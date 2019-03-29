@@ -1,0 +1,11 @@
+{
+  "name": "action-labeller",
+  "private": true,
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "actions-toolkit": "^1.6.0",
+    "js-yaml": "^3.13.0",
+    "minimatch": "^3.0.4"
+  }
+}
