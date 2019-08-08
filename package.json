@@ -1,11 +1,54 @@
 {
-  "name": "action-labeller",
+  "name": "labeler",
+  "version": "2.0.0",
   "private": true,
+  "description": "Labels pull requests by files altered",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/actions/labeler.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "author": "GitHub",
   "license": "MIT",
-  "main": "index.js",
   "dependencies": {
-    "actions-toolkit": "^1.6.0",
-    "js-yaml": "^3.13.0",
-    "minimatch": "^3.0.4"
+    "@actions/core": "file:toolkit/actions-core-0.0.0.tgz",
+    "@actions/exec": "file:toolkit/actions-exec-0.0.0.tgz",
+    "@actions/github": "file:toolkit/actions-github-0.0.0.tgz",
+    "@actions/io": "file:toolkit/actions-io-0.0.0.tgz",
+    "@actions/tool-cache": "file:toolkit/actions-tool-cache-0.0.0.tgz",
+    "js-yaml": "^3.13.1",
+    "minimatch": "^3.0.4",
+    "semver": "^6.1.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.4",
+    "@types/semver": "^6.0.0",
+    "@types/minimatch": "^3.0.0",
+    "@types/js-yaml": "^3.12.1",
+    "husky": "^2.3.0",
+    "jest": "^24.8.0",
+    "jest-circus": "^24.7.1",
+    "prettier": "^1.17.1",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.5.1"
+  },
+  "husky": {
+    "skipCI": true,
+    "hooks": {
+      "pre-commit": "npm run build && npm run format",
+      "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
+    }
   }
 }

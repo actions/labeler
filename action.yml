@@ -1,0 +1,12 @@
+name: 'Pull Request Triager'
+description: 'Label pull requests by files altered'
+author: 'GitHub'
+inputs: 
+  repo-token:
+    description: 'The GITHUB_TOKEN secret'
+  configuration-path:
+    description: 'The path for the label configurations'
+    default: '.github/labeler.yml'
+runs:
+  using: 'node12'
+  main: 'lib/main.js'

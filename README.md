@@ -1,50 +1,32 @@
-# Pull Request Labeller
+# Pull Request Labeler
 
-This action labels pull requests by comparing their changed files to a configuration file in the repository.
+Pull request labeler triages PRs based on the paths that are modified in the PR.
 
-For example, a configuration file at `.github/triage.yml` may look like this:
+To use, create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) 
+globs to match to apply the label. 
 
-```yaml
-design:
-  - src/frontend/**/*.css
-  - src/frontend/**/*.png
-
-server:
-  - src/server/**/*
+Example:
 ```
+label1:
+- example1/**/*
 
-And the action would be used like this:
+label2: example2/*
 
-```workflow
-workflow "Apply PR labels" {
-  on = "pull_request"
-  resolves = "Apply labels"
-}
-
-action "On sync" {
-  uses = "actions/bin/filter@master"
-  args = "action synchronize"
-}
-
-action "Apply labels" {
-  uses = "actions/labeller@v1.0.0"
-  needs = "On sync"
-  env = {LABEL_SPEC_FILE=".github/triage.yml"}
-  secrets = ["GITHUB_TOKEN"]
-}
+label3:
+- example3/*
+- example3/**/*.yml
 ```
+Then create a workflow:
+```
+name: "Pull Request Labeler"
+on: 
+- pull-request
 
-Now, whenever a user pushes to a pull request, this action will determine whether any changed files in that pull request match the specification file (note: this action uses [minimatch](https://github.com/isaacs/minimatch) to determine matches). If there are matches, the action will apply the appropriate labels to the pull request.
-
-## Contributing
-
-Check out [this doc](CONTRIBUTING.md).
-
-## License
-
-This action is released under the [MIT license](LICENSE.md).
-Container images built with this project include third party materials. See [THIRD_PARTY_NOTICE.md](THIRD_PARTY_NOTICE.md) for details.
-
-## Current Status
-
-This action is in active development.
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/labeler@v2
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+```
