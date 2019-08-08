@@ -26,7 +26,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: bbq-beets/labeler@labeler
+    - uses: actions/labeler@v2
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
