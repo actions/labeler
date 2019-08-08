@@ -1,4 +1,4 @@
-name: 'Pull Request Triager'
+name: 'Pull Request Labeler'
 description: 'Label pull requests by files altered'
 author: 'GitHub'
 inputs: 
