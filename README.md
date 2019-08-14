@@ -20,7 +20,7 @@ Then create a workflow:
 ```
 name: "Pull Request Labeler"
 on: 
-- pull-request
+- pull_request
 
 jobs:
   triage:
