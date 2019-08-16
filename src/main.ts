@@ -92,7 +92,8 @@ async function fetchContent(
   const response = await client.repos.getContents({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
-    path: repoPath
+    path: repoPath,
+    ref: github.context.sha
   });
 
   return Buffer.from(response.data.content, 'base64').toString();
