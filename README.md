@@ -19,9 +19,8 @@ label3:
 Then create a workflow:
 ```
 name: "Pull Request Labeler"
-on:
-  schedule:
-  - cron: "0 * * * *"
+on: 
+- pull_request
 
 jobs:
   triage:
