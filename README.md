@@ -16,7 +16,7 @@ label3:
 - example3/*
 - example3/**/*.yml
 ```
-Then create a workflow:
+Then create a workflow utilizing the labeler action, granting access to the GITHUB_TOKEN so the action can make calls to GitHub's rest API:
 ```
 name: "Pull Request Labeler"
 on: 
