@@ -16,10 +16,10 @@ label3:
 - example3/*
 - example3/**/*.yml
 ```
-Where "label1" is the name of the label on your repository that you want to add (eg: "merge conflict", "needs-updating") and "example1/**/*" is the path of the changed files.
+Where `"label1"` is the name of the label on your repository that you want to add (eg: "merge conflict", "needs-updating") and `"example1/**/*"` is the path of the changed files.
 
 
-Then create a workflow (eg: `.github/workflow/label.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) utilizing the labeler action, granting access to the GITHUB_TOKEN so the action can make calls to GitHub's rest API:
+Then create a workflow (eg: `.github/workflows/label.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) utilizing the labeler action, granting access to the GITHUB_TOKEN so the action can make calls to GitHub's rest API:
 ```
 name: "Pull Request Labeler"
 on:
