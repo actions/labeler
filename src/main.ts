@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import {Minimatch} from 'minimatch';
+import {Minimatch, IMinimatch} from 'minimatch';
 
 async function run() {
   try {
@@ -116,15 +116,28 @@ function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   return labelGlobs;
 }
 
+function printPattern(matcher: IMinimatch): string {
+  return (matcher.negate ? "!" : "") + matcher.pattern;
+}
+
 function checkGlobs(changedFiles: string[], globs: string[]): boolean {
-  for (const glob of globs) {
-    core.debug(` checking pattern ${glob}`);
-    const matcher = new Minimatch(glob);
-    for (const changedFile of changedFiles) {
-      core.debug(` - ${changedFile}`);
+  const matchers = globs.map(g => new Minimatch(g));
+  for (const changedFile of changedFiles) {
+    core.debug(` testing patterns against ${changedFile}`);
+    for (const matcher of matchers) {
+      core.debug(` - ${printPattern(matcher)}`);
       if (matcher.match(changedFile)) {
-        core.debug(` ${changedFile} matches`);
-        return true;
+        // match and not an exclusion rule
+        if (!matcher.negate) {
+          core.debug(` ${printPattern(matcher)} matches`);
+          return true;
+        }
+      } else {
+        // non-match, but is an exclusion rule
+        if (matcher.negate) {
+          core.debug(` ${printPattern(matcher)} excluded`);
+          break;
+        }
       }
     }
   }

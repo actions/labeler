@@ -38,7 +38,18 @@ repo:
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
   - src/**/*.spec.js
+
+# Add 'source' label to any change to src files within the source dir EXCEPT for the build sub-folder
+source:
+- !src/build/*
+- src/**/*
 ```
+
+#### Exclusions
+
+Exclusions are supported by preceding the pattern with `"!"`.
+
+Patterns are evaluated in order and the first match will result in the label being assigned. If an exclusion rule matches, all remaining patterns are skipped for the path being evaluated.
 
 ### Create Workflow
 
