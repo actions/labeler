@@ -36,6 +36,10 @@ repo:
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
   - src/**/*.spec.js
+  
+# Add 'build' label to any change to files ending with .yml in any location
+build:
+  - '**/*.yml'
 ```
 
 ### Create Workflow
