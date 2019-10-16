@@ -116,7 +116,7 @@ function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   return labelGlobs;
 }
 
-function checkGlobs(changedFiles: string[], globs: string[]): boolean {
+export function checkGlobs(changedFiles: string[], globs: string[]): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${glob}`);
     const matcher = new Minimatch(glob);
@@ -144,4 +144,8 @@ async function addLabels(
   });
 }
 
-run();
+// Call `run()` if it is not `require()`d
+// https://www.jstips.co/en/javascript/nodejs-run-a-module-if-it-is-not-required/
+if (!module.parent) {
+  run();
+}
