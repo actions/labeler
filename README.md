@@ -28,6 +28,12 @@ label2: example2/*
 repo:
   - ./*
   
+# Add 'triage' label to any file change
+triage:
+  - '**'
+  - '.*'
+  - '.*/**'
+  
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
   - package/core/*
