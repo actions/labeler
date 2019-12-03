@@ -5,7 +5,7 @@
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "ncc build src/main.ts -o lib",
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
     "test": "jest"
@@ -34,18 +34,12 @@
     "@types/semver": "^6.0.0",
     "@types/minimatch": "^3.0.0",
     "@types/js-yaml": "^3.12.1",
+    "@zeit/ncc": "^0.20.5",
     "husky": "^2.3.0",
     "jest": "^24.8.0",
     "jest-circus": "^24.7.1",
     "prettier": "^1.17.1",
     "ts-jest": "^24.0.2",
     "typescript": "^3.5.1"
-  },
-  "husky": {
-    "skipCI": true,
-    "hooks": {
-      "pre-commit": "npm run build && npm run format",
-      "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
-    }
   }
 }
