@@ -18,13 +18,12 @@ async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    core.info(`changed files: ${changedFiles}`);
+    core.info(`changed files(length: ${changedFiles.length}): ${changedFiles}`);
     const labelGlobs: Map<string, string[]> = await getLabelGlobs(
       client,
       configPath
     );
 
-    core.info(`labelGlobs: ${labelGlobs}`);
 
     const labels: string[] = [];
     for (const [label, globs] of labelGlobs.entries()) {
@@ -100,7 +99,9 @@ async function fetchContent(
     ref: github.context.sha
   });
 
-  return Buffer.from((response.data as any).content, "base64").toString();
+  const content = Buffer.from((response.data as any).content, "base64").toString();
+  core.info(`getContents: ${content}`);
+  return content;
 }
 
 function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
