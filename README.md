@@ -38,6 +38,13 @@ test:
   - src/**/*.spec.js
 ```
 
+#### RegExp Examples
+
+```yml
+resource/$1:
+  - package\\/resource_(\\w*?)(_test)?.go
+```
+
 ### Create Workflow
 
 Create a workflow (eg: `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:

@@ -1,12 +1,12 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import {Minimatch} from 'minimatch';
+import * as labeler from './labeler';
 
 async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
-    const configPath = core.getInput('configuration-path', {required: true});
+    const token = core.getInput('repo-token', { required: true });
+    const configPath = core.getInput('configuration-path', { required: true });
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -23,13 +23,7 @@ async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    for (const [label, globs] of labelGlobs.entries()) {
-      core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
-        labels.push(label);
-      }
-    }
+    const labels = labeler.getLabels(labelGlobs, changedFiles);
 
     if (labels.length > 0) {
       await addLabels(client, prNumber, labels);
@@ -114,21 +108,6 @@ function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   }
 
   return labelGlobs;
-}
-
-function checkGlobs(changedFiles: string[], globs: string[]): boolean {
-  for (const glob of globs) {
-    core.debug(` checking pattern ${glob}`);
-    const matcher = new Minimatch(glob);
-    for (const changedFile of changedFiles) {
-      core.debug(` - ${changedFile}`);
-      if (matcher.match(changedFile)) {
-        core.debug(` ${changedFile} matches`);
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 async function addLabels(
