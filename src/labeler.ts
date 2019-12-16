@@ -1,8 +1,10 @@
-import * as core from '@actions/core';
-import { Minimatch } from 'minimatch';
+import * as core from "@actions/core";
+import { Minimatch } from "minimatch";
 
-export function getLabels(labelGlobs: Map<string, string[]>, files: string[]): string[] {
-
+export function getLabels(
+  labelGlobs: Map<string, string[]>,
+  files: string[]
+): string[] {
   const labels = new Set<string>();
 
   for (const [label, globs] of labelGlobs.entries()) {
