@@ -7,6 +7,11 @@ inputs:
   configuration-path:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
+  not-found-label:
+    description: 'The label to apply when no matches were found'
+  operations-per-run:
+    description: 'The maximum number of operations per run, used to control rate limiting'
+    default: 30
 runs:
   using: 'node12'
   main: 'lib/main.js'

@@ -3,19 +3,68 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
-async function run() {
+async function run(): Promise<void> {
   try {
     const token = core.getInput('repo-token', {required: true});
     const configPath = core.getInput('configuration-path', {required: true});
-
-    const prNumber = getPrNumber();
-    if (!prNumber) {
-      console.log('Could not get pull request number from context, exiting');
-      return;
-    }
+    const notFoundLabel = core.getInput('not-found-label');
+    const operationsPerRun = parseInt(
+      core.getInput('operations-per-run', {required: true})
+    );
+    let operationsLeft = operationsPerRun;
 
     const client = new github.GitHub(token);
 
+    const prNumber = getPrNumber();
+    if (prNumber) {
+      await processPR(client, prNumber, configPath, notFoundLabel);
+      return;
+    }
+
+    const opts = await client.pulls.list.endpoint.merge({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      state: 'open',
+      sort: 'updated'
+    });
+
+    let prs = await client.paginate(opts);
+    prs = prs.filter(pr => {
+      const hasLabels = pr.labels && pr.labels.length > 0;
+      if (hasLabels) {
+        core.debug(
+          `pr ${pr.number} already has ${pr.labels.length} labels`
+        );
+      }
+      return !hasLabels;
+    });
+
+    for (const pr of prs) {
+      core.debug(`performing labeler at pr ${pr.number}`);
+      if (operationsLeft <= 0) {
+        core.warning(
+          `performed ${operationsPerRun} operations, exiting to avoid rate limit`
+        );
+        return;
+      }
+
+      if (await processPR(client, pr.number, configPath, notFoundLabel)) {
+        operationsLeft -= 1;
+      }
+    };
+  } catch (error) {
+    core.error(error);
+    core.setFailed(error.message);
+  }
+}
+
+async function processPR(
+  client: github.GitHub,
+  prNumber: number,
+  configPath: string,
+  notFoundLabel: string
+): Promise<boolean> {
+  try {
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
     const labelGlobs: Map<string, string[]> = await getLabelGlobs(
@@ -31,13 +80,19 @@ async function run() {
       }
     }
 
+    if (notFoundLabel && labels.length === 0) {
+      labels.push(notFoundLabel);
+    }
+
     if (labels.length > 0) {
       await addLabels(client, prNumber, labels);
+      return true;
     }
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);
   }
+  return false;
 }
 
 function getPrNumber(): number | undefined {
