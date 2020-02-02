@@ -2,6 +2,8 @@
 
 Pull request labeler triages PRs based on the paths that are modified in the PR.
 
+**Caveat:** This only works when the PRs come from inside same account/organization. (if the PR is from a forked repo, like is commmon in many OSS projects, this action will not work due to lack of permissions).
+
 ## Usage
 
 ### Create `.github/labeler.yml`
