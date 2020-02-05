@@ -1,5 +1,5 @@
 name: 'Pull Request Labeler'
-description: 'Label pull requests by files altered'
+description: 'Add labels to new pull requests based on the files that are changed'
 author: 'GitHub'
 inputs: 
   repo-token:
