@@ -89,14 +89,14 @@ async function fetchContent(
   client: github.GitHub,
   repoPath: string
 ): Promise<string> {
-  const response = await client.repos.getContents({
+  const response: any = await client.repos.getContents({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     path: repoPath,
     ref: github.context.sha
   });
 
-  return Buffer.from(response.data.content, 'base64').toString();
+  return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
 function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {

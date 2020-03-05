@@ -1,11 +1,10 @@
 {
   "name": "labeler",
-  "version": "2.0.0",
-  "private": true,
+  "version": "3.0.0",
   "description": "Labels pull requests by files altered",
-  "main": "lib/main.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && ncc build",
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
     "test": "jest"
@@ -15,15 +14,16 @@
     "url": "git+https://github.com/actions/labeler.git"
   },
   "keywords": [
+    "github",
     "actions",
-    "node",
-    "setup"
+    "label",
+    "labeler"
   ],
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.0.0",
-    "@actions/github": "^1.0.0",
+    "@actions/github": "^2.1.1",
     "js-yaml": "^3.13.1",
     "minimatch": "^3.0.4",
     "semver": "^6.1.1"
@@ -34,18 +34,11 @@
     "@types/semver": "^6.0.0",
     "@types/minimatch": "^3.0.0",
     "@types/js-yaml": "^3.12.1",
-    "husky": "^2.3.0",
+    "@zeit/ncc": "^0.21.1",
     "jest": "^24.8.0",
     "jest-circus": "^24.7.1",
     "prettier": "^1.17.1",
     "ts-jest": "^24.0.2",
     "typescript": "^3.5.1"
-  },
-  "husky": {
-    "skipCI": true,
-    "hooks": {
-      "pre-commit": "npm run build && npm run format",
-      "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
-    }
   }
 }
