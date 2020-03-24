@@ -1,12 +1,17 @@
 name: 'Labeler'
 description: 'Add labels to new pull requests based on the files that are changed'
 author: 'GitHub'
-inputs: 
+inputs:
   repo-token:
     description: 'The GITHUB_TOKEN secret'
   configuration-path:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
+outputs:
+  new-labels:
+    description: 'List of all new labels'
+  all-labels:
+    description: 'List of all labels'
 runs:
   using: 'node12'
   main: 'dist/index.js'

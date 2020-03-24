@@ -1,16 +1,16 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import * as yaml from 'js-yaml';
-import {Minimatch} from 'minimatch';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
+import * as yaml from "js-yaml";
+import { Minimatch } from "minimatch";
 
 async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
-    const configPath = core.getInput('configuration-path', {required: true});
+    const token = core.getInput("repo-token", { required: true });
+    const configPath = core.getInput("configuration-path", { required: true });
 
     const prNumber = getPrNumber();
     if (!prNumber) {
-      console.log('Could not get pull request number from context, exiting');
+      console.log("Could not get pull request number from context, exiting");
       return;
     }
 
@@ -32,7 +32,13 @@ async function run() {
     }
 
     if (labels.length > 0) {
-      await addLabels(client, prNumber, labels);
+      const { newLabels, allLabels } = await addLabels(
+        client,
+        prNumber,
+        labels
+      );
+      core.setOutput("new-labels", newLabels.join(","));
+      core.setOutput("all-labels", allLabels.join(","));
     }
   } catch (error) {
     core.error(error);
@@ -61,9 +67,9 @@ async function getChangedFiles(
 
   const changedFiles = listFilesResponse.data.map(f => f.filename);
 
-  core.debug('found changed files:');
+  core.debug("found changed files:");
   for (const file of changedFiles) {
-    core.debug('  ' + file);
+    core.debug("  " + file);
   }
 
   return changedFiles;
@@ -102,7 +108,7 @@ async function fetchContent(
 function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   const labelGlobs: Map<string, string[]> = new Map();
   for (const label in configObject) {
-    if (typeof configObject[label] === 'string') {
+    if (typeof configObject[label] === "string") {
       labelGlobs.set(label, [configObject[label]]);
     } else if (configObject[label] instanceof Array) {
       labelGlobs.set(label, configObject[label]);
@@ -135,13 +141,18 @@ async function addLabels(
   client: github.GitHub,
   prNumber: number,
   labels: string[]
-) {
-  await client.issues.addLabels({
+): Promise<{ newLabels: string[]; allLabels: string[] }> {
+  const addLabelResult = await client.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
     labels: labels
   });
+
+  return {
+    newLabels: labels,
+    allLabels: addLabelResult.data.map(datum => datum.name)
+  };
 }
 
 run();
