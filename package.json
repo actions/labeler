@@ -4,7 +4,7 @@
   "description": "Labels pull requests by files altered",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && ncc build",
+    "build": "ncc build ./src/main.ts",
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
     "test": "jest"

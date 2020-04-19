@@ -34,7 +34,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(656);
+/******/ 		return __webpack_require__(131);
 /******/ 	};
 /******/
 /******/ 	// run startup
@@ -3479,6 +3479,149 @@ module.exports = require("child_process");
 
 /***/ }),
 
+/***/ 131:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github = __importStar(__webpack_require__(469));
+const yaml = __importStar(__webpack_require__(414));
+const minimatch_1 = __webpack_require__(595);
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const token = core.getInput("repo-token", { required: true });
+            const configPath = core.getInput("configuration-path", { required: true });
+            const prNumber = getPrNumber();
+            if (!prNumber) {
+                console.log("Could not get pull request number from context, exiting");
+                return;
+            }
+            const client = new github.GitHub(token);
+            core.debug(`fetching changed files for pr #${prNumber}`);
+            const changedFiles = yield getChangedFiles(client, prNumber);
+            const labelGlobs = yield getLabelGlobs(client, configPath);
+            const labels = [];
+            for (const [label, globs] of labelGlobs.entries()) {
+                core.debug(`processing ${label}`);
+                if (checkGlobs(changedFiles, globs)) {
+                    labels.push(label);
+                }
+            }
+            if (labels.length > 0) {
+                yield addLabels(client, prNumber, labels);
+            }
+        }
+        catch (error) {
+            core.error(error);
+            core.setFailed(error.message);
+        }
+    });
+}
+function getPrNumber() {
+    const pullRequest = github.context.payload.pull_request;
+    if (!pullRequest) {
+        return undefined;
+    }
+    return pullRequest.number;
+}
+function getChangedFiles(client, prNumber) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const listFilesResponse = yield client.pulls.listFiles({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            pull_number: prNumber
+        });
+        const changedFiles = listFilesResponse.data.map(f => f.filename);
+        core.debug("found changed files:");
+        for (const file of changedFiles) {
+            core.debug("  " + file);
+        }
+        return changedFiles;
+    });
+}
+function getLabelGlobs(client, configurationPath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const configurationContent = yield fetchContent(client, configurationPath);
+        // loads (hopefully) a `{[label:string]: string | string[]}`, but is `any`:
+        const configObject = yaml.safeLoad(configurationContent);
+        // transform `any` => `Map<string,string[]>` or throw if yaml is malformed:
+        return getLabelGlobMapFromObject(configObject);
+    });
+}
+function fetchContent(client, repoPath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const response = yield client.repos.getContents({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            path: repoPath,
+            ref: github.context.sha
+        });
+        return Buffer.from(response.data.content, response.data.encoding).toString();
+    });
+}
+function getLabelGlobMapFromObject(configObject) {
+    const labelGlobs = new Map();
+    for (const label in configObject) {
+        if (typeof configObject[label] === "string") {
+            labelGlobs.set(label, [configObject[label]]);
+        }
+        else if (configObject[label] instanceof Array) {
+            labelGlobs.set(label, configObject[label]);
+        }
+        else {
+            throw Error(`found unexpected type for label ${label} (should be string or array of globs)`);
+        }
+    }
+    return labelGlobs;
+}
+function checkGlobs(changedFiles, globs) {
+    for (const glob of globs) {
+        core.debug(` checking pattern ${glob}`);
+        const matcher = new minimatch_1.Minimatch(glob);
+        for (const changedFile of changedFiles) {
+            core.debug(` - ${changedFile}`);
+            if (matcher.match(changedFile)) {
+                core.debug(` ${changedFile} matches`);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+function addLabels(client, prNumber, labels) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield client.issues.addLabels({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            issue_number: prNumber,
+            labels: labels
+        });
+    });
+}
+run();
+
+
+/***/ }),
+
 /***/ 141:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -4118,7 +4261,7 @@ exports.getUserAgent = getUserAgent;
 /***/ 215:
 /***/ (function(module) {
 
-module.exports = {"_from":"@octokit/rest@^16.43.1","_id":"@octokit/rest@16.43.1","_inBundle":false,"_integrity":"sha512-gfFKwRT/wFxq5qlNjnW2dh+qh74XgTQ2B179UX5K1HYCluioWj8Ndbgqw2PVqa1NnVJkGHp2ovMpVn/DImlmkw==","_location":"/@octokit/rest","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"@octokit/rest@^16.43.1","name":"@octokit/rest","escapedName":"@octokit%2frest","scope":"@octokit","rawSpec":"^16.43.1","saveSpec":null,"fetchSpec":"^16.43.1"},"_requiredBy":["/@actions/github"],"_resolved":"https://registry.npmjs.org/@octokit/rest/-/rest-16.43.1.tgz","_shasum":"3b11e7d1b1ac2bbeeb23b08a17df0b20947eda6b","_spec":"@octokit/rest@^16.43.1","_where":"D:\\dev\\GitHub\\actions\\labeler\\node_modules\\@actions\\github","author":{"name":"Gregor Martynus","url":"https://github.com/gr2m"},"bugs":{"url":"https://github.com/octokit/rest.js/issues"},"bundleDependencies":false,"bundlesize":[{"path":"./dist/octokit-rest.min.js.gz","maxSize":"33 kB"}],"contributors":[{"name":"Mike de Boer","email":"info@mikedeboer.nl"},{"name":"Fabian Jakobs","email":"fabian@c9.io"},{"name":"Joe Gallo","email":"joe@brassafrax.com"},{"name":"Gregor Martynus","url":"https://github.com/gr2m"}],"dependencies":{"@octokit/auth-token":"^2.4.0","@octokit/plugin-paginate-rest":"^1.1.1","@octokit/plugin-request-log":"^1.0.0","@octokit/plugin-rest-endpoint-methods":"2.4.0","@octokit/request":"^5.2.0","@octokit/request-error":"^1.0.2","atob-lite":"^2.0.0","before-after-hook":"^2.0.0","btoa-lite":"^1.0.0","deprecation":"^2.0.0","lodash.get":"^4.4.2","lodash.set":"^4.3.2","lodash.uniq":"^4.5.0","octokit-pagination-methods":"^1.1.0","once":"^1.4.0","universal-user-agent":"^4.0.0"},"deprecated":false,"description":"GitHub REST API client for Node.js","devDependencies":{"@gimenete/type-writer":"^0.1.3","@octokit/auth":"^1.1.1","@octokit/fixtures-server":"^5.0.6","@octokit/graphql":"^4.2.0","@types/node":"^13.1.0","bundlesize":"^0.18.0","chai":"^4.1.2","compression-webpack-plugin":"^3.1.0","cypress":"^3.0.0","glob":"^7.1.2","http-proxy-agent":"^4.0.0","lodash.camelcase":"^4.3.0","lodash.merge":"^4.6.1","lodash.upperfirst":"^4.3.1","lolex":"^5.1.2","mkdirp":"^1.0.0","mocha":"^7.0.1","mustache":"^4.0.0","nock":"^11.3.3","npm-run-all":"^4.1.2","nyc":"^15.0.0","prettier":"^1.14.2","proxy":"^1.0.0","semantic-release":"^17.0.0","sinon":"^8.0.0","sinon-chai":"^3.0.0","sort-keys":"^4.0.0","string-to-arraybuffer":"^1.0.0","string-to-jsdoc-comment":"^1.0.0","typescript":"^3.3.1","webpack":"^4.0.0","webpack-bundle-analyzer":"^3.0.0","webpack-cli":"^3.0.0"},"files":["index.js","index.d.ts","lib","plugins"],"homepage":"https://github.com/octokit/rest.js#readme","keywords":["octokit","github","rest","api-client"],"license":"MIT","name":"@octokit/rest","nyc":{"ignore":["test"]},"publishConfig":{"access":"public"},"release":{"publish":["@semantic-release/npm",{"path":"@semantic-release/github","assets":["dist/*","!dist/*.map.gz"]}]},"repository":{"type":"git","url":"git+https://github.com/octokit/rest.js.git"},"scripts":{"build":"npm-run-all build:*","build:browser":"npm-run-all build:browser:*","build:browser:development":"webpack --mode development --entry . --output-library=Octokit --output=./dist/octokit-rest.js --profile --json > dist/bundle-stats.json","build:browser:production":"webpack --mode production --entry . --plugin=compression-webpack-plugin --output-library=Octokit --output-path=./dist --output-filename=octokit-rest.min.js --devtool source-map","build:ts":"npm run -s update-endpoints:typescript","coverage":"nyc report --reporter=html && open coverage/index.html","generate-bundle-report":"webpack-bundle-analyzer dist/bundle-stats.json --mode=static --no-open --report dist/bundle-report.html","lint":"prettier --check '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","lint:fix":"prettier --write '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","postvalidate:ts":"tsc --noEmit --target es6 test/typescript-validate.ts","prebuild:browser":"mkdirp dist/","pretest":"npm run -s lint","prevalidate:ts":"npm run -s build:ts","start-fixtures-server":"octokit-fixtures-server","test":"nyc mocha test/mocha-node-setup.js \"test/*/**/*-test.js\"","test:browser":"cypress run --browser chrome","update-endpoints":"npm-run-all update-endpoints:*","update-endpoints:fetch-json":"node scripts/update-endpoints/fetch-json","update-endpoints:typescript":"node scripts/update-endpoints/typescript","validate:ts":"tsc --target es6 --noImplicitAny index.d.ts"},"types":"index.d.ts","version":"16.43.1"};
+module.exports = {"name":"@octokit/rest","version":"16.43.1","publishConfig":{"access":"public"},"description":"GitHub REST API client for Node.js","keywords":["octokit","github","rest","api-client"],"author":"Gregor Martynus (https://github.com/gr2m)","contributors":[{"name":"Mike de Boer","email":"info@mikedeboer.nl"},{"name":"Fabian Jakobs","email":"fabian@c9.io"},{"name":"Joe Gallo","email":"joe@brassafrax.com"},{"name":"Gregor Martynus","url":"https://github.com/gr2m"}],"repository":"https://github.com/octokit/rest.js","dependencies":{"@octokit/auth-token":"^2.4.0","@octokit/plugin-paginate-rest":"^1.1.1","@octokit/plugin-request-log":"^1.0.0","@octokit/plugin-rest-endpoint-methods":"2.4.0","@octokit/request":"^5.2.0","@octokit/request-error":"^1.0.2","atob-lite":"^2.0.0","before-after-hook":"^2.0.0","btoa-lite":"^1.0.0","deprecation":"^2.0.0","lodash.get":"^4.4.2","lodash.set":"^4.3.2","lodash.uniq":"^4.5.0","octokit-pagination-methods":"^1.1.0","once":"^1.4.0","universal-user-agent":"^4.0.0"},"devDependencies":{"@gimenete/type-writer":"^0.1.3","@octokit/auth":"^1.1.1","@octokit/fixtures-server":"^5.0.6","@octokit/graphql":"^4.2.0","@types/node":"^13.1.0","bundlesize":"^0.18.0","chai":"^4.1.2","compression-webpack-plugin":"^3.1.0","cypress":"^3.0.0","glob":"^7.1.2","http-proxy-agent":"^4.0.0","lodash.camelcase":"^4.3.0","lodash.merge":"^4.6.1","lodash.upperfirst":"^4.3.1","lolex":"^5.1.2","mkdirp":"^1.0.0","mocha":"^7.0.1","mustache":"^4.0.0","nock":"^11.3.3","npm-run-all":"^4.1.2","nyc":"^15.0.0","prettier":"^1.14.2","proxy":"^1.0.0","semantic-release":"^17.0.0","sinon":"^8.0.0","sinon-chai":"^3.0.0","sort-keys":"^4.0.0","string-to-arraybuffer":"^1.0.0","string-to-jsdoc-comment":"^1.0.0","typescript":"^3.3.1","webpack":"^4.0.0","webpack-bundle-analyzer":"^3.0.0","webpack-cli":"^3.0.0"},"types":"index.d.ts","scripts":{"coverage":"nyc report --reporter=html && open coverage/index.html","lint":"prettier --check '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","lint:fix":"prettier --write '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","pretest":"npm run -s lint","test":"nyc mocha test/mocha-node-setup.js \"test/*/**/*-test.js\"","test:browser":"cypress run --browser chrome","build":"npm-run-all build:*","build:ts":"npm run -s update-endpoints:typescript","prebuild:browser":"mkdirp dist/","build:browser":"npm-run-all build:browser:*","build:browser:development":"webpack --mode development --entry . --output-library=Octokit --output=./dist/octokit-rest.js --profile --json > dist/bundle-stats.json","build:browser:production":"webpack --mode production --entry . --plugin=compression-webpack-plugin --output-library=Octokit --output-path=./dist --output-filename=octokit-rest.min.js --devtool source-map","generate-bundle-report":"webpack-bundle-analyzer dist/bundle-stats.json --mode=static --no-open --report dist/bundle-report.html","update-endpoints":"npm-run-all update-endpoints:*","update-endpoints:fetch-json":"node scripts/update-endpoints/fetch-json","update-endpoints:typescript":"node scripts/update-endpoints/typescript","prevalidate:ts":"npm run -s build:ts","validate:ts":"tsc --target es6 --noImplicitAny index.d.ts","postvalidate:ts":"tsc --noEmit --target es6 test/typescript-validate.ts","start-fixtures-server":"octokit-fixtures-server"},"license":"MIT","files":["index.js","index.d.ts","lib","plugins"],"nyc":{"ignore":["test"]},"release":{"publish":["@semantic-release/npm",{"path":"@semantic-release/github","assets":["dist/*","!dist/*.map.gz"]}]},"bundlesize":[{"path":"./dist/octokit-rest.min.js.gz","maxSize":"33 kB"}],"_resolved":"https://registry.npmjs.org/@octokit/rest/-/rest-16.43.1.tgz","_integrity":"sha512-gfFKwRT/wFxq5qlNjnW2dh+qh74XgTQ2B179UX5K1HYCluioWj8Ndbgqw2PVqa1NnVJkGHp2ovMpVn/DImlmkw==","_from":"@octokit/rest@16.43.1"};
 
 /***/ }),
 
@@ -12334,149 +12477,6 @@ if (process.platform === 'linux') {
     'SIGUNUSED'
   )
 }
-
-
-/***/ }),
-
-/***/ 656:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
-const github = __importStar(__webpack_require__(469));
-const yaml = __importStar(__webpack_require__(414));
-const minimatch_1 = __webpack_require__(595);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const token = core.getInput('repo-token', { required: true });
-            const configPath = core.getInput('configuration-path', { required: true });
-            const prNumber = getPrNumber();
-            if (!prNumber) {
-                console.log('Could not get pull request number from context, exiting');
-                return;
-            }
-            const client = new github.GitHub(token);
-            core.debug(`fetching changed files for pr #${prNumber}`);
-            const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
-            const labels = [];
-            for (const [label, globs] of labelGlobs.entries()) {
-                core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs)) {
-                    labels.push(label);
-                }
-            }
-            if (labels.length > 0) {
-                yield addLabels(client, prNumber, labels);
-            }
-        }
-        catch (error) {
-            core.error(error);
-            core.setFailed(error.message);
-        }
-    });
-}
-function getPrNumber() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
-    return pullRequest.number;
-}
-function getChangedFiles(client, prNumber) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const listFilesResponse = yield client.pulls.listFiles({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            pull_number: prNumber
-        });
-        const changedFiles = listFilesResponse.data.map(f => f.filename);
-        core.debug('found changed files:');
-        for (const file of changedFiles) {
-            core.debug('  ' + file);
-        }
-        return changedFiles;
-    });
-}
-function getLabelGlobs(client, configurationPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const configurationContent = yield fetchContent(client, configurationPath);
-        // loads (hopefully) a `{[label:string]: string | string[]}`, but is `any`:
-        const configObject = yaml.safeLoad(configurationContent);
-        // transform `any` => `Map<string,string[]>` or throw if yaml is malformed:
-        return getLabelGlobMapFromObject(configObject);
-    });
-}
-function fetchContent(client, repoPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const response = yield client.repos.getContents({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            path: repoPath,
-            ref: github.context.sha
-        });
-        return Buffer.from(response.data.content, response.data.encoding).toString();
-    });
-}
-function getLabelGlobMapFromObject(configObject) {
-    const labelGlobs = new Map();
-    for (const label in configObject) {
-        if (typeof configObject[label] === 'string') {
-            labelGlobs.set(label, [configObject[label]]);
-        }
-        else if (configObject[label] instanceof Array) {
-            labelGlobs.set(label, configObject[label]);
-        }
-        else {
-            throw Error(`found unexpected type for label ${label} (should be string or array of globs)`);
-        }
-    }
-    return labelGlobs;
-}
-function checkGlobs(changedFiles, globs) {
-    for (const glob of globs) {
-        core.debug(` checking pattern ${glob}`);
-        const matcher = new minimatch_1.Minimatch(glob);
-        for (const changedFile of changedFiles) {
-            core.debug(` - ${changedFile}`);
-            if (matcher.match(changedFile)) {
-                core.debug(` ${changedFile} matches`);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-function addLabels(client, prNumber, labels) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield client.issues.addLabels({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            labels: labels
-        });
-    });
-}
-run();
 
 
 /***/ }),
