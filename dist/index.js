@@ -3510,24 +3510,37 @@ function run() {
         try {
             const token = core.getInput("repo-token", { required: true });
             const configPath = core.getInput("configuration-path", { required: true });
+            const syncLabels = !!core.getInput("sync-labels", { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
                 console.log("Could not get pull request number from context, exiting");
                 return;
             }
             const client = new github.GitHub(token);
+            const { data: pullRequest } = yield client.pulls.get({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: prNumber
+            });
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
+            const labelsToRemove = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
                 }
+                else if (pullRequest.labels.find(l => l.name === label)) {
+                    labelsToRemove.push(label);
+                }
             }
             if (labels.length > 0) {
                 yield addLabels(client, prNumber, labels);
+            }
+            if (syncLabels && labelsToRemove.length) {
+                yield removeLabels(client, prNumber, labelsToRemove);
             }
         }
         catch (error) {
@@ -3616,6 +3629,16 @@ function addLabels(client, prNumber, labels) {
             issue_number: prNumber,
             labels: labels
         });
+    });
+}
+function removeLabels(client, prNumber, labels) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield Promise.all(labels.map(label => client.issues.removeLabel({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            issue_number: prNumber,
+            name: label
+        })));
     });
 }
 run();
