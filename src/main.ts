@@ -53,13 +53,14 @@ async function getChangedFiles(
   client: github.GitHub,
   prNumber: number
 ): Promise<string[]> {
-  const listFilesResponse = await client.pulls.listFiles({
+  const listFilesOptions = client.pulls.listFiles.endpoint.merge({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber
   });
 
-  const changedFiles = listFilesResponse.data.map(f => f.filename);
+  const listFilesResponse = await client.paginate(listFilesOptions);
+  const changedFiles = listFilesResponse.map(f => f.filename);
 
   core.debug("found changed files:");
   for (const file of changedFiles) {
