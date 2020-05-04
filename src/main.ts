@@ -1,16 +1,16 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import * as yaml from 'js-yaml';
-import {Minimatch} from 'minimatch';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
+import * as yaml from "js-yaml";
+import * as labeler from "./labeler";
 
 async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
-    const configPath = core.getInput('configuration-path', {required: true});
+    const token = core.getInput("repo-token", { required: true });
+    const configPath = core.getInput("configuration-path", { required: true });
 
     const prNumber = getPrNumber();
     if (!prNumber) {
-      console.log('Could not get pull request number from context, exiting');
+      console.log("Could not get pull request number from context, exiting");
       return;
     }
 
@@ -23,13 +23,7 @@ async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    for (const [label, globs] of labelGlobs.entries()) {
-      core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
-        labels.push(label);
-      }
-    }
+    const labels = labeler.getLabels(labelGlobs, changedFiles);
 
     if (labels.length > 0) {
       await addLabels(client, prNumber, labels);
@@ -61,9 +55,9 @@ async function getChangedFiles(
   const listFilesResponse = await client.paginate(opts);
   const changedFiles = listFilesResponse.map(f => f.filename);
 
-  core.debug('found changed files:');
+  core.debug("found changed files:");
   for (const file of changedFiles) {
-    core.debug('  ' + file);
+    core.debug("  " + file);
   }
 
   return changedFiles;
@@ -96,13 +90,13 @@ async function fetchContent(
     ref: github.context.sha
   });
 
-  return Buffer.from(response.data.content, 'base64').toString();
+  return Buffer.from(response.data.content, "base64").toString();
 }
 
 function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   const labelGlobs: Map<string, string[]> = new Map();
   for (const label in configObject) {
-    if (typeof configObject[label] === 'string') {
+    if (typeof configObject[label] === "string") {
       labelGlobs.set(label, [configObject[label]]);
     } else if (configObject[label] instanceof Array) {
       labelGlobs.set(label, configObject[label]);
@@ -114,21 +108,6 @@ function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   }
 
   return labelGlobs;
-}
-
-function checkGlobs(changedFiles: string[], globs: string[]): boolean {
-  for (const glob of globs) {
-    core.debug(` checking pattern ${glob}`);
-    const matcher = new Minimatch(glob);
-    for (const changedFile of changedFiles) {
-      core.debug(` - ${changedFile}`);
-      if (matcher.match(changedFile)) {
-        core.debug(` ${changedFile} matches`);
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 async function addLabels(
