@@ -23,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.0.0",
-    "@actions/github": "^2.1.1",
+    "@actions/github": "^2.2.0",
     "js-yaml": "^3.13.1",
     "minimatch": "^3.0.4",
     "semver": "^6.1.1"
