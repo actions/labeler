@@ -96,6 +96,13 @@ async function fetchContent(
     ref: github.context.sha
   });
 
+  if (!('content' in response.data)) {
+    throw new Error(`The path '${repoPath}' is not a file`);
+  }
+  if (!response.data.content) {
+    throw new Error(`The file '${repoPath}' has no content`);
+  }
+
   return Buffer.from(response.data.content, 'base64').toString();
 }
 
