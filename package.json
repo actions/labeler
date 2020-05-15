@@ -23,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.0.0",
-    "@actions/github": "^1.0.0",
+    "@actions/github": "^2.2.0",
     "js-yaml": "^3.13.1",
     "minimatch": "^3.0.4",
     "semver": "^6.1.1"
@@ -39,7 +39,7 @@
     "jest-circus": "^24.7.1",
     "prettier": "^1.17.1",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.5.1"
+    "typescript": "^3.6.4"
   },
   "husky": {
     "skipCI": true,
