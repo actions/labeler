@@ -3,6 +3,13 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch, IMinimatch} from 'minimatch';
 
+interface MatchConfig {
+  all?: string[];
+  some?: string[];
+}
+
+type StringOrMatchConfig = string | MatchConfig;
+
 async function run() {
   try {
     const token = core.getInput('repo-token', {required: true});
@@ -18,7 +25,7 @@ async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, string[]> = await getLabelGlobs(
+    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
       client,
       configPath
     );
@@ -72,16 +79,16 @@ async function getChangedFiles(
 async function getLabelGlobs(
   client: github.GitHub,
   configurationPath: string
-): Promise<Map<string, string[]>> {
+): Promise<Map<string, StringOrMatchConfig[]>> {
   const configurationContent: string = await fetchContent(
     client,
     configurationPath
   );
 
-  // loads (hopefully) a `{[label:string]: string | string[]}`, but is `any`:
+  // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.safeLoad(configurationContent);
 
-  // transform `any` => `Map<string,string[]>` or throw if yaml is malformed:
+  // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
   return getLabelGlobMapFromObject(configObject);
 }
 
@@ -99,10 +106,12 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
-  const labelGlobs: Map<string, string[]> = new Map();
+function getLabelGlobMapFromObject(
+  configObject: any
+): Map<string, StringOrMatchConfig[]> {
+  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
   for (const label in configObject) {
-    if (typeof configObject[label] === 'string') {
+    if (typeof configObject[label] === "string") {
       labelGlobs.set(label, [configObject[label]]);
     } else if (configObject[label] instanceof Array) {
       labelGlobs.set(label, configObject[label]);
@@ -116,32 +125,78 @@ function getLabelGlobMapFromObject(configObject: any): Map<string, string[]> {
   return labelGlobs;
 }
 
-function printPattern(matcher: IMinimatch): string {
-  return (matcher.negate ? "!" : "") + matcher.pattern;
+function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
+  if (typeof config === "string") {
+    return {
+      some: [config]
+    };
+  }
+
+  return config;
 }
 
-function checkGlobs(changedFiles: string[], globs: string[]): boolean {
-  const matchers = globs.map(g => new Minimatch(g));
-  for (const changedFile of changedFiles) {
-    core.debug(` testing patterns against ${changedFile}`);
-    for (const matcher of matchers) {
-      core.debug(` - ${printPattern(matcher)}`);
-      if (matcher.match(changedFile)) {
-        // match and not an exclusion rule
-        if (!matcher.negate) {
-          core.debug(` ${printPattern(matcher)} matches`);
-          return true;
-        }
-      } else {
-        // non-match, but is an exclusion rule
-        if (matcher.negate) {
-          core.debug(` ${printPattern(matcher)} excluded`);
-          break;
-        }
-      }
+function checkGlobs(
+  changedFiles: string[],
+  globs: StringOrMatchConfig[]
+): boolean {
+  for (const glob of globs) {
+    core.debug(` checking pattern ${JSON.stringify(glob)}`);
+    const matchConfig = toMatchConfig(glob);
+    if (checkMatch(changedFiles, matchConfig)) {
+      return true;
     }
   }
   return false;
+}
+
+// equivalent to "Array.some()" but expanded for debugging and clarity
+function checkSome(changedFiles: string[], glob: string): boolean {
+  core.debug(` checking "some" pattern ${glob}`);
+  const matcher = new Minimatch(glob);
+  for (const changedFile of changedFiles) {
+    core.debug(` - ${changedFile}`);
+    if (matcher.match(changedFile)) {
+      core.debug(` ${changedFile} matches`);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// equivalent to "Array.every()" but expanded for debugging and clarity
+function checkAll(changedFiles: string[], glob: string): boolean {
+  core.debug(` checking "all" pattern ${glob}`);
+  const matcher = new Minimatch(glob);
+  for (const changedFile of changedFiles) {
+    core.debug(` - ${changedFile}`);
+    if (!matcher.match(changedFile)) {
+      core.debug(` ${changedFile} did not match`);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+  if (matchConfig.all !== undefined) {
+    for (const glob of matchConfig.all) {
+      if (!checkAll(changedFiles, glob)) {
+        return false;
+      }
+    }
+  }
+
+  if (matchConfig.some !== undefined) {
+    for (const glob of matchConfig.some) {
+      if (!checkSome(changedFiles, glob)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 async function addLabels(
