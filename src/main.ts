@@ -5,7 +5,7 @@ import {Minimatch, IMinimatch} from 'minimatch';
 
 interface MatchConfig {
   all?: string[];
-  some?: string[];
+  any?: string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -128,7 +128,7 @@ function getLabelGlobMapFromObject(
 function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
   if (typeof config === "string") {
     return {
-      some: [config]
+      any: [config]
     };
   }
 
@@ -150,8 +150,8 @@ function checkGlobs(
 }
 
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkSome(changedFiles: string[], glob: string): boolean {
-  core.debug(` checking "some" pattern ${glob}`);
+function checkAny(changedFiles: string[], glob: string): boolean {
+  core.debug(` checking "any" pattern ${glob}`);
   const matcher = new Minimatch(glob);
   for (const changedFile of changedFiles) {
     core.debug(` - ${changedFile}`);
@@ -188,9 +188,9 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
     }
   }
 
-  if (matchConfig.some !== undefined) {
-    for (const glob of matchConfig.some) {
-      if (!checkSome(changedFiles, glob)) {
+  if (matchConfig.any !== undefined) {
+    for (const glob of matchConfig.any) {
+      if (!checkAny(changedFiles, glob)) {
         return false;
       }
     }

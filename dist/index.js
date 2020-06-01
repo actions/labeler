@@ -4202,7 +4202,7 @@ function getLabelGlobMapFromObject(configObject) {
 function toMatchConfig(config) {
     if (typeof config === "string") {
         return {
-            all: [config]
+            any: [config]
         };
     }
     return config;
@@ -4218,8 +4218,8 @@ function checkGlobs(changedFiles, globs) {
     return false;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkSome(changedFiles, glob) {
-    core.debug(` checking "some" pattern ${glob}`);
+function checkAny(changedFiles, glob) {
+    core.debug(` checking "any" pattern ${glob}`);
     const matcher = new minimatch_1.Minimatch(glob);
     for (const changedFile of changedFiles) {
         core.debug(` - ${changedFile}`);
@@ -4251,9 +4251,9 @@ function checkMatch(changedFiles, matchConfig) {
             }
         }
     }
-    if (matchConfig.some !== undefined) {
-        for (const glob of matchConfig.some) {
-            if (!checkSome(changedFiles, glob)) {
+    if (matchConfig.any !== undefined) {
+        for (const glob of matchConfig.any) {
+            if (!checkAny(changedFiles, glob)) {
                 return false;
             }
         }
