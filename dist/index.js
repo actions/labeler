@@ -4207,6 +4207,9 @@ function toMatchConfig(config) {
     }
     return config;
 }
+function printPattern(matcher) {
+    return (matcher.negate ? "!" : "") + matcher.pattern;
+}
 function checkGlobs(changedFiles, globs) {
     for (const glob of globs) {
         core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -4217,45 +4220,53 @@ function checkGlobs(changedFiles, globs) {
     }
     return false;
 }
-// equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles, glob) {
-    core.debug(` checking "any" pattern ${glob}`);
-    const matcher = new minimatch_1.Minimatch(glob);
-    for (const changedFile of changedFiles) {
-        core.debug(` - ${changedFile}`);
-        if (matcher.match(changedFile)) {
-            core.debug(` ${changedFile} matches`);
-            return true;
-        }
-    }
-    return false;
-}
-// equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles, glob) {
-    core.debug(` checking "all" pattern ${glob}`);
-    const matcher = new minimatch_1.Minimatch(glob);
-    for (const changedFile of changedFiles) {
-        core.debug(` - ${changedFile}`);
+function isMatch(changedFile, matchers) {
+    core.debug(`    matching patterns against file ${changedFile}`);
+    for (const matcher of matchers) {
+        core.debug(`   - ${printPattern(matcher)}`);
         if (!matcher.match(changedFile)) {
-            core.debug(` ${changedFile} did not match`);
+            core.debug(`   ${printPattern(matcher)} did not match`);
             return false;
         }
     }
+    core.debug(`   all patterns matched`);
+    return true;
+}
+// equivalent to "Array.some()" but expanded for debugging and clarity
+function checkAny(changedFiles, globs) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    core.debug(`  checking "any" patterns`);
+    for (const changedFile of changedFiles) {
+        if (isMatch(changedFile, matchers)) {
+            core.debug(`  "any" patterns matched against ${changedFile}`);
+            return true;
+        }
+    }
+    core.debug(`  "any" patterns did not match any files`);
+    return false;
+}
+// equivalent to "Array.every()" but expanded for debugging and clarity
+function checkAll(changedFiles, globs) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    core.debug(` checking "all" patterns`);
+    for (const changedFile of changedFiles) {
+        if (!isMatch(changedFile, matchers)) {
+            core.debug(`  "all" patterns did not match against ${changedFile}`);
+            return false;
+        }
+    }
+    core.debug(`  "all" patterns matched all files`);
     return true;
 }
 function checkMatch(changedFiles, matchConfig) {
     if (matchConfig.all !== undefined) {
-        for (const glob of matchConfig.all) {
-            if (!checkAll(changedFiles, glob)) {
-                return false;
-            }
+        if (!checkAll(changedFiles, matchConfig.all)) {
+            return false;
         }
     }
     if (matchConfig.any !== undefined) {
-        for (const glob of matchConfig.any) {
-            if (!checkAny(changedFiles, glob)) {
-                return false;
-            }
+        if (!checkAny(changedFiles, matchConfig.any)) {
+            return false;
         }
     }
     return true;
