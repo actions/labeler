@@ -176,12 +176,12 @@ function isMatch(
   matchers: IMinimatch[],
   statuses: string[]
 ): boolean {
-  core.debug(`    matching statuses against file ${changedFile}`);
+  core.debug(`    matching statuses against file ${changedFile.filename}`);
   if (!statuses.includes(changedFile.status)) {
     return false;
   }
 
-  core.debug(`    matching patterns against file ${changedFile}`);
+  core.debug(`    matching patterns against file ${changedFile.filename}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);
     if (!matcher.match(changedFile.filename)) {
@@ -204,7 +204,7 @@ function checkAny(
   core.debug(`  checking "any" patterns`);
   for (const changedFile of changedFiles) {
     if (isMatch(changedFile, matchers, statuses)) {
-      core.debug(`  "any" patterns matched against ${changedFile}`);
+      core.debug(`  "any" patterns matched against ${changedFile.filename}`);
       return true;
     }
   }
@@ -223,7 +223,7 @@ function checkAll(
   core.debug(` checking "all" patterns`);
   for (const changedFile of changedFiles) {
     if (!isMatch(changedFile, matchers, statuses)) {
-      core.debug(`  "all" patterns did not match against ${changedFile}`);
+      core.debug(`  "all" patterns did not match against ${changedFile.filename}`);
       return false;
     }
   }
