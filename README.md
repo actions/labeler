@@ -30,12 +30,12 @@ The fields are defined as follows:
 A simple path glob is the equivalent to `any: ['glob']`. More specifically, the following two configurations are equivalent:
 ```yml
 label1:
-- example1/*
+  - example1/*
 ```
 and
 ```yml
 label1:
-- any: ['example1/*']
+  - any: ['example1/*']
 ```
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and indvidual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
@@ -57,7 +57,7 @@ label2: example2/*
 # Add 'repo' label to any root file changes
 repo:
   - ./*
-  
+
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
   - package/core/*
@@ -69,12 +69,12 @@ test:
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
-- any: ['src/**/*', '!src/docs/*']
+  - any: ['src/**/*', '!src/docs/*']
 
 # Add 'frontend` label to any change to *.js files as long as the `main.js` hasn't changed
 frontend:
-- any: ['src/**/*.js']
-  all: ['!src/main.js']
+  - any: ['src/**/*.js']
+    all: ['!src/main.js']
 ```
 
 ### Create Workflow
