@@ -57,7 +57,7 @@ label2: example2/*
 # Add 'repo' label to any root file changes
 repo:
   - ./*
-  
+
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
   - package/core/*
@@ -75,6 +75,12 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
+
+# Add 'new-test` only if a new test file has been added
+new-test:
+  - any: [src/**/*.spec.js]
+    status: 'added'
+
 ```
 
 ### Create Workflow
