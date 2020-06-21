@@ -4204,15 +4204,18 @@ function getLabelGlobMapFromObject(configObject) {
     return labelGlobs;
 }
 function toMatchConfig(config) {
-    const allStatus = ["added", "modified", "removed"];
+    const allStatuses = ["added", "modified", "removed"];
     if (typeof config === "string") {
         return {
             any: [config],
-            status: allStatus
+            status: allStatuses
         };
     }
     if (typeof config.status === "string") {
         config.status = [config.status];
+    }
+    else if (!Array.isArray(config.status)) {
+        config.status = allStatuses;
     }
     return config;
 }
