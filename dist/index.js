@@ -4235,6 +4235,7 @@ function checkGlobs(changedFiles, globs) {
 function isMatch(changedFile, matchers, statuses) {
     core.debug(`    matching statuses against file ${changedFile.filename}`);
     if (!statuses.includes(changedFile.status)) {
+        core.debug(`   ${changedFile.status} did not match ${JSON.stringify(statuses)}`);
         return false;
     }
     core.debug(`    matching patterns against file ${changedFile.filename}`);
