@@ -4204,10 +4204,15 @@ function getLabelGlobMapFromObject(configObject) {
     return labelGlobs;
 }
 function toMatchConfig(config) {
+    const allStatus = ["added", "modified", "removed"];
     if (typeof config === "string") {
         return {
-            any: [config]
+            any: [config],
+            status: allStatus
         };
+    }
+    if (typeof config.status === "string") {
+        config.status = [config.status];
     }
     return config;
 }
@@ -4224,7 +4229,11 @@ function checkGlobs(changedFiles, globs) {
     }
     return false;
 }
-function isMatch(changedFile, matchers) {
+function isMatch(changedFile, matchers, statuses) {
+    core.debug(`    matching statuses against file ${changedFile}`);
+    if (!statuses.includes(changedFile.status)) {
+        return false;
+    }
     core.debug(`    matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
         core.debug(`   - ${printPattern(matcher)}`);
@@ -4237,11 +4246,11 @@ function isMatch(changedFile, matchers) {
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles, globs) {
+function checkAny(changedFiles, globs, statuses) {
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     core.debug(`  checking "any" patterns`);
     for (const changedFile of changedFiles) {
-        if (isMatch(changedFile, matchers)) {
+        if (isMatch(changedFile, matchers, statuses)) {
             core.debug(`  "any" patterns matched against ${changedFile}`);
             return true;
         }
@@ -4250,11 +4259,11 @@ function checkAny(changedFiles, globs) {
     return false;
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles, globs) {
+function checkAll(changedFiles, globs, statuses) {
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     core.debug(` checking "all" patterns`);
     for (const changedFile of changedFiles) {
-        if (!isMatch(changedFile, matchers)) {
+        if (!isMatch(changedFile, matchers, statuses)) {
             core.debug(`  "all" patterns did not match against ${changedFile}`);
             return false;
         }
@@ -4264,12 +4273,12 @@ function checkAll(changedFiles, globs) {
 }
 function checkMatch(changedFiles, matchConfig) {
     if (matchConfig.all !== undefined) {
-        if (!checkAll(changedFiles, matchConfig.all)) {
+        if (!checkAll(changedFiles, matchConfig.all, matchConfig.status)) {
             return false;
         }
     }
     if (matchConfig.any !== undefined) {
-        if (!checkAny(changedFiles, matchConfig.any)) {
+        if (!checkAny(changedFiles, matchConfig.any, matchConfig.status)) {
             return false;
         }
     }
