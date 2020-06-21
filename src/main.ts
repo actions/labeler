@@ -8,6 +8,11 @@ interface MatchConfig {
   any?: string[];
 }
 
+interface File {
+  filename: string;
+  status: string;
+}
+
 type StringOrMatchConfig = string | MatchConfig;
 
 async function run() {
@@ -24,7 +29,7 @@ async function run() {
     const client = new github.GitHub(token);
 
     core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
+    const changedFiles: File[] = await getChangedFiles(client, prNumber);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
       client,
       configPath
@@ -59,18 +64,21 @@ function getPrNumber(): number | undefined {
 async function getChangedFiles(
   client: github.GitHub,
   prNumber: number
-): Promise<string[]> {
+): Promise<File[]> {
   const listFilesResponse = await client.pulls.listFiles({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber
   });
 
-  const changedFiles = listFilesResponse.data.map(f => f.filename);
+  const changedFiles = listFilesResponse.data.map(f => ({
+    filename: f.filename,
+    status: f.status,
+  }));
 
   core.debug('found changed files:');
   for (const file of changedFiles) {
-    core.debug('  ' + file);
+    core.debug('  ' + file.filename);
   }
 
   return changedFiles;
@@ -140,7 +148,7 @@ function printPattern(matcher: IMinimatch): string {
 }
 
 function checkGlobs(
-  changedFiles: string[],
+  changedFiles: File[],
   globs: StringOrMatchConfig[]
 ): boolean {
   for (const glob of globs) {
@@ -153,11 +161,11 @@ function checkGlobs(
   return false;
 }
 
-function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
+function isMatch(changedFile: File, matchers: IMinimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);
-    if (!matcher.match(changedFile)) {
+    if (!matcher.match(changedFile.filename)) {
       core.debug(`   ${printPattern(matcher)} did not match`);
       return false;
     }
@@ -168,7 +176,7 @@ function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
 }
 
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles: string[], globs: string[]): boolean {
+function checkAny(changedFiles: File[], globs: string[]): boolean {
   const matchers = globs.map(g => new Minimatch(g));
   core.debug(`  checking "any" patterns`);
   for (const changedFile of changedFiles) {
@@ -183,7 +191,7 @@ function checkAny(changedFiles: string[], globs: string[]): boolean {
 }
 
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles: string[], globs: string[]): boolean {
+function checkAll(changedFiles: File[], globs: string[]): boolean {
   const matchers = globs.map(g => new Minimatch(g));
   core.debug(` checking "all" patterns`);
   for (const changedFile of changedFiles) {
@@ -197,7 +205,7 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(changedFiles: File[], matchConfig: MatchConfig): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all)) {
       return false;
