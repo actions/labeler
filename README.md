@@ -90,7 +90,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v3-preview
+    - uses: actions/labeler@master
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
