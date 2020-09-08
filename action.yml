@@ -7,6 +7,12 @@ inputs:
   configuration-path:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
+    required: false
+  sync-labels:
+    description: 'Whether or not to remove labels when matching files are reverted'
+    default: false
+    required: false
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
