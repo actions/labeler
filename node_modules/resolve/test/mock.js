@@ -22,6 +22,9 @@ test('mock', function (t) {
             },
             readFile: function (file, cb) {
                 cb(null, files[path.resolve(file)]);
+            },
+            realpath: function (file, cb) {
+                cb(null, file);
             }
         };
     }
@@ -70,6 +73,9 @@ test('mock from package', function (t) {
             'package': { main: 'bar' },
             readFile: function (file, cb) {
                 cb(null, files[file]);
+            },
+            realpath: function (file, cb) {
+                cb(null, file);
             }
         };
     }
@@ -121,6 +127,9 @@ test('mock package', function (t) {
             },
             readFile: function (file, cb) {
                 cb(null, files[path.resolve(file)]);
+            },
+            realpath: function (file, cb) {
+                cb(null, file);
             }
         };
     }
@@ -157,6 +166,9 @@ test('mock package from package', function (t) {
             'package': { main: 'bar' },
             readFile: function (file, cb) {
                 cb(null, files[path.resolve(file)]);
+            },
+            realpath: function (file, cb) {
+                cb(null, file);
             }
         };
     }
@@ -165,5 +177,63 @@ test('mock package from package', function (t) {
         if (err) return t.fail(err);
         t.equal(res, path.resolve('/foo/node_modules/bar/baz.js'));
         t.equal(pkg && pkg.main, './baz.js');
+    });
+});
+
+test('symlinked', function (t) {
+    t.plan(4);
+
+    var files = {};
+    files[path.resolve('/foo/bar/baz.js')] = 'beep';
+    files[path.resolve('/foo/bar/symlinked/baz.js')] = 'beep';
+
+    var dirs = {};
+    dirs[path.resolve('/foo/bar')] = true;
+    dirs[path.resolve('/foo/bar/symlinked')] = true;
+
+    function opts(basedir) {
+        return {
+            preserveSymlinks: false,
+            basedir: path.resolve(basedir),
+            isFile: function (file, cb) {
+                cb(null, Object.prototype.hasOwnProperty.call(files, path.resolve(file)));
+            },
+            isDirectory: function (dir, cb) {
+                cb(null, !!dirs[path.resolve(dir)]);
+            },
+            readFile: function (file, cb) {
+                cb(null, files[path.resolve(file)]);
+            },
+            realpath: function (file, cb) {
+                var resolved = path.resolve(file);
+
+                if (resolved.indexOf('symlinked') >= 0) {
+                    cb(null, resolved);
+                    return;
+                }
+
+                var ext = path.extname(resolved);
+
+                if (ext) {
+                    var dir = path.dirname(resolved);
+                    var base = path.basename(resolved);
+                    cb(null, path.join(dir, 'symlinked', base));
+                } else {
+                    cb(null, path.join(resolved, 'symlinked'));
+                }
+            }
+        };
+    }
+
+    resolve('./baz', opts('/foo/bar'), function (err, res, pkg) {
+        if (err) return t.fail(err);
+        t.equal(res, path.resolve('/foo/bar/symlinked/baz.js'));
+        t.equal(pkg, undefined);
+    });
+
+    resolve('./baz.js', opts('/foo/bar'), function (err, res, pkg) {
+        if (err) return t.fail(err);
+        t.equal(res, path.resolve('/foo/bar/symlinked/baz.js'));
+        t.equal(pkg, undefined);
     });
 });

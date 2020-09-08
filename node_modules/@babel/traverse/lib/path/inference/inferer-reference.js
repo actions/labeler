@@ -5,17 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = _default;
 
-function t() {
-  const data = _interopRequireWildcard(require("@babel/types"));
+var t = _interopRequireWildcard(require("@babel/types"));
 
-  t = function () {
-    return data;
-  };
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
-  return data;
-}
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _default(node) {
   if (!this.isReferenced()) return;
@@ -30,9 +24,9 @@ function _default(node) {
   }
 
   if (node.name === "undefined") {
-    return t().voidTypeAnnotation();
+    return t.voidTypeAnnotation();
   } else if (node.name === "NaN" || node.name === "Infinity") {
-    return t().numberTypeAnnotation();
+    return t.numberTypeAnnotation();
   } else if (node.name === "arguments") {}
 }
 
@@ -56,9 +50,19 @@ function getTypeAnnotationBindingConstantViolations(binding, path, name) {
     }
   }
 
-  if (types.length) {
-    return t().createUnionTypeAnnotation(types);
+  if (!types.length) {
+    return;
   }
+
+  if (t.isTSTypeAnnotation(types[0]) && t.createTSUnionType) {
+    return t.createTSUnionType(types);
+  }
+
+  if (t.createFlowUnionType) {
+    return t.createFlowUnionType(types);
+  }
+
+  return t.createUnionTypeAnnotation(types);
 }
 
 function getConstantViolationsBefore(binding, path, functions) {
@@ -69,7 +73,7 @@ function getConstantViolationsBefore(binding, path, functions) {
 
     const status = violation._guessExecutionStatusRelativeTo(path);
 
-    if (functions && status === "function") functions.push(violation);
+    if (functions && status === "unknown") functions.push(violation);
     return status === "before";
   });
 }
@@ -95,8 +99,8 @@ function inferAnnotationFromBinaryExpression(name, path) {
       return target.getTypeAnnotation();
     }
 
-    if (t().BOOLEAN_NUMBER_BINARY_OPERATORS.indexOf(operator) >= 0) {
-      return t().numberTypeAnnotation();
+    if (t.BOOLEAN_NUMBER_BINARY_OPERATORS.indexOf(operator) >= 0) {
+      return t.numberTypeAnnotation();
     }
 
     return;
@@ -126,7 +130,7 @@ function inferAnnotationFromBinaryExpression(name, path) {
   if (!typePath.isLiteral()) return;
   const typeValue = typePath.node.value;
   if (typeof typeValue !== "string") return;
-  return t().createTypeAnnotationBasedOnTypeof(typeValue);
+  return t.createTypeAnnotationBasedOnTypeof(typeValue);
 }
 
 function getParentConditionalPath(binding, path, name) {
@@ -171,8 +175,22 @@ function getConditionalAnnotation(binding, path, name) {
   }
 
   if (types.length) {
+    if (t.isTSTypeAnnotation(types[0]) && t.createTSUnionType) {
+      return {
+        typeAnnotation: t.createTSUnionType(types),
+        ifStatement
+      };
+    }
+
+    if (t.createFlowUnionType) {
+      return {
+        typeAnnotation: t.createFlowUnionType(types),
+        ifStatement
+      };
+    }
+
     return {
-      typeAnnotation: t().createUnionTypeAnnotation(types),
+      typeAnnotation: t.createUnionTypeAnnotation(types),
       ifStatement
     };
   }

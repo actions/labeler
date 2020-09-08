@@ -5,17 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ForAwaitStatement = exports.NumericLiteralTypeAnnotation = exports.ExistentialTypeParam = exports.SpreadProperty = exports.RestProperty = exports.Flow = exports.Pure = exports.Generated = exports.User = exports.Var = exports.BlockScoped = exports.Referenced = exports.Scope = exports.Expression = exports.Statement = exports.BindingIdentifier = exports.ReferencedMemberExpression = exports.ReferencedIdentifier = void 0;
 
-function t() {
-  const data = _interopRequireWildcard(require("@babel/types"));
+var t = _interopRequireWildcard(require("@babel/types"));
 
-  t = function () {
-    return data;
-  };
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
-  return data;
-}
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 const ReferencedIdentifier = {
   types: ["Identifier", "JSXIdentifier"],
@@ -26,15 +20,15 @@ const ReferencedIdentifier = {
       parent
     } = path;
 
-    if (!t().isIdentifier(node, opts) && !t().isJSXMemberExpression(parent, opts)) {
-      if (t().isJSXIdentifier(node, opts)) {
-        if (t().react.isCompatTag(node.name)) return false;
+    if (!t.isIdentifier(node, opts) && !t.isJSXMemberExpression(parent, opts)) {
+      if (t.isJSXIdentifier(node, opts)) {
+        if (t.react.isCompatTag(node.name)) return false;
       } else {
         return false;
       }
     }
 
-    return t().isReferenced(node, parent, path.parentPath.parent);
+    return t.isReferenced(node, parent, path.parentPath.parent);
   }
 
 };
@@ -46,7 +40,7 @@ const ReferencedMemberExpression = {
     node,
     parent
   }) {
-    return t().isMemberExpression(node) && t().isReferenced(node, parent);
+    return t.isMemberExpression(node) && t.isReferenced(node, parent);
   }
 
 };
@@ -60,7 +54,7 @@ const BindingIdentifier = {
       parent
     } = path;
     const grandparent = path.parentPath.parent;
-    return t().isIdentifier(node) && t().isBinding(node, parent, grandparent);
+    return t.isIdentifier(node) && t.isBinding(node, parent, grandparent);
   }
 
 };
@@ -72,12 +66,12 @@ const Statement = {
     node,
     parent
   }) {
-    if (t().isStatement(node)) {
-      if (t().isVariableDeclaration(node)) {
-        if (t().isForXStatement(parent, {
+    if (t.isStatement(node)) {
+      if (t.isVariableDeclaration(node)) {
+        if (t.isForXStatement(parent, {
           left: node
         })) return false;
-        if (t().isForStatement(parent, {
+        if (t.isForStatement(parent, {
           init: node
         })) return false;
       }
@@ -97,31 +91,31 @@ const Expression = {
     if (path.isIdentifier()) {
       return path.isReferencedIdentifier();
     } else {
-      return t().isExpression(path.node);
+      return t.isExpression(path.node);
     }
   }
 
 };
 exports.Expression = Expression;
 const Scope = {
-  types: ["Scopable"],
+  types: ["Scopable", "Pattern"],
 
   checkPath(path) {
-    return t().isScope(path.node, path.parent);
+    return t.isScope(path.node, path.parent);
   }
 
 };
 exports.Scope = Scope;
 const Referenced = {
   checkPath(path) {
-    return t().isReferenced(path.node, path.parent);
+    return t.isReferenced(path.node, path.parent);
   }
 
 };
 exports.Referenced = Referenced;
 const BlockScoped = {
   checkPath(path) {
-    return t().isBlockScoped(path.node);
+    return t.isBlockScoped(path.node);
   }
 
 };
@@ -130,7 +124,7 @@ const Var = {
   types: ["VariableDeclaration"],
 
   checkPath(path) {
-    return t().isVar(path.node);
+    return t.isVar(path.node);
   }
 
 };
@@ -162,13 +156,13 @@ const Flow = {
   checkPath({
     node
   }) {
-    if (t().isFlow(node)) {
+    if (t.isFlow(node)) {
       return true;
-    } else if (t().isImportDeclaration(node)) {
+    } else if (t.isImportDeclaration(node)) {
       return node.importKind === "type" || node.importKind === "typeof";
-    } else if (t().isExportDeclaration(node)) {
+    } else if (t.isExportDeclaration(node)) {
       return node.exportKind === "type";
-    } else if (t().isImportSpecifier(node)) {
+    } else if (t.isImportSpecifier(node)) {
       return node.importKind === "type" || node.importKind === "typeof";
     } else {
       return false;

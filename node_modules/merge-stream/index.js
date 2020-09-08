@@ -1,6 +1,6 @@
 'use strict';
 
-var PassThrough = require('readable-stream/passthrough')
+const { PassThrough } = require('stream');
 
 module.exports = function (/*streams...*/) {
   var sources = []

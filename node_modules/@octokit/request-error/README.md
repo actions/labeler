@@ -4,7 +4,6 @@
 
 [![@latest](https://img.shields.io/npm/v/@octokit/request-error.svg)](https://www.npmjs.com/package/@octokit/request-error)
 [![Build Status](https://github.com/octokit/request-error.js/workflows/Test/badge.svg)](https://github.com/octokit/request-error.js/actions?query=workflow%3ATest)
-[![Greenkeeper](https://badges.greenkeeper.io/octokit/request-error.js.svg)](https://greenkeeper.io/)
 
 ## Usage
 

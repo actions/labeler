@@ -4,22 +4,22 @@
 
 [![@latest](https://img.shields.io/npm/v/@octokit/endpoint.svg)](https://www.npmjs.com/package/@octokit/endpoint)
 ![Build Status](https://github.com/octokit/endpoint.js/workflows/Test/badge.svg)
-[![Greenkeeper](https://badges.greenkeeper.io/octokit/endpoint.js.svg)](https://greenkeeper.io/)
 
 `@octokit/endpoint` combines [GitHub REST API routes](https://developer.github.com/v3/) with your parameters and turns them into generic request options that can be used in any request library.
 
 <!-- update table of contents by running `npx markdown-toc README.md -i` -->
+
 <!-- toc -->
 
 - [Usage](#usage)
 - [API](#api)
-  - [endpoint()](#endpointroute-options-or-endpointoptions)
-  - [endpoint.defaults()](#endpointdefaults)
-  - [endpoint.DEFAULTS](#endpointdefaults-1)
-  - [endpoint.merge()](#endpointmergeroute-options-or-endpointmergeoptions)
-  - [endpoint.parse()](#endpointparse)
+  - [`endpoint(route, options)` or `endpoint(options)`](#endpointroute-options-or-endpointoptions)
+  - [`endpoint.defaults()`](#endpointdefaults)
+  - [`endpoint.DEFAULTS`](#endpointdefaults)
+  - [`endpoint.merge(route, options)` or `endpoint.merge(options)`](#endpointmergeroute-options-or-endpointmergeoptions)
+  - [`endpoint.parse()`](#endpointparse)
 - [Special cases](#special-cases)
-  - [The `data` parameter – set request body directly](#the-data-parameter--set-request-body-directly)
+  - [The `data` parameter – set request body directly](#the-data-parameter-%E2%80%93-set-request-body-directly)
   - [Set parameters for both the URL/query and the request body](#set-parameters-for-both-the-urlquery-and-the-request-body)
 - [LICENSE](#license)
 

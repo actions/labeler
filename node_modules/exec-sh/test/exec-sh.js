@@ -73,7 +73,7 @@ describe('exec-sh', function () {
         stdio: 'inherit'
       }
       execSh('command', options)
-      assert.deepEqual(spawn.getCall(0).args[2], expectedOptions)
+      assert.deepStrictEqual(spawn.getCall(0).args[2], expectedOptions)
     })
 
     it('should allow overriding default options', function () {
@@ -83,7 +83,7 @@ describe('exec-sh', function () {
         stdio: null
       }
       execSh('command', options)
-      assert.deepEqual(spawn.getCall(0).args[2], expectedOptions)
+      assert.deepStrictEqual(spawn.getCall(0).args[2], expectedOptions)
     })
 
     it('should allow passing nested environment options', function () {
@@ -101,7 +101,7 @@ describe('exec-sh', function () {
         stdio: 'inherit'
       }
       execSh('command', options)
-      assert.deepEqual(spawn.getCall(0).args[2], expectedOptions)
+      assert.deepStrictEqual(spawn.getCall(0).args[2], expectedOptions)
     })
 
     it("should accept optional 'callback' parameter", function () {
@@ -166,7 +166,7 @@ describe('exec-sh', function () {
       exitCode = 1
       execSh('command', function (err) {
         assert(err instanceof Error)
-        assert.equal(exitCode, err.code)
+        assert.strictEqual(exitCode, err.code)
         done()
       })
     })
@@ -177,8 +177,8 @@ describe('exec-sh', function () {
 
     it('promise interface: should resolve with stderr and stdout', function (done) {
       execSh.promise('command').then(function (data) {
-        assert(data.hasOwnProperty('stdout'))
-        assert(data.hasOwnProperty('stderr'))
+        assert.ok('stdout' in data)
+        assert.ok('stderr' in data)
         done()
       })
     })

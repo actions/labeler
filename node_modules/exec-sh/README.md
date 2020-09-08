@@ -74,17 +74,17 @@ var execShPromise = require("exec-sh").promise;
 // run interactive bash shell
 const run = async () => {
   let out;
-  
+
   try {
     out = await execShPromise('pwd', true);
   } catch (e) {
     console.log('Error: ', e);
     console.log('Stderr: ', e.stderr);
     console.log('Stdout: ', e.stdout);
-    
+
     return e;
   }
-  
+
   console.log('out: ', out.stdout, out.stderr);
 }
 
@@ -114,7 +114,7 @@ Returns [ChildProcess](http://nodejs.org/api/child_process.html#child_process_cl
 Complete API Documentation including private and public methods is generated from source code by JSDoc tool and is [available here](https://s3.eu-central-1.amazonaws.com/tsertkov-artifacts/exec-sh/master/jsdoc/index.html).
 
 ## Code Coverage
-Code coverage report for all files is [available here](https://s3.eu-central-1.amazonaws.com/tsertkov-artifacts/exec-sh/master/coverage/lcov-report/index.html).
+Code coverage report for all files is [available here](https://s3.eu-central-1.amazonaws.com/tsertkov-artifacts/exec-sh/master/coverage/index.html).
 
 ## Scripts
 

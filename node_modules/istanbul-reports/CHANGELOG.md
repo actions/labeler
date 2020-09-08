@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.2.7]
+
+
+### Bug Fixes
+
+* Remove handlebars ([#503](https://github.com/istanbuljs/istanbuljs/issues/503))
+
+
+
+
+
 ## [2.2.6]
 
 

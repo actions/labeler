@@ -22,6 +22,9 @@ test('mock', function (t) {
             },
             readFileSync: function (file) {
                 return files[path.resolve(file)];
+            },
+            realpathSync: function (file) {
+                return file;
             }
         };
     }
@@ -69,6 +72,9 @@ test('mock package', function (t) {
             },
             readFileSync: function (file) {
                 return files[path.resolve(file)];
+            },
+            realpathSync: function (file) {
+                return file;
             }
         };
     }
@@ -76,5 +82,60 @@ test('mock package', function (t) {
     t.equal(
         resolve.sync('bar', opts('/foo')),
         path.resolve('/foo/node_modules/bar/baz.js')
+    );
+});
+
+test('symlinked', function (t) {
+    t.plan(2);
+
+    var files = {};
+    files[path.resolve('/foo/bar/baz.js')] = 'beep';
+    files[path.resolve('/foo/bar/symlinked/baz.js')] = 'beep';
+
+    var dirs = {};
+    dirs[path.resolve('/foo/bar')] = true;
+    dirs[path.resolve('/foo/bar/symlinked')] = true;
+
+    function opts(basedir) {
+        return {
+            preserveSymlinks: false,
+            basedir: path.resolve(basedir),
+            isFile: function (file) {
+                return Object.prototype.hasOwnProperty.call(files, path.resolve(file));
+            },
+            isDirectory: function (dir) {
+                return !!dirs[path.resolve(dir)];
+            },
+            readFileSync: function (file) {
+                return files[path.resolve(file)];
+            },
+            realpathSync: function (file) {
+                var resolved = path.resolve(file);
+
+                if (resolved.indexOf('symlinked') >= 0) {
+                    return resolved;
+                }
+
+                var ext = path.extname(resolved);
+
+                if (ext) {
+                    var dir = path.dirname(resolved);
+                    var base = path.basename(resolved);
+                    return path.join(dir, 'symlinked', base);
+                } else {
+                    return path.join(resolved, 'symlinked');
+                }
+            }
+        };
+    }
+
+    t.equal(
+        resolve.sync('./baz', opts('/foo/bar')),
+        path.resolve('/foo/bar/symlinked/baz.js')
+    );
+
+    t.equal(
+        resolve.sync('./baz.js', opts('/foo/bar')),
+        path.resolve('/foo/bar/symlinked/baz.js')
     );
 });

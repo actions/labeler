@@ -33,29 +33,25 @@ Object.defineProperty(exports, "Identifier", {
   }
 });
 
-function t() {
-  const data = _interopRequireWildcard(require("@babel/types"));
-
-  t = function () {
-    return data;
-  };
-
-  return data;
-}
+var t = _interopRequireWildcard(require("@babel/types"));
 
 var _infererReference = _interopRequireDefault(require("./inferer-reference"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function VariableDeclarator() {
+  var _type;
+
   const id = this.get("id");
   if (!id.isIdentifier()) return;
   const init = this.get("init");
   let type = init.getTypeAnnotation();
 
-  if (type && type.type === "AnyTypeAnnotation") {
+  if (((_type = type) == null ? void 0 : _type.type) === "AnyTypeAnnotation") {
     if (init.isCallExpression() && init.get("callee").isIdentifier({
       name: "Array"
     }) && !init.scope.hasBinding("Array", true)) {
@@ -74,55 +70,75 @@ TypeCastExpression.validParent = true;
 
 function NewExpression(node) {
   if (this.get("callee").isIdentifier()) {
-    return t().genericTypeAnnotation(node.callee);
+    return t.genericTypeAnnotation(node.callee);
   }
 }
 
 function TemplateLiteral() {
-  return t().stringTypeAnnotation();
+  return t.stringTypeAnnotation();
 }
 
 function UnaryExpression(node) {
   const operator = node.operator;
 
   if (operator === "void") {
-    return t().voidTypeAnnotation();
-  } else if (t().NUMBER_UNARY_OPERATORS.indexOf(operator) >= 0) {
-    return t().numberTypeAnnotation();
-  } else if (t().STRING_UNARY_OPERATORS.indexOf(operator) >= 0) {
-    return t().stringTypeAnnotation();
-  } else if (t().BOOLEAN_UNARY_OPERATORS.indexOf(operator) >= 0) {
-    return t().booleanTypeAnnotation();
+    return t.voidTypeAnnotation();
+  } else if (t.NUMBER_UNARY_OPERATORS.indexOf(operator) >= 0) {
+    return t.numberTypeAnnotation();
+  } else if (t.STRING_UNARY_OPERATORS.indexOf(operator) >= 0) {
+    return t.stringTypeAnnotation();
+  } else if (t.BOOLEAN_UNARY_OPERATORS.indexOf(operator) >= 0) {
+    return t.booleanTypeAnnotation();
   }
 }
 
 function BinaryExpression(node) {
   const operator = node.operator;
 
-  if (t().NUMBER_BINARY_OPERATORS.indexOf(operator) >= 0) {
-    return t().numberTypeAnnotation();
-  } else if (t().BOOLEAN_BINARY_OPERATORS.indexOf(operator) >= 0) {
-    return t().booleanTypeAnnotation();
+  if (t.NUMBER_BINARY_OPERATORS.indexOf(operator) >= 0) {
+    return t.numberTypeAnnotation();
+  } else if (t.BOOLEAN_BINARY_OPERATORS.indexOf(operator) >= 0) {
+    return t.booleanTypeAnnotation();
   } else if (operator === "+") {
     const right = this.get("right");
     const left = this.get("left");
 
     if (left.isBaseType("number") && right.isBaseType("number")) {
-      return t().numberTypeAnnotation();
+      return t.numberTypeAnnotation();
     } else if (left.isBaseType("string") || right.isBaseType("string")) {
-      return t().stringTypeAnnotation();
+      return t.stringTypeAnnotation();
     }
 
-    return t().unionTypeAnnotation([t().stringTypeAnnotation(), t().numberTypeAnnotation()]);
+    return t.unionTypeAnnotation([t.stringTypeAnnotation(), t.numberTypeAnnotation()]);
   }
 }
 
 function LogicalExpression() {
-  return t().createUnionTypeAnnotation([this.get("left").getTypeAnnotation(), this.get("right").getTypeAnnotation()]);
+  const argumentTypes = [this.get("left").getTypeAnnotation(), this.get("right").getTypeAnnotation()];
+
+  if (t.isTSTypeAnnotation(argumentTypes[0]) && t.createTSUnionType) {
+    return t.createTSUnionType(argumentTypes);
+  }
+
+  if (t.createFlowUnionType) {
+    return t.createFlowUnionType(argumentTypes);
+  }
+
+  return t.createUnionTypeAnnotation(argumentTypes);
 }
 
 function ConditionalExpression() {
-  return t().createUnionTypeAnnotation([this.get("consequent").getTypeAnnotation(), this.get("alternate").getTypeAnnotation()]);
+  const argumentTypes = [this.get("consequent").getTypeAnnotation(), this.get("alternate").getTypeAnnotation()];
+
+  if (t.isTSTypeAnnotation(argumentTypes[0]) && t.createTSUnionType) {
+    return t.createTSUnionType(argumentTypes);
+  }
+
+  if (t.createFlowUnionType) {
+    return t.createFlowUnionType(argumentTypes);
+  }
+
+  return t.createUnionTypeAnnotation(argumentTypes);
 }
 
 function SequenceExpression() {
@@ -141,36 +157,36 @@ function UpdateExpression(node) {
   const operator = node.operator;
 
   if (operator === "++" || operator === "--") {
-    return t().numberTypeAnnotation();
+    return t.numberTypeAnnotation();
   }
 }
 
 function StringLiteral() {
-  return t().stringTypeAnnotation();
+  return t.stringTypeAnnotation();
 }
 
 function NumericLiteral() {
-  return t().numberTypeAnnotation();
+  return t.numberTypeAnnotation();
 }
 
 function BooleanLiteral() {
-  return t().booleanTypeAnnotation();
+  return t.booleanTypeAnnotation();
 }
 
 function NullLiteral() {
-  return t().nullLiteralTypeAnnotation();
+  return t.nullLiteralTypeAnnotation();
 }
 
 function RegExpLiteral() {
-  return t().genericTypeAnnotation(t().identifier("RegExp"));
+  return t.genericTypeAnnotation(t.identifier("RegExp"));
 }
 
 function ObjectExpression() {
-  return t().genericTypeAnnotation(t().identifier("Object"));
+  return t.genericTypeAnnotation(t.identifier("Object"));
 }
 
 function ArrayExpression() {
-  return t().genericTypeAnnotation(t().identifier("Array"));
+  return t.genericTypeAnnotation(t.identifier("Array"));
 }
 
 function RestElement() {
@@ -180,13 +196,13 @@ function RestElement() {
 RestElement.validParent = true;
 
 function Func() {
-  return t().genericTypeAnnotation(t().identifier("Function"));
+  return t.genericTypeAnnotation(t.identifier("Function"));
 }
 
-const isArrayFrom = t().buildMatchMemberExpression("Array.from");
-const isObjectKeys = t().buildMatchMemberExpression("Object.keys");
-const isObjectValues = t().buildMatchMemberExpression("Object.values");
-const isObjectEntries = t().buildMatchMemberExpression("Object.entries");
+const isArrayFrom = t.buildMatchMemberExpression("Array.from");
+const isObjectKeys = t.buildMatchMemberExpression("Object.keys");
+const isObjectValues = t.buildMatchMemberExpression("Object.values");
+const isObjectEntries = t.buildMatchMemberExpression("Object.entries");
 
 function CallExpression() {
   const {
@@ -194,11 +210,11 @@ function CallExpression() {
   } = this.node;
 
   if (isObjectKeys(callee)) {
-    return t().arrayTypeAnnotation(t().stringTypeAnnotation());
+    return t.arrayTypeAnnotation(t.stringTypeAnnotation());
   } else if (isArrayFrom(callee) || isObjectValues(callee)) {
-    return t().arrayTypeAnnotation(t().anyTypeAnnotation());
+    return t.arrayTypeAnnotation(t.anyTypeAnnotation());
   } else if (isObjectEntries(callee)) {
-    return t().arrayTypeAnnotation(t().tupleTypeAnnotation([t().stringTypeAnnotation(), t().anyTypeAnnotation()]));
+    return t.arrayTypeAnnotation(t.tupleTypeAnnotation([t.stringTypeAnnotation(), t.anyTypeAnnotation()]));
   }
 
   return resolveCall(this.get("callee"));
@@ -214,9 +230,9 @@ function resolveCall(callee) {
   if (callee.isFunction()) {
     if (callee.is("async")) {
       if (callee.is("generator")) {
-        return t().genericTypeAnnotation(t().identifier("AsyncIterator"));
+        return t.genericTypeAnnotation(t.identifier("AsyncIterator"));
       } else {
-        return t().genericTypeAnnotation(t().identifier("Promise"));
+        return t.genericTypeAnnotation(t.identifier("Promise"));
       }
     } else {
       if (callee.node.returnType) {

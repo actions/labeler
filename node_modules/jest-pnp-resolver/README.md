@@ -13,6 +13,8 @@ yarn add -D jest-pnp-resolver
 
 ## Usage
 
+As of `jest@^24.4.0` you don't need to manually add this package anymore. The default resolver will already use PnP.
+
 Simply add the resolver to your configuration. For example, a minimal `jest.config.js` would be as such:
 
 ```js
