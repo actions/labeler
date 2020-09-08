@@ -7,6 +7,7 @@ async function run() {
   try {
     const token = core.getInput('repo-token', {required: true});
     const configPath = core.getInput('configuration-path', {required: true});
+    const syncLabels = !!core.getInput("sync-labels", { required: false });
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -15,6 +16,12 @@ async function run() {
     }
 
     const client = new github.GitHub(token);
+
+    const { data: pullRequest } = await client.pulls.get({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: prNumber
+    });
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
@@ -53,13 +60,14 @@ async function getChangedFiles(
   client: github.GitHub,
   prNumber: number
 ): Promise<string[]> {
-  const listFilesResponse = await client.pulls.listFiles({
+  const listFilesOptions = client.pulls.listFiles.endpoint.merge({ 
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber
   });
 
-  const changedFiles = listFilesResponse.data.map(f => f.filename);
+  const listFilesResponse = await client.paginate(listFilesOptions);
+  const changedFiles = listFilesResponse.map(f => f.filename);
 
   core.debug('found changed files:');
   for (const file of changedFiles) {
