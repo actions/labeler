@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import * as yaml from 'js-yaml';
-import {Minimatch, IMinimatch} from 'minimatch';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
+import * as yaml from "js-yaml";
+import { Minimatch, IMinimatch } from "minimatch";
 
 interface MatchConfig {
   all?: string[];
@@ -12,13 +12,13 @@ type StringOrMatchConfig = string | MatchConfig;
 
 async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
-    const configPath = core.getInput('configuration-path', {required: true});
+    const token = core.getInput("repo-token", { required: true });
+    const configPath = core.getInput("configuration-path", { required: true });
     const syncLabels = !!core.getInput("sync-labels", { required: false });
 
     const prNumber = getPrNumber();
     if (!prNumber) {
-      console.log('Could not get pull request number from context, exiting');
+      console.log("Could not get pull request number from context, exiting");
       return;
     }
 
@@ -74,7 +74,7 @@ async function getChangedFiles(
   client: github.GitHub,
   prNumber: number
 ): Promise<string[]> {
-  const listFilesOptions = client.pulls.listFiles.endpoint.merge({ 
+  const listFilesOptions = client.pulls.listFiles.endpoint.merge({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber
@@ -83,9 +83,9 @@ async function getChangedFiles(
   const listFilesResponse = await client.paginate(listFilesOptions);
   const changedFiles = listFilesResponse.map(f => f.filename);
 
-  core.debug('found changed files:');
+  core.debug("found changed files:");
   for (const file of changedFiles) {
-    core.debug('  ' + file);
+    core.debug("  " + file);
   }
 
   return changedFiles;

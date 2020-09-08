@@ -4115,12 +4115,12 @@ const minimatch_1 = __webpack_require__(595);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput('repo-token', { required: true });
-            const configPath = core.getInput('configuration-path', { required: true });
+            const token = core.getInput("repo-token", { required: true });
+            const configPath = core.getInput("configuration-path", { required: true });
             const syncLabels = !!core.getInput("sync-labels", { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
-                console.log('Could not get pull request number from context, exiting');
+                console.log("Could not get pull request number from context, exiting");
                 return;
             }
             const client = new github.GitHub(token);
@@ -4172,9 +4172,9 @@ function getChangedFiles(client, prNumber) {
         });
         const listFilesResponse = yield client.paginate(listFilesOptions);
         const changedFiles = listFilesResponse.map(f => f.filename);
-        core.debug('found changed files:');
+        core.debug("found changed files:");
         for (const file of changedFiles) {
-            core.debug('  ' + file);
+            core.debug("  " + file);
         }
         return changedFiles;
     });
