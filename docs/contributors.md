@@ -1,22 +1,32 @@
-# Contributors
+# Contributing Guidelines
 
-### Checkin
+Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
 
-- Do checkin source (src)
-- Do checkin build output (lib)
-- Do checkin runtime node_modules
-- Do not checkin devDependency node_modules (husky can help see below)
+Contributions to this project are [released](https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license) to the public under the [project's open-source license](../LICENSE).
 
-### devDependencies
+## Submitting a Pull Request
 
-In order to handle correctly checking in node_modules without devDependencies, we run [Husky](https://github.com/typicode/husky) before each commit.
-This step ensures that formatting and checkin rules are followed and that devDependencies are excluded. To make sure Husky runs correctly, please use the following workflow:
+1. [Fork](https://github.com/actions/labeler/fork) and clone the repository
+1. Configure and install the dependencies: `npm install`
+1. Create a new branch: `git checkout -b my-branch-name`
+1. Make your change and build the action using `npm run build`
+1. Push to your fork and [submit a pull request](https://github.com/actions/labeler/compare)
+1. Pat your self on the back and wait for your pull request to be reviewed and merged.
 
-```
-npm install                                 # installs all devDependencies including Husky
-git add abc.ext                             # Add the files you've changed. This should include files in src, lib, and node_modules (see above)
-git commit -m "Informative commit message"  # Commit. This will run Husky
-```
+Here are a few things you can do that will increase the likelihood of your pull request being accepted:
 
-During the commit step, Husky will take care of formatting all files with [Prettier](https://github.com/prettier/prettier) as well as pruning out devDependencies using `npm prune --production`.
-It will also make sure these changes are appropriately included in your commit (no further work is needed)
+- Follow the coding style used in this project. You can do this by running `npm run format`.
+- Keep your change as focused as possible. If there are multiple changes you would like to make that are not dependent upon each other, consider submitting them as separate pull requests.
+- Write [good commit messages](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
+
+## Development Details
+
+This project is written in [TypeScript](https://www.typescriptlang.org/), a typed variant of JavaScript, and we use [Prettier](https://prettier.io/) to get a consistent code style.
+
+Because of how GitHub Actions are run, the source code of this project is transpiled from TypeScript into JavaScript. The transpiled code (found in `lib/`) is subsequently compiled using [NCC](https://github.com/vercel/ncc/blob/master/readme.md) (found in `dist/`) to avoid having to include the `node_modules/` directory in the repository.
+
+## Resources
+
+- [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
+- [Using Pull Requests](https://help.github.com/articles/about-pull-requests/)
+- [GitHub Help](https://help.github.com)
