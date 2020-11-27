@@ -9,6 +9,7 @@ Contributions to this project are [released](https://help.github.com/articles/gi
 1. [Fork](https://github.com/actions/labeler/fork) and clone the repository
 1. Configure and install the dependencies: `npm install`
 1. Create a new branch: `git checkout -b my-branch-name`
+1. Make your change on your new branch
 1. Push to your fork and [submit a pull request](https://github.com/actions/labeler/compare)
 1. Pat your self on the back and wait for your pull request to be reviewed and merged.
 
