@@ -1,0 +1,17 @@
+name: Update dist/index.js
+
+on:
+  push: {branches: main}
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+    name: Update dist/index.js
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: npm run build
+      - name: Push updates
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update lib/index.js"
