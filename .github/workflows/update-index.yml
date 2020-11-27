@@ -14,4 +14,4 @@ jobs:
       - name: Push updates
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Update lib/index.js"
+          commit_message: "Update dist/index.js"
