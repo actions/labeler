@@ -54,7 +54,7 @@ label2: example2/*
 ```yml
 # Add 'repo' label to any root file changes
 repo:
-  - ./*
+  - '*'
   
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
