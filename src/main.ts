@@ -22,6 +22,9 @@ async function run() {
       return;
     }
 
+    const prTitle = getPrTitle();
+    core.info(`prTitle: ${prTitle}`);
+
     const client = new github.GitHub(token);
 
     const { data: pullRequest } = await client.pulls.get({
@@ -30,6 +33,24 @@ async function run() {
       pull_number: prNumber
     });
 
+    const labels: string[] = [];
+    const labelsToRemove: string[] = [];
+
+    // add label based on title
+    const labelTitleRegex: Map<string, RegExp[]> = await getLabelTitleRegex(
+      client, 
+      configPath
+    );
+    for (const [label, regexs] of labelTitleRegex.entries()) {
+      core.debug(`processing ${label}`);
+      if (checkRegexs(prTitle, regexs)) {
+        labels.push(label);
+      } else if (pullRequest.labels.find(l => l.name === label)) {
+        labelsToRemove.push(label);
+      }
+    }
+
+    // add label based on changed files
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
@@ -37,8 +58,6 @@ async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
@@ -68,6 +87,15 @@ function getPrNumber(): number | undefined {
   }
 
   return pullRequest.number;
+}
+
+function getPrTitle(): string {
+  const pullRequest = github.context.payload.pull_request;
+  if (!pullRequest) {
+    return '';
+  }
+
+  return pullRequest.title;
 }
 
 async function getChangedFiles(
@@ -125,19 +153,64 @@ function getLabelGlobMapFromObject(
   configObject: any
 ): Map<string, StringOrMatchConfig[]> {
   const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
-  for (const label in configObject) {
-    if (typeof configObject[label] === "string") {
-      labelGlobs.set(label, [configObject[label]]);
-    } else if (configObject[label] instanceof Array) {
-      labelGlobs.set(label, configObject[label]);
-    } else {
-      throw Error(
-        `found unexpected type for label ${label} (should be string or array of globs)`
-      );
+  for (const configType in configObject) {
+    if (configType == "changed_file") {
+      for (const label in configObject["changed_file"]) {
+        const val = configObject["changed_file"][label]
+        if (typeof val === "string") {
+          labelGlobs.set(label, [val]);
+        } else if (val instanceof Array) {
+          labelGlobs.set(label, val);
+        } else {
+          throw Error(
+            `found unexpected type for label ${label} (should be string or array of globs)`
+          );
+        }
+      }
     }
   }
 
   return labelGlobs;
+}
+
+async function getLabelTitleRegex(
+  client: github.GitHub,
+  configurationPath: string
+): Promise<Map<string, RegExp[]>> {
+  const configurationContent: string = await fetchContent(
+    client,
+    configurationPath
+  );
+
+  // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+  const configObject: any = yaml.safeLoad(configurationContent);
+
+  // transform `any` => `Map<string,RegExp[]>` or throw if yaml is malformed:
+  return getLabelTitleRegexMapFromObject(configObject);
+}
+
+function getLabelTitleRegexMapFromObject(
+  configObject: any
+): Map<string, RegExp[]> {
+  const titleRegexs: Map<string, RegExp[]> = new Map();
+  for (const configType in configObject) {
+    if (configType == "title") {
+      for (const label in configObject["title"]) {
+        const val = configObject["title"][label];
+        if (typeof val === "string") {
+          titleRegexs.set(label, [new RegExp(val, 'i')]);
+        } else if (val instanceof Array) {
+          titleRegexs.set(label, val.map(regexStr => new RegExp(regexStr, 'i')) );
+        } else {
+          throw Error(
+            `found unexpected type for label ${label} (should be string or array of regex)`
+          );
+        }
+      }
+    }
+  }
+
+  return titleRegexs;
 }
 
 function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
@@ -162,6 +235,18 @@ function checkGlobs(
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
     const matchConfig = toMatchConfig(glob);
     if (checkMatch(changedFiles, matchConfig)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkRegexs(
+  prTitle: string,
+  regexs: RegExp[]
+): boolean {
+  for (const regex of regexs) {
+    if (regex.test(prTitle)) {
       return true;
     }
   }
