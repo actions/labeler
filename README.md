@@ -95,6 +95,25 @@ jobs:
 
 _Note: This grants access to the `GITHUB_TOKEN` so the action can make calls to GitHub's rest API_
 
+### (Optional) Apply any shared configurations
+
+If you have lists of rules for labels & file patterns in a repository that stores shared configurations, you can apply them to multiple other repos rather than having to configure each repo independently. To do this, add a `shared-configurations` setting like this:
+
+```
+name: "Pull Request Labeler"
+on:
+- pull_request_target
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/labeler@main
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        shared-configurations: '["my-org/my-repo/some-path/shared-preset.yml@branchname", "my-org/my-repo/some-path/another-preset.yml@branchname"]'
+```
+
 #### Inputs
 
 Various inputs are defined in [`action.yml`](action.yml) to let you configure the labeler:
@@ -103,4 +122,5 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | - | - | - |
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret | N/A |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
+| `shared-configurations` | Github locations of shared configuration files | [] |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`

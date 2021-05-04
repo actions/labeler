@@ -8,6 +8,10 @@ inputs:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
     required: false
+  shared-configurations:
+    description: "Github locations of shared configuration files"
+    default: "[]"
+    required: false
   sync-labels:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false

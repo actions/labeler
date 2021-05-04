@@ -14534,11 +14534,15 @@ const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const yaml = __importStar(__webpack_require__(917));
 const minimatch_1 = __webpack_require__(973);
+const uniq = (arr) => [...new Set(arr)];
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput("repo-token", { required: true });
             const configPath = core.getInput("configuration-path", { required: true });
+            const sharedConfigurations = JSON.parse(core.getInput("shared-configurations", {
+                required: true,
+            }));
             const syncLabels = !!core.getInput("sync-labels", { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
@@ -14549,11 +14553,31 @@ function run() {
             const { data: pullRequest } = yield client.pulls.get({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                pull_number: prNumber
+                pull_number: prNumber,
             });
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
+            const localLabelGlobs = yield getLabelGlobs(client, configPath);
+            const sharedConfigGlobs = yield Promise.all(sharedConfigurations.map((config) => {
+                const [, repoOwner, repoName, repoPath] = config.match(/([^/]+)\/([^/]+)\/?(.*)?@/);
+                const [, repoRef] = config.match("@(.*)");
+                return getLabelGlobs(client, repoPath, {
+                    repoOwner,
+                    repoName,
+                    repoRef,
+                });
+            }));
+            const labelGlobEntries = Object.entries([localLabelGlobs, ...sharedConfigGlobs].reduce((acc, map) => {
+                const newAcc = Object.assign({}, acc);
+                const entries = [...map];
+                entries.forEach(([k, v]) => {
+                    if (!newAcc[k])
+                        newAcc[k] = [];
+                    newAcc[k] = [...newAcc[k], ...v];
+                });
+                return newAcc;
+            }, {}));
+            const labelGlobs = new Map(labelGlobEntries);
             const labels = [];
             const labelsToRemove = [];
             for (const [label, globs] of labelGlobs.entries()) {
@@ -14561,7 +14585,7 @@ function run() {
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
                 }
-                else if (pullRequest.labels.find(l => l.name === label)) {
+                else if (pullRequest.labels.find((l) => l.name === label)) {
                     labelsToRemove.push(label);
                 }
             }
@@ -14590,10 +14614,10 @@ function getChangedFiles(client, prNumber) {
         const listFilesOptions = client.pulls.listFiles.endpoint.merge({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            pull_number: prNumber
+            pull_number: prNumber,
         });
         const listFilesResponse = yield client.paginate(listFilesOptions);
-        const changedFiles = listFilesResponse.map(f => f.filename);
+        const changedFiles = listFilesResponse.map((f) => f.filename);
         core.debug("found changed files:");
         for (const file of changedFiles) {
             core.debug("  " + file);
@@ -14601,22 +14625,22 @@ function getChangedFiles(client, prNumber) {
         return changedFiles;
     });
 }
-function getLabelGlobs(client, configurationPath) {
+function getLabelGlobs(client, configurationPath, remoteRepoDetails) {
     return __awaiter(this, void 0, void 0, function* () {
-        const configurationContent = yield fetchContent(client, configurationPath);
+        const configurationContent = yield fetchContent(client, configurationPath, remoteRepoDetails);
         // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
         const configObject = yaml.safeLoad(configurationContent);
         // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
         return getLabelGlobMapFromObject(configObject);
     });
 }
-function fetchContent(client, repoPath) {
+function fetchContent(client, repoPath, { repoName = github.context.repo.repo, repoOwner = github.context.repo.owner, repoRef = github.context.sha, } = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield client.repos.getContents({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
+            owner: repoOwner,
+            repo: repoName,
             path: repoPath,
-            ref: github.context.sha
+            ref: repoRef,
         });
         return Buffer.from(response.data.content, response.data.encoding).toString();
     });
@@ -14639,7 +14663,7 @@ function getLabelGlobMapFromObject(configObject) {
 function toMatchConfig(config) {
     if (typeof config === "string") {
         return {
-            any: [config]
+            any: [config],
         };
     }
     return config;
@@ -14671,7 +14695,7 @@ function isMatch(changedFile, matchers) {
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    const matchers = globs.map((g) => new minimatch_1.Minimatch(g));
     core.debug(`  checking "any" patterns`);
     for (const changedFile of changedFiles) {
         if (isMatch(changedFile, matchers)) {
@@ -14684,7 +14708,7 @@ function checkAny(changedFiles, globs) {
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    const matchers = globs.map((g) => new minimatch_1.Minimatch(g));
     core.debug(` checking "all" patterns`);
     for (const changedFile of changedFiles) {
         if (!isMatch(changedFile, matchers)) {
@@ -14714,17 +14738,17 @@ function addLabels(client, prNumber, labels) {
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
-            labels: labels
+            labels: labels,
         });
     });
 }
 function removeLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all(labels.map(label => client.issues.removeLabel({
+        yield Promise.all(labels.map((label) => client.issues.removeLabel({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
-            name: label
+            name: label,
         })));
     });
 }
@@ -29691,7 +29715,7 @@ module.exports = new Schema({
 /***/ 954:
 /***/ (function(module) {
 
-module.exports = {"_args":[["@octokit/rest@16.43.1","/Users/dakale/dev/GitHub/actions/labeler"]],"_from":"@octokit/rest@16.43.1","_id":"@octokit/rest@16.43.1","_inBundle":false,"_integrity":"sha512-gfFKwRT/wFxq5qlNjnW2dh+qh74XgTQ2B179UX5K1HYCluioWj8Ndbgqw2PVqa1NnVJkGHp2ovMpVn/DImlmkw==","_location":"/@octokit/rest","_phantomChildren":{"@octokit/types":"2.14.0","deprecation":"2.3.1","once":"1.4.0","os-name":"3.1.0"},"_requested":{"type":"version","registry":true,"raw":"@octokit/rest@16.43.1","name":"@octokit/rest","escapedName":"@octokit%2frest","scope":"@octokit","rawSpec":"16.43.1","saveSpec":null,"fetchSpec":"16.43.1"},"_requiredBy":["/@actions/github"],"_resolved":"https://registry.npmjs.org/@octokit/rest/-/rest-16.43.1.tgz","_spec":"16.43.1","_where":"/Users/dakale/dev/GitHub/actions/labeler","author":{"name":"Gregor Martynus","url":"https://github.com/gr2m"},"bugs":{"url":"https://github.com/octokit/rest.js/issues"},"bundlesize":[{"path":"./dist/octokit-rest.min.js.gz","maxSize":"33 kB"}],"contributors":[{"name":"Mike de Boer","email":"info@mikedeboer.nl"},{"name":"Fabian Jakobs","email":"fabian@c9.io"},{"name":"Joe Gallo","email":"joe@brassafrax.com"},{"name":"Gregor Martynus","url":"https://github.com/gr2m"}],"dependencies":{"@octokit/auth-token":"^2.4.0","@octokit/plugin-paginate-rest":"^1.1.1","@octokit/plugin-request-log":"^1.0.0","@octokit/plugin-rest-endpoint-methods":"2.4.0","@octokit/request":"^5.2.0","@octokit/request-error":"^1.0.2","atob-lite":"^2.0.0","before-after-hook":"^2.0.0","btoa-lite":"^1.0.0","deprecation":"^2.0.0","lodash.get":"^4.4.2","lodash.set":"^4.3.2","lodash.uniq":"^4.5.0","octokit-pagination-methods":"^1.1.0","once":"^1.4.0","universal-user-agent":"^4.0.0"},"description":"GitHub REST API client for Node.js","devDependencies":{"@gimenete/type-writer":"^0.1.3","@octokit/auth":"^1.1.1","@octokit/fixtures-server":"^5.0.6","@octokit/graphql":"^4.2.0","@types/node":"^13.1.0","bundlesize":"^0.18.0","chai":"^4.1.2","compression-webpack-plugin":"^3.1.0","cypress":"^3.0.0","glob":"^7.1.2","http-proxy-agent":"^4.0.0","lodash.camelcase":"^4.3.0","lodash.merge":"^4.6.1","lodash.upperfirst":"^4.3.1","lolex":"^5.1.2","mkdirp":"^1.0.0","mocha":"^7.0.1","mustache":"^4.0.0","nock":"^11.3.3","npm-run-all":"^4.1.2","nyc":"^15.0.0","prettier":"^1.14.2","proxy":"^1.0.0","semantic-release":"^17.0.0","sinon":"^8.0.0","sinon-chai":"^3.0.0","sort-keys":"^4.0.0","string-to-arraybuffer":"^1.0.0","string-to-jsdoc-comment":"^1.0.0","typescript":"^3.3.1","webpack":"^4.0.0","webpack-bundle-analyzer":"^3.0.0","webpack-cli":"^3.0.0"},"files":["index.js","index.d.ts","lib","plugins"],"homepage":"https://github.com/octokit/rest.js#readme","keywords":["octokit","github","rest","api-client"],"license":"MIT","name":"@octokit/rest","nyc":{"ignore":["test"]},"publishConfig":{"access":"public"},"release":{"publish":["@semantic-release/npm",{"path":"@semantic-release/github","assets":["dist/*","!dist/*.map.gz"]}]},"repository":{"type":"git","url":"git+https://github.com/octokit/rest.js.git"},"scripts":{"build":"npm-run-all build:*","build:browser":"npm-run-all build:browser:*","build:browser:development":"webpack --mode development --entry . --output-library=Octokit --output=./dist/octokit-rest.js --profile --json > dist/bundle-stats.json","build:browser:production":"webpack --mode production --entry . --plugin=compression-webpack-plugin --output-library=Octokit --output-path=./dist --output-filename=octokit-rest.min.js --devtool source-map","build:ts":"npm run -s update-endpoints:typescript","coverage":"nyc report --reporter=html && open coverage/index.html","generate-bundle-report":"webpack-bundle-analyzer dist/bundle-stats.json --mode=static --no-open --report dist/bundle-report.html","lint":"prettier --check '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","lint:fix":"prettier --write '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","postvalidate:ts":"tsc --noEmit --target es6 test/typescript-validate.ts","prebuild:browser":"mkdirp dist/","pretest":"npm run -s lint","prevalidate:ts":"npm run -s build:ts","start-fixtures-server":"octokit-fixtures-server","test":"nyc mocha test/mocha-node-setup.js \"test/*/**/*-test.js\"","test:browser":"cypress run --browser chrome","update-endpoints":"npm-run-all update-endpoints:*","update-endpoints:fetch-json":"node scripts/update-endpoints/fetch-json","update-endpoints:typescript":"node scripts/update-endpoints/typescript","validate:ts":"tsc --target es6 --noImplicitAny index.d.ts"},"types":"index.d.ts","version":"16.43.1"};
+module.exports = {"_args":[["@octokit/rest@16.43.1","/Users/jonathannarwold/repos/labeler-action"]],"_from":"@octokit/rest@16.43.1","_id":"@octokit/rest@16.43.1","_inBundle":false,"_integrity":"sha512-gfFKwRT/wFxq5qlNjnW2dh+qh74XgTQ2B179UX5K1HYCluioWj8Ndbgqw2PVqa1NnVJkGHp2ovMpVn/DImlmkw==","_location":"/@octokit/rest","_phantomChildren":{"@octokit/types":"2.14.0","deprecation":"2.3.1","once":"1.4.0","os-name":"3.1.0"},"_requested":{"type":"version","registry":true,"raw":"@octokit/rest@16.43.1","name":"@octokit/rest","escapedName":"@octokit%2frest","scope":"@octokit","rawSpec":"16.43.1","saveSpec":null,"fetchSpec":"16.43.1"},"_requiredBy":["/@actions/github"],"_resolved":"https://registry.npmjs.org/@octokit/rest/-/rest-16.43.1.tgz","_spec":"16.43.1","_where":"/Users/jonathannarwold/repos/labeler-action","author":{"name":"Gregor Martynus","url":"https://github.com/gr2m"},"bugs":{"url":"https://github.com/octokit/rest.js/issues"},"bundlesize":[{"path":"./dist/octokit-rest.min.js.gz","maxSize":"33 kB"}],"contributors":[{"name":"Mike de Boer","email":"info@mikedeboer.nl"},{"name":"Fabian Jakobs","email":"fabian@c9.io"},{"name":"Joe Gallo","email":"joe@brassafrax.com"},{"name":"Gregor Martynus","url":"https://github.com/gr2m"}],"dependencies":{"@octokit/auth-token":"^2.4.0","@octokit/plugin-paginate-rest":"^1.1.1","@octokit/plugin-request-log":"^1.0.0","@octokit/plugin-rest-endpoint-methods":"2.4.0","@octokit/request":"^5.2.0","@octokit/request-error":"^1.0.2","atob-lite":"^2.0.0","before-after-hook":"^2.0.0","btoa-lite":"^1.0.0","deprecation":"^2.0.0","lodash.get":"^4.4.2","lodash.set":"^4.3.2","lodash.uniq":"^4.5.0","octokit-pagination-methods":"^1.1.0","once":"^1.4.0","universal-user-agent":"^4.0.0"},"description":"GitHub REST API client for Node.js","devDependencies":{"@gimenete/type-writer":"^0.1.3","@octokit/auth":"^1.1.1","@octokit/fixtures-server":"^5.0.6","@octokit/graphql":"^4.2.0","@types/node":"^13.1.0","bundlesize":"^0.18.0","chai":"^4.1.2","compression-webpack-plugin":"^3.1.0","cypress":"^3.0.0","glob":"^7.1.2","http-proxy-agent":"^4.0.0","lodash.camelcase":"^4.3.0","lodash.merge":"^4.6.1","lodash.upperfirst":"^4.3.1","lolex":"^5.1.2","mkdirp":"^1.0.0","mocha":"^7.0.1","mustache":"^4.0.0","nock":"^11.3.3","npm-run-all":"^4.1.2","nyc":"^15.0.0","prettier":"^1.14.2","proxy":"^1.0.0","semantic-release":"^17.0.0","sinon":"^8.0.0","sinon-chai":"^3.0.0","sort-keys":"^4.0.0","string-to-arraybuffer":"^1.0.0","string-to-jsdoc-comment":"^1.0.0","typescript":"^3.3.1","webpack":"^4.0.0","webpack-bundle-analyzer":"^3.0.0","webpack-cli":"^3.0.0"},"files":["index.js","index.d.ts","lib","plugins"],"homepage":"https://github.com/octokit/rest.js#readme","keywords":["octokit","github","rest","api-client"],"license":"MIT","name":"@octokit/rest","nyc":{"ignore":["test"]},"publishConfig":{"access":"public"},"release":{"publish":["@semantic-release/npm",{"path":"@semantic-release/github","assets":["dist/*","!dist/*.map.gz"]}]},"repository":{"type":"git","url":"git+https://github.com/octokit/rest.js.git"},"scripts":{"build":"npm-run-all build:*","build:browser":"npm-run-all build:browser:*","build:browser:development":"webpack --mode development --entry . --output-library=Octokit --output=./dist/octokit-rest.js --profile --json > dist/bundle-stats.json","build:browser:production":"webpack --mode production --entry . --plugin=compression-webpack-plugin --output-library=Octokit --output-path=./dist --output-filename=octokit-rest.min.js --devtool source-map","build:ts":"npm run -s update-endpoints:typescript","coverage":"nyc report --reporter=html && open coverage/index.html","generate-bundle-report":"webpack-bundle-analyzer dist/bundle-stats.json --mode=static --no-open --report dist/bundle-report.html","lint":"prettier --check '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","lint:fix":"prettier --write '{lib,plugins,scripts,test}/**/*.{js,json,ts}' 'docs/*.{js,json}' 'docs/src/**/*' index.js README.md package.json","postvalidate:ts":"tsc --noEmit --target es6 test/typescript-validate.ts","prebuild:browser":"mkdirp dist/","pretest":"npm run -s lint","prevalidate:ts":"npm run -s build:ts","start-fixtures-server":"octokit-fixtures-server","test":"nyc mocha test/mocha-node-setup.js \"test/*/**/*-test.js\"","test:browser":"cypress run --browser chrome","update-endpoints":"npm-run-all update-endpoints:*","update-endpoints:fetch-json":"node scripts/update-endpoints/fetch-json","update-endpoints:typescript":"node scripts/update-endpoints/typescript","validate:ts":"tsc --target es6 --noImplicitAny index.d.ts"},"types":"index.d.ts","version":"16.43.1"};
 
 /***/ }),
 
