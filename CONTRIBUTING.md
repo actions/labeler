@@ -19,8 +19,9 @@ Please note that this project is released with a [Contributor Code of Conduct][c
 
 ## What should I know before submitting a pull request or issue
 
-The code related to `labaler` is split between this repository and [actions/toolkit](https://github.com/actions/toolkit) where the `@actions/artifact` npm package is housed. The npm package contains the core functionality to interact with artifacts. Any extra functionality on top of interacting with the apis such as search is inside this repository.
-Artifact related issues will be tracked in this repository so please do not open duplicate issues in `actions/toolkit`.
+This project is written in [TypeScript](https://www.typescriptlang.org/), a typed variant of JavaScript, and we use [Prettier](https://prettier.io/) to get a consistent code style.
+
+Because of how GitHub Actions are run, the source code of this project is transpiled from TypeScript into JavaScript. The transpiled code (found in `lib/`) is subsequently compiled using [NCC](https://github.com/vercel/ncc/blob/master/readme.md) (found in `dist/`) to avoid having to include the `node_modules/` directory in the repository.
 
 ## Submitting a pull request
 
