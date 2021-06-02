@@ -1,8 +1,8 @@
 # Pull Request Labeler
 
 <p align="left">
-  <a href="https://github.com/actions/labeler/actions?query=workflow%3Abuild_test">
-    <img alt="build and test status" src="https://github.com/actions/labeler/workflows/build_test/badge.svg">
+  <a href="https://github.com/actions/labeler/actions?query=workflow%3A%22Build+%26+Test%22++">
+    <img alt="build and test status" src="https://github.com/actions/labeler/actions/workflows/build_test.yml/badge.svg">
   </a>
 </p>
 
