@@ -1,5 +1,5 @@
 name: 'Labeler'
-description: 'Automatically label new pull requests based on the file paths being changed'
+description: 'Automatically label new pull requests based on the paths of files being changed'
 author: 'GitHub'
 inputs:
   repo-token:

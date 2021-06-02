@@ -6,7 +6,7 @@
   </a>
 </p>
 
-Automatically label new pull requests based on the file paths being changed.
+Automatically label new pull requests based on the paths of files being changed.
 
 ## Usage
 
@@ -113,4 +113,4 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 
 # Contributions
 
-Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md)
+Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
