@@ -10,7 +10,7 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 
-async function run() {
+export async function run() {
   try {
     const token = core.getInput("repo-token", { required: true });
     const configPath = core.getInput("configuration-path", { required: true });
@@ -154,7 +154,7 @@ function printPattern(matcher: IMinimatch): string {
   return (matcher.negate ? "!" : "") + matcher.pattern;
 }
 
-function checkGlobs(
+export function checkGlobs(
   changedFiles: string[],
   globs: StringOrMatchConfig[]
 ): boolean {
@@ -257,5 +257,3 @@ async function removeLabels(
     )
   );
 }
-
-run();
