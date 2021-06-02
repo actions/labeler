@@ -25,15 +25,14 @@ Artifact related issues will be tracked in this repository so please do not open
 ## Submitting a pull request
 
 1. [Fork][fork] and clone the repository
-2. Configure and install the dependencies: `npm install`
-3. Make sure the tests pass on your machine: `npm run test`
-4. Create a new branch: `git checkout -b my-branch-name`
-5. Make your change, add tests, and make sure the tests still pass
-6. Make sure your code is correctly formatted: `npm run format`
-7. Make sure your code passes linting: `npm run lint`
-8. Update `dist/index.js` using `npm run release`. This creates a single javascript file that is used as an entry-point for the action
-7. Push to your fork and [submit a pull request][pr]
-8. Pat yourself on the back and wait for your pull request to be reviewed and merged.
+1. Configure and install the dependencies: `npm install`
+1. Make sure the tests pass on your machine: `npm run test`
+1. Create a new branch: `git checkout -b my-branch-name`
+1. Make your change, add tests, and make sure the tests still pass
+1. Make sure your code is correctly formatted: `npm run format`
+1. Update `dist/index.js` using `npm run release`. This creates a single javascript file that is used as an entry-point for the action
+1. Push to your fork and [submit a pull request][pr]
+1. Pat yourself on the back and wait for your pull request to be reviewed and merged.
 
 Here are a few things you can do that will increase the likelihood of your pull request being accepted:
 
