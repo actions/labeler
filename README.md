@@ -1,6 +1,6 @@
 # Pull Request Labeler
 
-Pull request labeler triages PRs based on the paths that are modified in the PR.
+Automatically label new pull requests based on the file paths they change.
 
 ## Usage
 
@@ -55,7 +55,7 @@ label2: example2/*
 # Add 'repo' label to any root file changes
 repo:
   - ./*
-  
+
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
   - package/core/*
