@@ -40,6 +40,21 @@ Here are a few things you can do that will increase the likelihood of your pull 
 - Write tests.
 - Keep your change as focused as possible. If there are multiple changes you would like to make that are not dependent upon each other, consider submitting them as separate pull requests.
 
+## Releasing a new version
+
+All the concepts from [the actions/toolkit release docs](https://github.com/actions/toolkit/blob/main/docs/action-versioning.md) apply. Please read that first!
+
+Once the changes are merged into main, a repo maintainer should:
+
+1. Bump the package version by running [`npm version [major|minor|patch]`](https://docs.npmjs.com/cli/v7/commands/npm-version). We adhere to [SemVer 2.0](https://semver.org/spec/v2.0.0.html) to the best of our ability. Commit the changes to `package.json` and `package-lock.json` and push them to main.
+1. [Draft a new release](https://github.com/actions/labeler/releases/new) pointing to the ref of the version bump you just made. Publish the release to the marketplace when complete.
+1. Finally: update the most recent "shorthand tag" (v1, v2, v3, etc) to point to the specific ref of the release you just made. For example, if we just released `v1.1.0`, we would rewrite the `v1` tag like this:
+
+```
+git tag -fa v1 v1.1.0 -m "Update v1 tag to point to v1.1.0"
+git push origin v1 --force
+```
+
 ## Licensed
 
 This repository uses a tool called [Licensed](https://github.com/github/licensed) to verify third party dependencies. You may need to locally install licensed and run `licensed cache` to update the dependency cache if you install or update a production dependency. If licensed cache is unable to determine the dependency, you may need to modify the cache file yourself to put the correct license. You should still verify the dependency, licensed is a tool to help, but is not a substitute for human review of dependencies.
