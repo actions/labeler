@@ -1,5 +1,6 @@
 import { run } from "../src/labeler";
 import { GitHub } from "@actions/github";
+import * as core from "@actions/core";
 
 const fs = jest.requireActual("fs");
 
@@ -11,6 +12,7 @@ const addLabelsMock = jest.spyOn(gh.issues, "addLabels");
 const removeLabelMock = jest.spyOn(gh.issues, "removeLabel");
 const reposMock = jest.spyOn(gh.repos, "getContents");
 const paginateMock = jest.spyOn(gh, "paginate");
+const getPullMock = jest.spyOn(gh.pulls, "get");
 
 const yamlFixtures = {
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
@@ -54,5 +56,61 @@ describe("run", () => {
 
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
+      "sync-labels": true,
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles("foo.txt");
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{ name: "touched-a-pdf-file" }],
+      },
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(1);
+    expect(removeLabelMock).toHaveBeenCalledWith({
+      owner: "monalisa",
+      repo: "helloworld",
+      issue_number: 123,
+      name: "touched-a-pdf-file",
+    });
+  });
+
+  it("(with sync-labels: false) it issues no delete calls even when there are preexisting PR labels that no longer match the glob pattern", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
+      "sync-labels": false,
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles("foo.txt");
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{ name: "touched-a-pdf-file" }],
+      },
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 });
