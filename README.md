@@ -42,14 +42,14 @@ label1:
 - any: ['example1/*']
 ```
 
-From a boolean logic perspective, top-level match objects are `OR`-ed together and indvidual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
+From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
 #### Basic Examples
 
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
 label1:
-  - example/**/*
+- example/**/*
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
@@ -60,16 +60,16 @@ label2: example2/*
 ```yml
 # Add 'repo' label to any root file changes
 repo:
-  - ./*
+- ./*
 
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
-  - package/core/*
-  - package/core/**/*
+- package/core/*
+- package/core/**/*
 
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
-  - src/**/*.spec.js
+- src/**/*.spec.js
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
