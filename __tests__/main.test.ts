@@ -18,17 +18,6 @@ const yamlFixtures = {
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
 };
 
-function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
-  reposMock.mockResolvedValue(<any>{
-    data: { content: yamlFixtures[fixtureName], encoding: "utf8" },
-  });
-}
-
-function mockGitHubResponseChangedFiles(...files: string[]): void {
-  const returnValue = files.map((f) => ({ filename: f }));
-  paginateMock.mockReturnValue(<any>returnValue);
-}
-
 afterAll(() => jest.restoreAllMocks());
 
 describe("run", () => {
@@ -114,3 +103,14 @@ describe("run", () => {
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 });
+
+function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
+  reposMock.mockResolvedValue(<any>{
+    data: { content: yamlFixtures[fixtureName], encoding: "utf8" },
+  });
+}
+
+function mockGitHubResponseChangedFiles(...files: string[]): void {
+  const returnValue = files.map((f) => ({ filename: f }));
+  paginateMock.mockReturnValue(<any>returnValue);
+}
