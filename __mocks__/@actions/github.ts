@@ -1,32 +1,32 @@
 export const context = {
   payload: {
     pull_request: {
-      number: 123
-    }
+      number: 123,
+    },
   },
   repo: {
     owner: "monalisa",
-    repo: "helloworld"
-  }
+    repo: "helloworld",
+  },
 };
 
 const mockApi = {
   issues: {
     addLabels: jest.fn(),
-    removeLabel: jest.fn()
+    removeLabel: jest.fn(),
   },
   paginate: jest.fn(),
   pulls: {
     get: jest.fn().mockResolvedValue({}),
     listFiles: {
       endpoint: {
-        merge: jest.fn().mockReturnValue({})
-      }
-    }
+        merge: jest.fn().mockReturnValue({}),
+      },
+    },
   },
   repos: {
-    getContents: jest.fn()
-  }
+    getContents: jest.fn(),
+  },
 };
 
 export const GitHub = jest.fn().mockImplementation(() => mockApi);
