@@ -15,7 +15,7 @@ const paginateMock = jest.spyOn(gh, "paginate");
 const getPullMock = jest.spyOn(gh.pulls, "get");
 
 const yamlFixtures = {
-  "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
+  "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml")
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -33,7 +33,7 @@ describe("run", () => {
       owner: "monalisa",
       repo: "helloworld",
       issue_number: 123,
-      labels: ["touched-a-pdf-file"],
+      labels: ["touched-a-pdf-file"]
     });
   });
 
@@ -51,7 +51,7 @@ describe("run", () => {
     let mockInput = {
       "repo-token": "foo",
       "configuration-path": "bar",
-      "sync-labels": true,
+      "sync-labels": true
     };
 
     jest
@@ -62,8 +62,8 @@ describe("run", () => {
     mockGitHubResponseChangedFiles("foo.txt");
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{ name: "touched-a-pdf-file" }],
-      },
+        labels: [{ name: "touched-a-pdf-file" }]
+      }
     });
 
     await run();
@@ -74,7 +74,7 @@ describe("run", () => {
       owner: "monalisa",
       repo: "helloworld",
       issue_number: 123,
-      name: "touched-a-pdf-file",
+      name: "touched-a-pdf-file"
     });
   });
 
@@ -82,7 +82,7 @@ describe("run", () => {
     let mockInput = {
       "repo-token": "foo",
       "configuration-path": "bar",
-      "sync-labels": false,
+      "sync-labels": false
     };
 
     jest
@@ -93,8 +93,8 @@ describe("run", () => {
     mockGitHubResponseChangedFiles("foo.txt");
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{ name: "touched-a-pdf-file" }],
-      },
+        labels: [{ name: "touched-a-pdf-file" }]
+      }
     });
 
     await run();
@@ -106,11 +106,11 @@ describe("run", () => {
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
   reposMock.mockResolvedValue(<any>{
-    data: { content: yamlFixtures[fixtureName], encoding: "utf8" },
+    data: { content: yamlFixtures[fixtureName], encoding: "utf8" }
   });
 }
 
 function mockGitHubResponseChangedFiles(...files: string[]): void {
-  const returnValue = files.map((f) => ({ filename: f }));
+  const returnValue = files.map(f => ({ filename: f }));
   paginateMock.mockReturnValue(<any>returnValue);
 }
