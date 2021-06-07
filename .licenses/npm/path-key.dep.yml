@@ -3,7 +3,7 @@ name: path-key
 version: 2.0.1
 type: npm
 summary: Get the PATH environment variable key cross-platform
-homepage: https://github.com/sindresorhus/path-key#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

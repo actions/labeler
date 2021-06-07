@@ -3,7 +3,7 @@ name: semver
 version: 6.3.0
 type: npm
 summary: The semantic version parser used by npm.
-homepage: https://github.com/npm/node-semver#readme
+homepage: 
 license: isc
 licenses:
 - sources: LICENSE

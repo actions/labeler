@@ -3,7 +3,7 @@ name: npm-run-path
 version: 2.0.2
 type: npm
 summary: Get your PATH prepended with locally installed binaries
-homepage: https://github.com/sindresorhus/npm-run-path#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

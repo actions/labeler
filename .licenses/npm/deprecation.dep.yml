@@ -3,7 +3,7 @@ name: deprecation
 version: 2.3.1
 type: npm
 summary: Log a deprecation message with stack
-homepage: https://github.com/gr2m/deprecation#readme
+homepage: 
 license: isc
 licenses:
 - sources: LICENSE
