@@ -1,0 +1,19 @@
+name: Licensed Check
+
+on:
+  push: {branches: main}
+  pull_request: {branches: main}
+
+jobs:
+  licensed_check:
+    needs: licensed_cache_update
+    runs-on: ubuntu-latest
+    name: Check licenses
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jonabc/setup-licensed@v1.0.2
+        with:
+          version: '2.x'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm install
+      - run: licensed status
