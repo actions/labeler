@@ -4,7 +4,7 @@ version: 1.0.0
 type: npm
 summary: "`Promise#finally()` ponyfill - Invoked when the promise is settled regardless
   of outcome"
-homepage: https://github.com/sindresorhus/p-finally#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

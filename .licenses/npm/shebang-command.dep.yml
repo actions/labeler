@@ -3,7 +3,7 @@ name: shebang-command
 version: 1.2.0
 type: npm
 summary: Get the command from a shebang
-homepage: https://github.com/kevva/shebang-command#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

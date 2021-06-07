@@ -3,7 +3,7 @@ name: "@octokit/plugin-request-log"
 version: 1.0.0
 type: npm
 summary: Log all requests and request errors
-homepage: https://github.com/octokit/plugin-request-log.js#readme
+homepage: 
 license: mit
 licenses:
 - sources: LICENSE

@@ -3,7 +3,7 @@ name: macos-release
 version: 2.3.0
 type: npm
 summary: Get the name and version of a macOS release from the Darwin version
-homepage: https://github.com/sindresorhus/macos-release#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

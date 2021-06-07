@@ -4,7 +4,7 @@ version: 1.0.10
 type: npm
 summary: Very powerful CLI arguments parser. Native port of argparse - python's options
   parsing library
-homepage: https://github.com/nodeca/argparse#readme
+homepage: 
 license: mit
 licenses:
 - sources: LICENSE
