@@ -3,7 +3,7 @@ name: shebang-regex
 version: 1.0.0
 type: npm
 summary: Regular expression for matching a shebang
-homepage: https://github.com/sindresorhus/shebang-regex#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

@@ -3,7 +3,7 @@ name: strip-eof
 version: 1.0.0
 type: npm
 summary: Strip the End-Of-File (EOF) character from a string/buffer
-homepage: https://github.com/sindresorhus/strip-eof#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

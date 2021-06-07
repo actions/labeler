@@ -3,7 +3,7 @@ name: "@octokit/rest"
 version: 16.43.1
 type: npm
 summary: GitHub REST API client for Node.js
-homepage: https://github.com/octokit/rest.js#readme
+homepage: 
 license: mit
 licenses:
 - sources: LICENSE

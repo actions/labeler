@@ -4,7 +4,7 @@ version: 1.3.1
 type: npm
 summary: Like which(1) unix command. Find the first instance of an executable in the
   PATH.
-homepage: https://github.com/isaacs/node-which#readme
+homepage: 
 license: isc
 licenses:
 - sources: LICENSE

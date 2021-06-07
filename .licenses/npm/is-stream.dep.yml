@@ -3,7 +3,7 @@ name: is-stream
 version: 1.1.0
 type: npm
 summary: Check if something is a Node.js stream
-homepage: https://github.com/sindresorhus/is-stream#readme
+homepage: 
 license: mit
 licenses:
 - sources: license
