@@ -2,8 +2,8 @@
 name: "@actions/core"
 version: 1.2.4
 type: npm
-summary: Actions core lib
-homepage: https://github.com/actions/toolkit/tree/master/packages/core
+summary: 
+homepage: 
 license: mit
 licenses:
 - sources: Auto-generated MIT license text
