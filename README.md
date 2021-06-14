@@ -5,7 +5,8 @@
     <img alt="build and test status" src="https://github.com/actions/labeler/actions/workflows/build_test.yml/badge.svg">
   </a>
   <a href="https://david-dm.org/actions/labeler">
-  <img alt="dependencies" src="https://status.david-dm.org/gh/actions/labeler.svg">
+    <img alt="dependencies" src="https://status.david-dm.org/gh/actions/labeler.svg">
+  </a>
 </p>
 
 Automatically label new pull requests based on the paths of files being changed.
