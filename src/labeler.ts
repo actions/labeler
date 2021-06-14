@@ -101,7 +101,7 @@ async function getLabelGlobs(
   );
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
-  const configObject: any = yaml.safeLoad(configurationContent);
+  const configObject: any = yaml.load(configurationContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
   return getLabelGlobMapFromObject(configObject);

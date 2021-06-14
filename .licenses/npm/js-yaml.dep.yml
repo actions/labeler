@@ -1,6 +1,6 @@
 ---
 name: js-yaml
-version: 3.14.1
+version: 4.1.0
 type: npm
 summary: YAML 1.2 parser and serializer
 homepage: https://github.com/nodeca/js-yaml
