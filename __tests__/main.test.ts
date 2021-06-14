@@ -111,6 +111,6 @@ function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
 }
 
 function mockGitHubResponseChangedFiles(...files: string[]): void {
-  const returnValue = files.map((f) => ({ filename: f }));
+  const returnValue = files.map((f) => ({ filename: f, status: "modified" }));
   paginateMock.mockReturnValue(<any>returnValue);
 }
