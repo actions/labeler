@@ -1,5 +1,5 @@
 import { run } from "../src/labeler";
-import { GitHub } from "@actions/github";
+import * as github from "@actions/github";
 import * as core from "@actions/core";
 
 const fs = jest.requireActual("fs");
@@ -7,12 +7,12 @@ const fs = jest.requireActual("fs");
 jest.mock("@actions/core");
 jest.mock("@actions/github");
 
-const gh = new GitHub("_");
-const addLabelsMock = jest.spyOn(gh.issues, "addLabels");
-const removeLabelMock = jest.spyOn(gh.issues, "removeLabel");
-const reposMock = jest.spyOn(gh.repos, "getContents");
+const gh = github.getOctokit("_");
+const addLabelsMock = jest.spyOn(gh.rest.issues, "addLabels");
+const removeLabelMock = jest.spyOn(gh.rest.issues, "removeLabel");
+const reposMock = jest.spyOn(gh.rest.repos, "getContent");
 const paginateMock = jest.spyOn(gh, "paginate");
-const getPullMock = jest.spyOn(gh.pulls, "get");
+const getPullMock = jest.spyOn(gh.rest.pulls, "get");
 
 const yamlFixtures = {
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
