@@ -1,12 +1,12 @@
 {
   "name": "labeler",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc && ncc build lib/main.js",
-    "format": "prettier --write **/*.ts",
-    "format-check": "prettier --check **/*.ts",
+    "format": "prettier --write \"**/*.ts\"",
+    "format-check": "prettier --check \"**/*.ts\"",
     "test": "jest"
   },
   "repository": {
@@ -34,10 +34,10 @@
     "@types/semver": "^6.0.0",
     "@types/minimatch": "^3.0.0",
     "@types/js-yaml": "^3.12.1",
-    "@zeit/ncc": "^0.21.1",
+    "@vercel/ncc": "^0.23.0",
     "jest": "^24.8.0",
     "jest-circus": "^24.7.1",
-    "prettier": "^1.17.1",
+    "prettier": "^2.3.0",
     "ts-jest": "^24.0.2",
     "typescript": "^3.5.1"
   }
