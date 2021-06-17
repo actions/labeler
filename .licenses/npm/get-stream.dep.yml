@@ -3,7 +3,7 @@ name: get-stream
 version: 4.1.0
 type: npm
 summary: Get a stream as a string, buffer, or array
-homepage: https://github.com/sindresorhus/get-stream#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

@@ -4,7 +4,7 @@ version: 3.3.0
 type: npm
 summary: 'Get the name of a Windows version from the release number: `5.1.2600` →
   `XP`'
-homepage: https://github.com/sindresorhus/windows-release#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

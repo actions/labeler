@@ -3,7 +3,7 @@ name: os-name
 version: 3.1.0
 type: npm
 summary: 'Get the name of the current operating system. Example: macOS Sierra'
-homepage: https://github.com/sindresorhus/os-name#readme
+homepage: 
 license: mit
 licenses:
 - sources: license

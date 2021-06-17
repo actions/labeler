@@ -3,7 +3,7 @@ name: execa
 version: 1.0.0
 type: npm
 summary: A better `child_process`
-homepage: https://github.com/sindresorhus/execa#readme
+homepage: 
 license: mit
 licenses:
 - sources: license
