@@ -6,9 +6,11 @@ on:
   push:
     branches:
       - main
+      - check_dist
   pull_request:
     branches:
       - main
+      - check_dist
 
 jobs:
   check_dist:
