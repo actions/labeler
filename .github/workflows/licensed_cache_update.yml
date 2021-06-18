@@ -17,11 +17,11 @@ jobs:
     name: Check licenses
     steps:
       - uses: actions/checkout@v1
-      - uses: jonabc/setup-licensed@v1.0.2
+      - uses: jonabc/setup-licensed@v1
         with:
           version: '2.x'
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm install --production
-      - uses: jonabc/licensed-ci@v1.5.3
+      - uses: jonabc/licensed-ci@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
