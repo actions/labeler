@@ -1,14 +1,18 @@
-name: Check Licenses
+name: Check License Status
 
 on:
-  push: {branches: main}
-  pull_request: {branches: main}
+  push:
+    branches:
+      - main
+      - licensed_cache_update
+  pull_request:
+    branches: main
 
 jobs:
-  licensed_check:
-    needs: licensed_cache_update
+  check_license:
+    needs: update_licenses_cache
     runs-on: ubuntu-latest
-    name: Check Licenses
+    name: Check License Status
     steps:
       - uses: actions/checkout@v2
       - uses: jonabc/setup-licensed@v1.0.2
