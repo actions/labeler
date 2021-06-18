@@ -11,6 +11,7 @@ on:
 jobs:
   check_license:
     needs: update_licenses_cache
+    if: always() # always run after we update the license cache. if it failed, we will probably just fail as well
     runs-on: ubuntu-latest
     name: Check License Status
     steps:
