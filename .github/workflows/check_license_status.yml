@@ -6,7 +6,8 @@ on:
       - main
       - licensed_cache_update
   pull_request:
-    branches: main
+    branches:
+      - main
 
 jobs:
   check_license:
