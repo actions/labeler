@@ -1,7 +1,9 @@
 #! /usr/bin/env bash
 
-if [[ "$(git diff --exit-code -- dist/index.js | tee /dev/tty)" ]]; then
-  echo -e "‼️  Changes detected to dist/index.js! \n\tPlease run \`npm run build' and commit the result." >&2;
+dist_index_diff=$(git diff --exit-code -- dist/index.js)
+
+if [[ "$dist_index_diff" ]]; then
+  echo -e "$dist_index_diff\n‼️  Changes detected to dist/index.js! \n\tPlease run \`npm run build' and commit the result." >&2;
   exit 1;
 fi
 
