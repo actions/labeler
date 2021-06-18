@@ -1,0 +1,32 @@
+# Fails if any of dist/index.js needs to be rebuilt
+
+name: Check dist/index.js
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check_dist:
+    runs-on: ubuntu-latest
+    name: Check dist/index.js for diffs
+    steps:
+      - uses: actions/checkout@v1
+      - run: npm install
+      - run: npm run build
+      # - run: |
+      #     if [[ "$(git status --porcelain)" != "" ]]; then
+      #       echo "::set-output name=createPR::true"
+      #       git config --global user.email "github-actions@github.com"
+      #       git config --global user.name "github-actions[bot]"
+      #       git checkout -b bots/updateGitHubDependencies-${{github.run_number}}
+      #       git add .
+      #       git commit -m "Update Dependencies"
+      #       git push --set-upstream origin bots/updateGitHubDependencies-${{github.run_number}}
+      #     fi
+      - run: |
+          git diff dist/index.js && echo "Changes detected to dist/index.js! Please run npm run build and commit the result." && exit 1
