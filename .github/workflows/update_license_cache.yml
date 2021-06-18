@@ -1,11 +1,16 @@
+# Updates our cache of license files in response to changes to our dependencies
+# declared in package-lock.json. Automatically commits the changes and pushes
+# them to your branch. NB `check_license_status` should always run *after* this
+#
+# see https://github.com/actions/labeler/pull/155 for more context
+
 name: Update License Cache
 
 on:
   push:
     branches:
       - main
-      - licensed_cache_update
-    paths: package-lock.json
+    paths: [package-lock.json]
   pull_request:
     branches: main
     paths: package-lock.json

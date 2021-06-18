@@ -1,3 +1,10 @@
+# Fails if any of our dependencies have licenses that our incompatible with our
+# requirements (see .licensed.yml) OR if any of our dependencies have been
+# upgraded to a new version without us having updated their corresponding
+# license metadata file in .licenses/
+#
+# see https://github.com/actions/labeler/pull/91 for more context
+
 name: Check License Status
 
 on:
