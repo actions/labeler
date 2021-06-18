@@ -31,4 +31,4 @@ jobs:
       #       git push --set-upstream origin bots/updateGitHubDependencies-${{github.run_number}}
       #     fi
       - run: |
-          git diff dist/index.js && echo "Changes detected to dist/index.js! Please run npm run build and commit the result." && exit 1
+          git diff --exit-code dist/index.js || (echo "Changes detected to dist/index.js! Please run \`npm run build\` and commit the result." >&2 ; exit 1)
