@@ -11,22 +11,24 @@ export const context = {
 };
 
 const mockApi = {
-  issues: {
-    addLabels: jest.fn(),
-    removeLabel: jest.fn(),
-  },
-  paginate: jest.fn(),
-  pulls: {
-    get: jest.fn().mockResolvedValue({}),
-    listFiles: {
-      endpoint: {
-        merge: jest.fn().mockReturnValue({}),
+  rest: {
+    issues: {
+      addLabels: jest.fn(),
+      removeLabel: jest.fn(),
+    },
+    pulls: {
+      get: jest.fn().mockResolvedValue({}),
+      listFiles: {
+        endpoint: {
+          merge: jest.fn().mockReturnValue({}),
+        },
       },
     },
+    repos: {
+      getContent: jest.fn(),
+    },
   },
-  repos: {
-    getContents: jest.fn(),
-  },
+  paginate: jest.fn(),
 };
 
-export const GitHub = jest.fn().mockImplementation(() => mockApi);
+export const getOctokit = jest.fn().mockImplementation(() => mockApi);

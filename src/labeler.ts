@@ -9,6 +9,7 @@ interface MatchConfig {
 }
 
 type StringOrMatchConfig = string | MatchConfig;
+type ClientType = ReturnType<typeof github.getOctokit>;
 
 export async function run() {
   try {
@@ -22,9 +23,9 @@ export async function run() {
       return;
     }
 
-    const client = new github.GitHub(token);
+    const client: ClientType = github.getOctokit(token);
 
-    const { data: pullRequest } = await client.pulls.get({
+    const { data: pullRequest } = await client.rest.pulls.get({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       pull_number: prNumber,
@@ -71,17 +72,17 @@ function getPrNumber(): number | undefined {
 }
 
 async function getChangedFiles(
-  client: github.GitHub,
+  client: ClientType,
   prNumber: number
 ): Promise<string[]> {
-  const listFilesOptions = client.pulls.listFiles.endpoint.merge({
+  const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber,
   });
 
   const listFilesResponse = await client.paginate(listFilesOptions);
-  const changedFiles = listFilesResponse.map((f) => f.filename);
+  const changedFiles = listFilesResponse.map((f: any) => f.filename);
 
   core.debug("found changed files:");
   for (const file of changedFiles) {
@@ -92,7 +93,7 @@ async function getChangedFiles(
 }
 
 async function getLabelGlobs(
-  client: github.GitHub,
+  client: ClientType,
   configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
   const configurationContent: string = await fetchContent(
@@ -108,10 +109,10 @@ async function getLabelGlobs(
 }
 
 async function fetchContent(
-  client: github.GitHub,
+  client: ClientType,
   repoPath: string
 ): Promise<string> {
-  const response: any = await client.repos.getContents({
+  const response: any = await client.rest.repos.getContent({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     path: repoPath,
@@ -229,11 +230,11 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 }
 
 async function addLabels(
-  client: github.GitHub,
+  client: ClientType,
   prNumber: number,
   labels: string[]
 ) {
-  await client.issues.addLabels({
+  await client.rest.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
@@ -242,13 +243,13 @@ async function addLabels(
 }
 
 async function removeLabels(
-  client: github.GitHub,
+  client: ClientType,
   prNumber: number,
   labels: string[]
 ) {
   await Promise.all(
     labels.map((label) =>
-      client.issues.removeLabel({
+      client.rest.issues.removeLabel({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         issue_number: prNumber,
