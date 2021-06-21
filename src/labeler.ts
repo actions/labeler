@@ -15,7 +15,8 @@ export async function run() {
   try {
     const token = core.getInput("repo-token", { required: true });
     const configPath = core.getInput("configuration-path", { required: true });
-    const syncLabels = !!core.getInput("sync-labels", { required: false });
+    const syncLabels =
+      core.getInput("sync-labels", { required: false }) === "true";
 
     const prNumber = getPrNumber();
     if (!prNumber) {

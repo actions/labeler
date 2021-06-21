@@ -51,7 +51,7 @@ describe("run", () => {
     let mockInput = {
       "repo-token": "foo",
       "configuration-path": "bar",
-      "sync-labels": true,
+      "sync-labels": "true",
     };
 
     jest
@@ -82,7 +82,31 @@ describe("run", () => {
     let mockInput = {
       "repo-token": "foo",
       "configuration-path": "bar",
-      "sync-labels": false,
+      "sync-labels": "false",
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles("foo.txt");
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{ name: "touched-a-pdf-file" }],
+      },
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("(with sync-labels not specified) it behaves like sync-labels: false", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
     };
 
     jest
