@@ -1,0 +1,32 @@
+# Updates our cache of license files in response to changes to our dependencies
+# declared in package-lock.json. Automatically commits the changes and pushes
+# them to your branch. NB `check_license_status` should always run *after* this
+#
+# see https://github.com/actions/labeler/pull/155 for more context
+
+name: Update License Cache
+
+on:
+  push:
+    branches:
+      - main
+    paths: [package-lock.json]
+  pull_request:
+    branches: main
+    paths: package-lock.json
+  workflow_dispatch:
+
+jobs:
+  update_licenses_cache:
+    runs-on: ubuntu-latest
+    name: Update License Cache
+    steps:
+      - uses: actions/checkout@v1
+      - uses: jonabc/setup-licensed@v1
+        with:
+          version: '2.x'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm install --production
+      - uses: jonabc/licensed-ci@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
