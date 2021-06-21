@@ -1,0 +1,2 @@
+touched-a-pdf-file:
+  - any: ['*.pdf']
