@@ -60,11 +60,7 @@ describe("run", () => {
 
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.txt");
-    getPullMock.mockResolvedValue(<any>{
-      data: {
-        labels: [{ name: "touched-a-pdf-file" }],
-      },
-    });
+    mockGitHubResponsePreexistingLabels("touched-a-pdf-file");
 
     await run();
 
@@ -91,11 +87,7 @@ describe("run", () => {
 
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.txt");
-    getPullMock.mockResolvedValue(<any>{
-      data: {
-        labels: [{ name: "touched-a-pdf-file" }],
-      },
-    });
+    mockGitHubResponsePreexistingLabels("touched-a-pdf-file");
 
     await run();
 
@@ -113,4 +105,12 @@ function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
 function mockGitHubResponseChangedFiles(...files: string[]): void {
   const returnValue = files.map((f) => ({ filename: f }));
   paginateMock.mockReturnValue(<any>returnValue);
+}
+
+function mockGitHubResponsePreexistingLabels(...labels: string[]): void {
+  getPullMock.mockResolvedValue(<any>{
+    data: {
+      labels: labels.map((label) => ({ name: label })),
+    },
+  });
 }
