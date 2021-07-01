@@ -98,18 +98,29 @@ describe("run", () => {
   });
 
   it("correctly sets output values", async () => {
+    addLabelsMock.mockResolvedValue(<any>{
+      data: [{ name: "oldskool_label" }, { name: "touched-a-pdf-file" }],
+    });
+
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.pdf");
+    mockGitHubResponsePreexistingLabels("oldskool_label");
 
     await run();
 
-    // expect(setOutputMock).toHaveBeenCalledTimes(2);
-    // expect(setOutputMock).toHaveBeenCalledWith(
-    //   "new-labels",
-    //   "touched-a-pdf-file"
-    // );
-    //   "all-labels");
-    // });
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setOutputMock).toHaveBeenCalledTimes(2);
+
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      1,
+      "new-labels",
+      "touched-a-pdf-file"
+    );
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      2,
+      "all-labels",
+      "oldskool_label,touched-a-pdf-file"
+    );
   });
 });
 
