@@ -1,4 +1,4 @@
-import { run } from "../src/labeler";
+import { run, Label } from "../src/labeler";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 
@@ -19,7 +19,7 @@ const yamlFixtures = {
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
 };
 
-afterAll(() => jest.restoreAllMocks());
+afterEach(() => jest.restoreAllMocks());
 
 describe("run", () => {
   it("adds labels to PRs that match our glob patterns", async () => {
@@ -77,7 +77,7 @@ describe("run", () => {
   });
 
   it("(with sync-labels: false) it issues no delete calls even when there are preexisting PR labels that no longer match the glob pattern", async () => {
-    let mockInput = {
+    const mockInput = {
       "repo-token": "foo",
       "configuration-path": "bar",
       "sync-labels": false,
@@ -97,14 +97,11 @@ describe("run", () => {
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 
-  it("correctly sets output values", async () => {
-    addLabelsMock.mockResolvedValue(<any>{
-      data: [{ name: "oldskool_label" }, { name: "touched-a-pdf-file" }],
-    });
-
+  it("correctly sets output values when labels were mutated", async () => {
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.pdf");
     mockGitHubResponsePreexistingLabels("oldskool_label");
+    mockGitHubResponseAddLabels("oldskool_label", "touched-a-pdf-file");
 
     await run();
 
@@ -120,6 +117,54 @@ describe("run", () => {
       2,
       "all-labels",
       "oldskool_label,touched-a-pdf-file"
+    );
+  });
+
+  it("correctly sets output values when nothing changed", async () => {
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles();
+    mockGitHubResponsePreexistingLabels("oldskool_label");
+    mockGitHubResponseAddLabels("oldskool_label");
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
+    expect(setOutputMock).toHaveBeenCalledTimes(2);
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, "new-labels", "");
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      2,
+      "all-labels",
+      "oldskool_label"
+    );
+  });
+
+  it("correctly sets output values when sync-labels is true", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
+      "sync-labels": true,
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles();
+    mockGitHubResponsePreexistingLabels("oldskool_label", "touched-a-pdf-file"); // the pdf label should get removed
+    mockGitHubResponseAddLabels("oldskool_label");
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(1);
+    expect(setOutputMock).toHaveBeenCalledTimes(2);
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, "new-labels", "");
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      2,
+      "all-labels",
+      "oldskool_label"
     );
   });
 });
@@ -140,5 +185,29 @@ function mockGitHubResponsePreexistingLabels(...labels: string[]): void {
     data: {
       labels: labels.map((label) => ({ name: label })),
     },
+  });
+}
+
+function mockGitHubResponseAddLabels(...labelStrings: string[]): void {
+  const data: Label[] = [];
+  let i = 0;
+  for (const label of labelStrings) {
+    data.push({
+      name: label,
+      id: i,
+      node_id: `node_id_${i}`,
+      url: `https://github.com/foo/bar/${i}`,
+      description: `here's label ${i}!`,
+      color: "blue",
+      default: false,
+    });
+    i++;
+  }
+
+  addLabelsMock.mockResolvedValue({
+    status: 200,
+    headers: {},
+    url: "https://github.com/foo",
+    data,
   });
 }

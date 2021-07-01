@@ -10,6 +10,15 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
+export type Label = {
+  id: number;
+  node_id: string;
+  url: string;
+  name: string;
+  description: string | null;
+  color: string;
+  default: boolean;
+};
 
 export async function run() {
   try {
@@ -38,7 +47,7 @@ export async function run() {
       configPath
     );
 
-    const labels: string[] = [];
+    const labelsToAdd: string[] = [];
     const labelsToRemove: string[] = [];
     const preexistingLabels = pullRequest.labels
       .map((l) => l.name)
@@ -47,24 +56,29 @@ export async function run() {
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
-        labels.push(label);
+        labelsToAdd.push(label);
       } else if (preexistingLabels.find((l) => l === label)) {
         labelsToRemove.push(label);
       }
     }
 
-    if (labels.length > 0) {
-      const allLabels = await addLabels(client, prNumber, labels);
-      const newLabels = allLabels.filter(
-        (currentLabel) => !preexistingLabels.includes(currentLabel)
-      );
-      core.setOutput("new-labels", newLabels.join(","));
-      core.setOutput("all-labels", allLabels.join(","));
+    let allLabels: string[] = preexistingLabels;
+
+    if (labelsToAdd.length > 0) {
+      // addLabels returns all of the issue's labels including the ones we added
+      allLabels = await addLabels(client, prNumber, labelsToAdd);
     }
+
+    const newLabels = allLabels.filter((l) => !preexistingLabels.includes(l));
 
     if (syncLabels && labelsToRemove.length) {
       await removeLabels(client, prNumber, labelsToRemove);
+      // allLabels = (preexisting + added) - removed
+      allLabels = allLabels.filter((l) => !labelsToRemove.includes(l));
     }
+
+    core.setOutput("new-labels", newLabels.join(","));
+    core.setOutput("all-labels", allLabels.join(","));
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);
