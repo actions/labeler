@@ -13,13 +13,7 @@ export const context = {
 const mockApi = {
   rest: {
     issues: {
-      addLabels: jest.fn(({ owner, repo, issue_number, labels }) =>
-        Promise.resolve({
-          data: labels.map((l) => {
-            name: l;
-          }),
-        })
-      ),
+      addLabels: jest.fn(),
       removeLabel: jest.fn(),
     },
     pulls: {
