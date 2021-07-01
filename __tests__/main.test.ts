@@ -13,6 +13,7 @@ const removeLabelMock = jest.spyOn(gh.rest.issues, "removeLabel");
 const reposMock = jest.spyOn(gh.rest.repos, "getContent");
 const paginateMock = jest.spyOn(gh, "paginate");
 const getPullMock = jest.spyOn(gh.rest.pulls, "get");
+const setOutputMock = jest.spyOn(core, "setOutput");
 
 const yamlFixtures = {
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
@@ -22,6 +23,7 @@ afterAll(() => jest.restoreAllMocks());
 
 describe("run", () => {
   it("adds labels to PRs that match our glob patterns", async () => {
+    mockGitHubResponsePreexistingLabels("foo", "bar", "baz");
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.pdf");
 
@@ -93,6 +95,21 @@ describe("run", () => {
 
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("correctly sets output values", async () => {
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles("foo.pdf");
+
+    await run();
+
+    // expect(setOutputMock).toHaveBeenCalledTimes(2);
+    // expect(setOutputMock).toHaveBeenCalledWith(
+    //   "new-labels",
+    //   "touched-a-pdf-file"
+    // );
+    //   "all-labels");
+    // });
   });
 });
 

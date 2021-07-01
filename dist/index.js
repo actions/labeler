@@ -62,17 +62,21 @@ function run() {
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
             const labelsToRemove = [];
+            const preexistingLabels = pullRequest.labels
+                .map((l) => l.name)
+                .filter((l) => !!l); // just to get the type to be string[] instead of (string|undefined)[]
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
                 }
-                else if (pullRequest.labels.find((l) => l.name === label)) {
+                else if (preexistingLabels.find((l) => l === label)) {
                     labelsToRemove.push(label);
                 }
             }
             if (labels.length > 0) {
-                const { newLabels, allLabels } = yield addLabels(client, prNumber, labels);
+                const allLabels = yield addLabels(client, prNumber, labels);
+                const newLabels = allLabels.filter((currentLabel) => !preexistingLabels.includes(currentLabel));
                 core.setOutput("new-labels", newLabels.join(","));
                 core.setOutput("all-labels", allLabels.join(","));
             }
@@ -226,10 +230,7 @@ function addLabels(client, prNumber, labels) {
             issue_number: prNumber,
             labels: labels,
         });
-        return {
-            newLabels: labels,
-            allLabels: addLabelResult.data.map(datum => datum.name),
-        };
+        return addLabelResult.data.map((datum) => datum.name);
     });
 }
 function removeLabels(client, prNumber, labels) {

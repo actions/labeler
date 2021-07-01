@@ -40,20 +40,23 @@ export async function run() {
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
+    const preexistingLabels = pullRequest.labels
+      .map((l) => l.name)
+      .filter((l): l is string => !!l); // just to get the type to be string[] instead of (string|undefined)[]
+
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
         labels.push(label);
-      } else if (pullRequest.labels.find((l) => l.name === label)) {
+      } else if (preexistingLabels.find((l) => l === label)) {
         labelsToRemove.push(label);
       }
     }
 
     if (labels.length > 0) {
-      const { newLabels, allLabels } = await addLabels(
-        client,
-        prNumber,
-        labels
+      const allLabels = await addLabels(client, prNumber, labels);
+      const newLabels = allLabels.filter(
+        (currentLabel) => !preexistingLabels.includes(currentLabel)
       );
       core.setOutput("new-labels", newLabels.join(","));
       core.setOutput("all-labels", allLabels.join(","));
@@ -239,7 +242,7 @@ async function addLabels(
   client: ClientType,
   prNumber: number,
   labels: string[]
-): Promise<{ newLabels: string[]; allLabels: string[] }> {
+): Promise<string[]> {
   const addLabelResult = await client.rest.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
@@ -247,10 +250,7 @@ async function addLabels(
     labels: labels,
   });
 
-  return {
-    newLabels: labels,
-    allLabels: addLabelResult.data.map(datum => datum.name),
-  };
+  return addLabelResult.data.map((datum) => datum.name);
 }
 
 async function removeLabels(
