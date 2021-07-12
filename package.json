@@ -28,7 +28,7 @@
     "minimatch": "^3.0.4"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.23",
+    "@types/jest": "^26.0.24",
     "@types/node": "^15.12.5",
     "@types/minimatch": "^3.0.4",
     "@types/js-yaml": "^4.0.1",
