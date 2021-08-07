@@ -105,6 +105,7 @@ describe("run", () => {
   });
 
   it("adds labels based on the branch names that match the glob pattern", async () => {
+    github.context.ref = "test/testing-time";
     usingLabelerConfigYaml("branches.yml");
     await run();
 
@@ -114,6 +115,20 @@ describe("run", () => {
       repo: "helloworld",
       issue_number: 123,
       labels: ["test-branch"],
+    });
+  });
+
+  it("adds labels based on branch names that match the glob pattern", async () => {
+    github.context.ref = "my/feature/that-i-like";
+    usingLabelerConfigYaml("branches.yml");
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: "monalisa",
+      repo: "helloworld",
+      issue_number: 123,
+      labels: ["feature-branch"],
     });
   });
 });

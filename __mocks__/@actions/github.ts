@@ -8,7 +8,6 @@ export const context = {
     owner: "monalisa",
     repo: "helloworld",
   },
-  ref: "test/testing-time",
 };
 
 const mockApi = {
