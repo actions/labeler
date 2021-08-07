@@ -241,6 +241,12 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
     }
   }
 
+  if (matchConfig.branch !== undefined) {
+    if (!checkBranch(matchConfig.branch)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
