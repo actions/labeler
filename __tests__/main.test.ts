@@ -15,6 +15,7 @@ const paginateMock = jest.spyOn(gh, "paginate");
 const getPullMock = jest.spyOn(gh.rest.pulls, "get");
 
 const yamlFixtures = {
+  "branches.yml": fs.readFileSync("__tests__/fixtures/branches.yml"),
   "only_pdfs.yml": fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
 };
 
@@ -101,6 +102,19 @@ describe("run", () => {
 
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("adds labels based on the branch names that match the glob pattern", async () => {
+    usingLabelerConfigYaml("branches.yml");
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: "monalisa",
+      repo: "helloworld",
+      issue_number: 123,
+      labels: ["test-branch"],
+    });
   });
 });
 
