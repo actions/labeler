@@ -214,6 +214,20 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
+function checkBranch(glob: string): boolean {
+  const matcher = new Minimatch(glob);
+  const branchName = github.context.ref;
+  core.debug(` checking "branch" pattern against ${branchName}`);
+  core.debug(`  - ${printPattern(matcher)}`);
+  if (!matcher.match(branchName)) {
+    core.debug(`   ${printPattern(matcher)} did not match`);
+    return false;
+  }
+
+  core.debug(`   "branch" pattern matched`);
+  return true;
+}
+
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all)) {
