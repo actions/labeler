@@ -6,6 +6,7 @@ import { Minimatch, IMinimatch } from "minimatch";
 interface MatchConfig {
   all?: string[];
   any?: string[];
+  branch?: string;
 }
 
 type StringOrMatchConfig = string | MatchConfig;
