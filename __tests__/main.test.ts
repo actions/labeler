@@ -118,7 +118,7 @@ describe("run", () => {
     });
   });
 
-  it("adds labels based on branch names that match the glob pattern", async () => {
+  it("adds labels based on branch names that match different glob patterns", async () => {
     github.context.ref = "my/feature/that-i-like";
     usingLabelerConfigYaml("branches.yml");
     await run();
