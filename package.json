@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@types/jest": "^27.0.0",
-    "@types/node": "^16.4.13",
+    "@types/node": "^16.6.0",
     "@types/minimatch": "^3.0.5",
     "@types/js-yaml": "^4.0.2",
     "@vercel/ncc": "^0.29.0",
