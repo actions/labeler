@@ -1,0 +1,50 @@
+name: Licenses
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json, package-lock.json]
+  pull_request:
+    branches: [main]
+    paths: [package.json, package-lock.json]
+  workflow_dispatch:
+
+jobs:
+  # Updates our cache of license files in response to changes to our dependencies
+  # declared in package-lock.json. Automatically commits the changes and pushes
+  # them to your branch. NB `check_license_status` should always run *after* this
+  #
+  # see https://github.com/actions/labeler/pull/155 for more context
+  update_licenses:
+    runs-on: ubuntu-latest
+    name: Update Licenses
+    steps:
+      - uses: actions/checkout@v1
+      - uses: jonabc/setup-licensed@v1
+        with:
+          version: '2.x'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm install --production
+      - uses: jonabc/licensed-ci@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Fails if any of our dependencies have licenses that our incompatible with our
+  # requirements (see .licensed.yml) OR if any of our dependencies have been
+  # upgraded to a new version without us having updated their corresponding
+  # license metadata file in .licenses/
+  #
+  # see https://github.com/actions/labeler/pull/91 for more context
+  check_licenses:
+    needs: update_licenses
+    if: always() # always run after we update the license cache. if it failed, we will probably just fail as well
+    runs-on: ubuntu-latest
+    name: Check Licenses
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jonabc/setup-licensed@v1.0.2
+        with:
+          version: '2.x'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm install
+      - run: licensed status
