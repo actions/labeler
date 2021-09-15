@@ -3,3 +3,6 @@ test-branch:
 
 feature-branch:
   - branch: "*/feature/*"
+
+bug-branch:
+  - branch: "{bug,fix}/*"

@@ -133,6 +133,20 @@ describe("run", () => {
       labels: ["feature-branch"],
     });
   });
+
+  it("it can support multiple branches by batching", async () => {
+    github.context.payload.pull_request!.head = { ref: "fix/123" };
+    usingLabelerConfigYaml("branches.yml");
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: "monalisa",
+      repo: "helloworld",
+      issue_number: 123,
+      labels: ["bug-branch"],
+    });
+  });
 });
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
