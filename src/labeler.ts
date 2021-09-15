@@ -218,6 +218,7 @@ function checkBranch(glob: string): boolean {
   const matcher = new Minimatch(glob);
   const branchName = github.context.ref;
   core.debug(` checking "branch" pattern against ${branchName}`);
+  core.debug(` - but we should be checking ${github.context.payload.pull_request.head.ref}`);
   core.debug(`  - ${printPattern(matcher)}`);
   if (!matcher.match(branchName)) {
     core.debug(`   ${printPattern(matcher)} did not match`);
