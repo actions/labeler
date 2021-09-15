@@ -206,7 +206,9 @@ function checkAll(changedFiles, globs) {
 function checkBranch(glob) {
     const matcher = new minimatch_1.Minimatch(glob);
     const branchName = github.context.ref;
+    const branchName2 = github.context.payload.pull_request.head.ref;
     core.debug(` checking "branch" pattern against ${branchName}`);
+    core.debug(` - but we should be checking ${branchName2}`);
     core.debug(`  - ${printPattern(matcher)}`);
     if (!matcher.match(branchName)) {
         core.debug(`   ${printPattern(matcher)} did not match`);
