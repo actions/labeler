@@ -105,7 +105,7 @@ describe("run", () => {
   });
 
   it("adds labels based on the branch names that match the glob pattern", async () => {
-    github.context.ref = "test/testing-time";
+    github.context.payload.pull_request!.head = {ref: "test/testing-time"};
     usingLabelerConfigYaml("branches.yml");
     await run();
 
@@ -119,7 +119,7 @@ describe("run", () => {
   });
 
   it("adds labels based on branch names that match different glob patterns", async () => {
-    github.context.ref = "my/feature/that-i-like";
+    github.context.payload.pull_request!.head = {ref: "my/feature/that-i-like"};
     usingLabelerConfigYaml("branches.yml");
     await run();
 
