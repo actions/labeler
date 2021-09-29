@@ -6,7 +6,7 @@ import { Minimatch, IMinimatch } from "minimatch";
 interface MatchConfig {
   all?: string[];
   any?: string[];
-  branch?: string;
+  branch?: string | string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -70,6 +70,15 @@ function getPrNumber(): number | undefined {
   }
 
   return pullRequest.number;
+}
+
+function getBranchName(): string | undefined {
+  const pullRequest = github.context.payload.pull_request;
+  if (!pullRequest) {
+    return undefined;
+  }
+
+  return pullRequest.head?.ref;
 }
 
 async function getChangedFiles(
@@ -214,18 +223,40 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function checkBranch(glob: string): boolean {
-  const matcher = new Minimatch(glob);
-  const branchName = github.context.payload.pull_request?.head.ref;
-  core.debug(` checking "branch" pattern against ${branchName}`);
+function matchBranchPattern(matcher: IMinimatch, branchName: string): boolean {
   core.debug(`  - ${printPattern(matcher)}`);
-  if (branchName || !matcher.match(branchName)) {
+  if (!matcher.match(branchName)) {
     core.debug(`   ${printPattern(matcher)} did not match`);
     return false;
   }
 
   core.debug(`   "branch" pattern matched`);
   return true;
+}
+
+function checkBranch(glob: string | string[]): boolean {
+  const branchName = getBranchName();
+  if (!branchName) {
+    core.debug(` no branch name`);
+    return false;
+  }
+
+  core.debug(` checking "branch" pattern against ${branchName}`);
+  if (Array.isArray(glob)) {
+    const matchers = glob.map((g) => new Minimatch(g));
+    for (const matcher of matchers) {
+      if (matchBranchPattern(matcher, branchName)) {
+        core.debug(`  "branch" patterns matched against ${branchName}`);
+        return true;
+      }
+    }
+
+    core.debug(`  "branch" patterns did not match against ${branchName}`);
+    return false;
+  } else {
+    const matcher = new Minimatch(glob);
+    return matchBranchPattern(matcher, branchName);
+  }
 }
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
