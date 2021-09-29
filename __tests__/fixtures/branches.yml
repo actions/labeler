@@ -6,3 +6,6 @@ feature-branch:
 
 bug-branch:
   - branch: "{bug,fix}/*"
+
+array-branch:
+  - branch: ["array/*", "*/array/*"]
