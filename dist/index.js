@@ -92,6 +92,14 @@ function getPrNumber() {
     }
     return pullRequest.number;
 }
+function getBranchName() {
+    var _a;
+    const pullRequest = github.context.payload.pull_request;
+    if (!pullRequest) {
+        return undefined;
+    }
+    return (_a = pullRequest.head) === null || _a === void 0 ? void 0 : _a.ref;
+}
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
@@ -203,10 +211,7 @@ function checkAll(changedFiles, globs) {
     core.debug(`  "all" patterns matched all files`);
     return true;
 }
-function checkBranch(glob) {
-    const matcher = new minimatch_1.Minimatch(glob);
-    const branchName = github.context.payload.pull_request.head.ref;
-    core.debug(` checking "branch" pattern against ${branchName}`);
+function matchBranchPattern(matcher, branchName) {
     core.debug(`  - ${printPattern(matcher)}`);
     if (!matcher.match(branchName)) {
         core.debug(`   ${printPattern(matcher)} did not match`);
@@ -214,6 +219,29 @@ function checkBranch(glob) {
     }
     core.debug(`   "branch" pattern matched`);
     return true;
+}
+function checkBranch(glob) {
+    const branchName = getBranchName();
+    if (!branchName) {
+        core.debug(` no branch name`);
+        return false;
+    }
+    core.debug(` checking "branch" pattern against ${branchName}`);
+    if (Array.isArray(glob)) {
+        const matchers = glob.map((g) => new minimatch_1.Minimatch(g));
+        for (const matcher of matchers) {
+            if (matchBranchPattern(matcher, branchName)) {
+                core.debug(`  "branch" patterns matched against ${branchName}`);
+                return true;
+            }
+        }
+        core.debug(`  "branch" patterns did not match against ${branchName}`);
+        return false;
+    }
+    else {
+        const matcher = new minimatch_1.Minimatch(glob);
+        return matchBranchPattern(matcher, branchName);
+    }
 }
 function checkMatch(changedFiles, matchConfig) {
     if (matchConfig.all !== undefined) {
