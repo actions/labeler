@@ -1,4 +1,4 @@
-# Pull Request Labeler
+#  Pull Request Labeler
 
 <p align="left">
   <a href="https://github.com/actions/labeler/actions?query=workflow%3A%22Build+%26+Test%22++">
