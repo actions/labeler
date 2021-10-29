@@ -225,13 +225,13 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
 
 function matchBranchPattern(matcher: IMinimatch, branchName: string): boolean {
   core.debug(`  - ${printPattern(matcher)}`);
-  if (!matcher.match(branchName)) {
-    core.debug(`   ${printPattern(matcher)} did not match`);
-    return false;
+  if (matcher.match(branchName)) {
+    core.debug(`   "branch" pattern matched`);
+    return true;
   }
 
-  core.debug(`   "branch" pattern matched`);
-  return true;
+  core.debug(`   ${printPattern(matcher)} did not match`);
+  return false;
 }
 
 function checkBranch(glob: string | string[]): boolean {
