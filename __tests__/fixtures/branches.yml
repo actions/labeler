@@ -1,5 +1,5 @@
 test-branch:
-  - branch: "test/*"
+  - branch: "test/**"
 
 feature-branch:
   - branch: "*/feature/*"
@@ -8,4 +8,4 @@ bug-branch:
   - branch: "{bug,fix}/*"
 
 array-branch:
-  - branch: ["array/*", "*/array/*"]
+  - branch: ["array/*"]

@@ -118,9 +118,9 @@ describe("run", () => {
     });
   });
 
-  it("adds labels based on branch names that match different glob patterns", async () => {
+  it("adds multiple labels based on branch names that match different glob patterns", async () => {
     github.context.payload.pull_request!.head = {
-      ref: "my/feature/that-i-like",
+      ref: "test/feature/123",
     };
     usingLabelerConfigYaml("branches.yml");
     await run();
@@ -130,7 +130,7 @@ describe("run", () => {
       owner: "monalisa",
       repo: "helloworld",
       issue_number: 123,
-      labels: ["feature-branch"],
+      labels: ["test-branch", "feature-branch"],
     });
   });
 
