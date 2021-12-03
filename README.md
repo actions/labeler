@@ -56,6 +56,10 @@ label1:
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
+# add label3 to any .txt file changes in the entire folder, ' are mandatory for leading *
+label3:
+- '**/*.txt'
+
 ```
 
 #### Common Examples
