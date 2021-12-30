@@ -1,0 +1,23 @@
+# Fails if any of dist/index.js needs to be rebuilt
+
+name: Check dist/index.js
+
+on:
+  push:
+    branches:
+      - main
+      - check_dist
+  pull_request:
+    branches:
+      - main
+      - check_dist
+
+jobs:
+  check_dist:
+    runs-on: ubuntu-latest
+    name: Check dist/index.js for diffs
+    steps:
+      - uses: actions/checkout@v1
+      - run: npm install
+      - run: npm run build
+      - run: "${GITHUB_WORKSPACE}/.github/workflows/check_dist.sh"
