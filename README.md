@@ -67,7 +67,6 @@ repo:
 
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
-- package/core/*
 - package/core/**/*
 
 # Add 'test' label to any change to *.spec.js files within the source dir
@@ -113,7 +112,23 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret | N/A |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
+| `dot` | Whether or not to auto-include paths starting with dot (e.g. `.github`) | `false`
 
-# Contributions
+When `dot` is disabled and you want to include _all_ files in a folder:
+
+```yml
+label1:
+- path/to/folder/**/*
+- path/to/folder/**/.*
+```
+
+If `dot` is enabled:
+
+```yml
+label1:
+- path/to/folder/**/*
+```
+
+## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
