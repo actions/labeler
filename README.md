@@ -47,16 +47,19 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
+> ⚠️ This action uses [micromatch](https://www.npmjs.com/package/micromatch) for apply globs.
+> For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
+> You need to set `dot: true` to change this behavior.
+> See [Inputs](#inputs) table below for details.
+
 #### Basic Examples
 
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
-# (this does not apply to files starting with dot by default – see inputs table below)
 label1:
 - example/**/*
 
 # Add 'label2' to any file changes within 'example2' folder
-# (this does not apply to files starting with dot by default – see inputs table below)
 label2: example2/*
 ```
 
