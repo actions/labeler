@@ -34,7 +34,7 @@ describe("checkGlobs", () => {
     expect(result).toBeFalsy();
   });
 
-  it("returns false for a file starting with dot if `dot` option is true", () => {
+  it("returns true for a file starting with dot if `dot` option is true", () => {
     const changedFiles = [".foo.txt"];
     const result = checkGlobs(changedFiles, matchConfig, true);
 
