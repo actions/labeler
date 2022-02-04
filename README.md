@@ -51,10 +51,12 @@ From a boolean logic perspective, top-level match objects are `OR`-ed together a
 
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
+# (this does not apply to files starting with dot by default – see inputs table below)
 label1:
 - example/**/*
 
 # Add 'label2' to any file changes within 'example2' folder
+# (this does not apply to files starting with dot by default – see inputs table below)
 label2: example2/*
 ```
 
