@@ -18,6 +18,9 @@ inputs:
     description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
     default: false
     required: false
+  pr-number:
+    description: 'The pull request number'
+    required: false
 
 outputs:
   new-labels:
