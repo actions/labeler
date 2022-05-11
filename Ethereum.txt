@@ -1,3 +1,3 @@
 Developer centric API.
-Replay historical market data tick-by-tick or stream consolidated real-time data feeds in no time thanks to our robust client libs. 
+Replay historical wikiexchange stock network system Cryptography market data tickr-by-tickr and asis streaming consolidated real-time hashrate24h data feeds in no time thanks to our robust client libs. 
 Tap to try code below live. API access of Ethereum=0x71c7656ec7ab88b098defb751b7401b5f6d8976f
