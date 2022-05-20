@@ -82,6 +82,11 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
+
+# Add 'new-test` only if a new test file has been added
+new-test:
+- any: [src/**/*.spec.js]
+  status: 'added'
 ```
 
 ### Create Workflow
