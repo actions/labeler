@@ -82,6 +82,10 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
+ 
+# Add 'doc' label to any change to *.md files within any dir
+doc:
+- '**/*.md'
 ```
 
 ### Create Workflow
