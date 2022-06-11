@@ -9,7 +9,7 @@
   </a>
 </p>
 
-Automatically label new pull requests based on the paths of files being changed.
+Automatically label new pull requests based on the paths of files being changed or the branch name.
 
 ## Usage
 
@@ -26,13 +26,15 @@ For more control over matching, you can provide a match object instead of a simp
 ```yml
 - any: ['list', 'of', 'globs']
   all: ['list', 'of', 'globs']
+  branch: ['list', 'of, 'globs']
 ```
 
-One or both fields can be provided for fine-grained matching. Unlike the top-level list, the list of path globs provided to `any` and `all` must ALL match against a path for the label to be applied.
+One or all fields can be provided for fine-grained matching. Unlike the top-level list, the list of path globs provided to `any` and `all` must ALL match against a path for the label to be applied.
 
 The fields are defined as follows:
 * `any`: match ALL globs against ANY changed path
 * `all`: match ALL globs against ALL changed paths
+* `branch`: match ANY glob against the branch name
 
 A simple path glob is the equivalent to `any: ['glob']`. More specifically, the following two configurations are equivalent:
 ```yml
@@ -56,6 +58,10 @@ label1:
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
+
+# Add 'label3' to any PR where the branch name starts with 'example3'
+label3:
+- branch: 'example3/**'
 ```
 
 #### Common Examples
@@ -82,6 +88,10 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
+  
+ # Add 'feature' label to any branch that starts with `feature` or has a `feature` section in the name
+ feature:
+ - branch: ['feature/**', '*/feaure/**']
 ```
 
 ### Create Workflow
