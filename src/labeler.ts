@@ -96,10 +96,24 @@ async function getLabelGlobs(
   client: ClientType,
   configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
-    client,
-    configurationPath
-  );
+  let configurationContent: string;
+  try {
+    configurationContent = await fetchContent(client, configurationPath);
+  } catch (e) {
+    console.error(e + " with type " + typeof e);
+    // ignoring error type as I can not import it without changing dependencies
+    // all HTTP errors thrown should have the property "name"
+    // @ts-ignore
+    if (e.name == "HttpError" || e.name == "NotFound") {
+      console.error(
+        "config not found at " +
+          configurationPath +
+          " make sure it exists and that this action has the correct access rights"
+      );
+    }
+
+    throw e;
+  }
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
