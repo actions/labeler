@@ -93,16 +93,19 @@ frontend:
 
 Create a workflow (eg: `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
 
-```
+```yml
 name: "Pull Request Labeler"
 on:
 - pull_request_target
 
 jobs:
   triage:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v3
+    - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
@@ -115,7 +118,7 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 
 | Name | Description | Default |
 | - | - | - |
-| `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret | N/A |
+| `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | N/A |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
 
