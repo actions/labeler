@@ -81,7 +81,7 @@ function run() {
             if (syncLabels && labelsToRemove.length) {
                 yield removeLabels(client, prNumber, labelsToRemove);
             }
-            core.setOutput("labels", labels);
+            core.setOutput("labels", labels.toString());
         }
         catch (error) {
             core.error(error);
