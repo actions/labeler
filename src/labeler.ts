@@ -57,11 +57,11 @@ export async function run() {
       await removeLabels(client, prNumber, labelsToRemove);
     }
 
-    console.log(labels);
+    core.setOutput("labels", labels);
   } catch (error: any) {
     core.error(error);
     core.setFailed(error.message);
-    console.log("");
+    core.setOutput("labels", "");
   }
 }
 
