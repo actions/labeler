@@ -12,6 +12,9 @@ inputs:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false
     required: false
+outputs:
+  labels:
+    description: The labels added to the pull request
 
 runs:
   using: 'node16'

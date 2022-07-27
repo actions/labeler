@@ -56,9 +56,12 @@ export async function run() {
     if (syncLabels && labelsToRemove.length) {
       await removeLabels(client, prNumber, labelsToRemove);
     }
+
+    core.setOutput("labels", labels.toString());
   } catch (error: any) {
     core.error(error);
     core.setFailed(error.message);
+    core.setOutput("labels", "");
   }
 }
 
