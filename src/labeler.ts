@@ -63,6 +63,16 @@ export async function run() {
 }
 
 function getPrNumber(): number | undefined {
+  const prNumberInput = core.getInput("pr-number");
+  if (prNumberInput) {
+    const parsed = parseInt(prNumberInput, 10);
+    if (Number.isNaN(parsed)) {
+      throw new Error(
+        `Provided 'pr-number' input ("${prNumberInput}") is not a valid PR number`
+      );
+    }
+    return parsed;
+  }
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {
     return undefined;
