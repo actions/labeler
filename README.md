@@ -116,7 +116,7 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | N/A |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
-
+| `sync-ignore-labels` | A comma or newline separated list of labels to ignore from the sync-labels remove operation | ""
 # Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
