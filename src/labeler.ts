@@ -16,6 +16,9 @@ export async function run() {
     const token = core.getInput("repo-token", { required: true });
     const configPath = core.getInput("configuration-path", { required: true });
     const syncLabels = !!core.getInput("sync-labels", { required: false });
+    const syncIgnoreLabels = getStringAsArray(
+      core.getInput("sync-ignore-labels") ?? ""
+    );
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -44,7 +47,10 @@ export async function run() {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
         labels.push(label);
-      } else if (pullRequest.labels.find((l) => l.name === label)) {
+      } else if (
+        pullRequest.labels.find((l) => l.name === label) &&
+        !syncIgnoreLabels.includes(label)
+      ) {
         labelsToRemove.push(label);
       }
     }
@@ -257,4 +263,11 @@ async function removeLabels(
       })
     )
   );
+}
+
+function getStringAsArray(str: string): string[] {
+  return str
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter((x) => x !== "");
 }

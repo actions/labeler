@@ -12,7 +12,10 @@ inputs:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false
     required: false
-
+  sync-ignore-labels:
+    description: >
+      A comma or newline separated list of labels to ignore from the sync-labels remove operation.
+    required: false
 runs:
   using: 'node16'
   main: 'dist/index.js'

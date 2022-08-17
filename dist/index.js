@@ -45,11 +45,13 @@ const github = __importStar(__nccwpck_require__(5438));
 const yaml = __importStar(__nccwpck_require__(1917));
 const minimatch_1 = __nccwpck_require__(3973);
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput("repo-token", { required: true });
             const configPath = core.getInput("configuration-path", { required: true });
             const syncLabels = !!core.getInput("sync-labels", { required: false });
+            const syncIgnoreLabels = getStringAsArray((_a = core.getInput("sync-ignore-labels")) !== null && _a !== void 0 ? _a : "");
             const prNumber = getPrNumber();
             if (!prNumber) {
                 console.log("Could not get pull request number from context, exiting");
@@ -71,7 +73,8 @@ function run() {
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
                 }
-                else if (pullRequest.labels.find((l) => l.name === label)) {
+                else if (pullRequest.labels.find((l) => l.name === label) &&
+                    !syncIgnoreLabels.includes(label)) {
                     labelsToRemove.push(label);
                 }
             }
@@ -239,6 +242,12 @@ function removeLabels(client, prNumber, labels) {
             name: label,
         })));
     });
+}
+function getStringAsArray(str) {
+    return str
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter((x) => x !== "");
 }
 
 

@@ -102,6 +102,32 @@ describe("run", () => {
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
+
+  it("(with sync-labels: true) it issues no delete calls for labels in sync-ignore-label", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
+      "sync-labels": true,
+      "sync-ignore-labels": "touched-a-pdf-file",
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles("foo.txt");
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{ name: "touched-a-pdf-file" }],
+      },
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
+  });
 });
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
