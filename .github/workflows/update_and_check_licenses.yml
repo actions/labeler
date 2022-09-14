@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: jonabc/setup-licensed@v1
         with:
-          version: '2.x'
+          version: '3.x'
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm install --production
       - uses: jonabc/licensed-ci@v1
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: jonabc/setup-licensed@v1.0.2
         with:
-          version: '2.x'
+          version: '3.x'
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm install
       - run: licensed status
