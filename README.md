@@ -88,10 +88,10 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
-  
+
  # Add 'feature' label to any branch that starts with `feature` or has a `feature` section in the name
  feature:
- - branch: ['feature/**', '*/feaure/**']
+ - branch: ['feature/**', '*/feature/**']
 ```
 
 ### Create Workflow
