@@ -1,6 +1,6 @@
 {
   "name": "labeler",
-  "version": "3.1.0",
+  "version": "4.0.1",
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
@@ -22,7 +22,7 @@
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.6.0",
+    "@actions/core": "^1.10.0",
     "@actions/github": "^5.0.0",
     "js-yaml": "^4.1.0",
     "minimatch": "^3.0.4"
@@ -34,8 +34,8 @@
     "@types/js-yaml": "^4.0.5",
     "@vercel/ncc": "^0.34.0",
     "jest": "^27.5.1",
-    "prettier": "^2.6.2",
+    "prettier": "^2.7.1",
     "ts-jest": "^27.1.3",
-    "typescript": "^4.6.3"
+    "typescript": "^4.8.2"
   }
 }
