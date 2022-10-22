@@ -117,6 +117,12 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
 
+#### Outputs
+
+| Name     | Description | Default |
+| -        | -           | - |
+| `labels` | A string containing the labels added, separated by white spaces. If no labels where added, it returns an empty string (`""`) | N/A |
+
 # Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
