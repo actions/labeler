@@ -17,7 +17,7 @@ Automatically label new pull requests based on the paths of files being changed.
 
 Create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
 
-The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
+The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**`, `tests/*.spec.js`) or a match object.
 
 #### Match Object
 
@@ -52,7 +52,7 @@ From a boolean logic perspective, top-level match objects are `OR`-ed together a
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
 label1:
-- example/**/*
+- example/**
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
@@ -67,8 +67,7 @@ repo:
 
 # Add '@domain/core' label to any change within the 'core' package
 @domain/core:
-- package/core/*
-- package/core/**/*
+- package/core/**
 
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
@@ -76,7 +75,7 @@ test:
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
-- any: ['src/**/*', '!src/docs/*']
+- any: ['src/**', '!src/docs/*']
 
 # Add 'frontend` label to any change to *.js files as long as the `main.js` hasn't changed
 frontend:
