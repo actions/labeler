@@ -4,3 +4,1273 @@
 # don't diff machine generated files
 dist/index.js -diff
 package-lock.json -diff
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@zakwarlord7 
+Your account has been flagged.
+Because of that, your profile is hidden from the public. If you believe this is a mistake, contact support to have your account status reviewed.
+enina20
+/
+michelline
+Public
+Code
+Issues
+Pull requests
+Actions
+Projects
+Security
+Insights
+initial commit
+ master
+@enina20
+enina20 committed on Jun 18, 2021 
+0 parents commit 2991198f90bffe7839ff6e47c9354954ebf883fd
+Show file tree Hide file tree
+Showing 26 changed files with 13,201 additions and 0 deletions.
+ 17  
+.browserslistrc
+@@ -0,0 +1,17 @@
+# This file is used by the build system to adjust CSS and JS output to support the specified browsers below.
+# For additional information regarding the format and rule options, please see:
+# https://github.com/browserslist/browserslist#queries
+
+# For the full list of supported browsers by the Angular framework, please see:
+# https://angular.io/guide/browser-support
+
+# You can see what browsers were selected by your queries by running:
+#   npx browserslist
+
+last 1 Chrome version
+last 1 Firefox version
+last 2 Edge major versions
+last 2 Safari major versions
+last 2 iOS major versions
+Firefox ESR
+not IE 11 # Angular supports IE 11 only as an opt-in. To opt-in, remove the 'not' prefix on this line.
+ 16  
+.editorconfig
+@@ -0,0 +1,16 @@
+# Editor configuration, see https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.ts]
+quote_type = single
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+ 45  
+.gitignore
+@@ -0,0 +1,45 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+/dist
+/tmp
+/out-tsc
+# Only exists if Bazel was run
+/bazel-out
+
+# dependencies
+/node_modules
+
+# profiling files
+chrome-profiler-events*.json
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+ 27  
+README.md
+@@ -0,0 +1,27 @@
+# Proyecto162
+
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.0.1.
+
+## Development server
+
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+
+## Code scaffolding
+
+Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+
+## Build
+
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+
+## Running unit tests
+
+Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+
+## Running end-to-end tests
+
+Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+
+## Further help
+
+To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+ 106  
+angular.json
+@@ -0,0 +1,106 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "proyecto162": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/proyecto162",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "browserTarget": "proyecto162:build:production"
+            },
+            "development": {
+              "browserTarget": "proyecto162:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "proyecto162:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "src/test.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "tsconfig.spec.json",
+            "karmaConfig": "karma.conf.js",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "scripts": []
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "proyecto162"
+}
+ 44  
+karma.conf.js
+@@ -0,0 +1,44 @@
+// Karma configuration file, see link for more information
+// https://karma-runner.github.io/1.0/config/configuration-file.html
+
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+      require('@angular-devkit/build-angular/plugins/karma')
+    ],
+    client: {
+      jasmine: {
+        // you can add configuration options for Jasmine here
+        // the possible options are listed at https://jasmine.github.io/api/edge/Configuration.html
+        // for example, you can disable the random execution with `random: false`
+        // or set a specific seed with `seed: 4321`
+      },
+      clearContext: false // leave Jasmine Spec Runner output visible in browser
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true // removes the duplicated traces
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/proyecto162'),
+      subdir: '.',
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' }
+      ]
+    },
+    reporters: ['progress', 'kjhtml'],
+    port: 9876,
+    colors: true,
+    logLevel: config.LOG_INFO,
+    autoWatch: true,
+    browsers: ['Chrome'],
+    singleRun: false,
+    restartOnFileChange: true
+  });
+};
+ 12,127  
+package-lock.json
+Large diffs are not rendered by default.
+
+ 39  
+package.json
+@@ -0,0 +1,39 @@
+{
+  "name": "proyecto162",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "~12.0.1",
+    "@angular/common": "~12.0.1",
+    "@angular/compiler": "~12.0.1",
+    "@angular/core": "~12.0.1",
+    "@angular/forms": "~12.0.1",
+    "@angular/platform-browser": "~12.0.1",
+    "@angular/platform-browser-dynamic": "~12.0.1",
+    "@angular/router": "~12.0.1",
+    "rxjs": "~6.6.0",
+    "tslib": "^2.1.0",
+    "zone.js": "~0.11.4"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "~12.0.1",
+    "@angular/cli": "~12.0.1",
+    "@angular/compiler-cli": "~12.0.1",
+    "@types/jasmine": "~3.6.0",
+    "@types/node": "^12.11.1",
+    "jasmine-core": "~3.7.0",
+    "karma": "~6.3.0",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage": "~2.0.3",
+    "karma-jasmine": "~4.0.0",
+    "karma-jasmine-html-reporter": "^1.5.0",
+    "typescript": "~4.2.3"
+  }
+}
+ 10  
+src/app/app-routing.module.ts
+@@ -0,0 +1,10 @@
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+
+const routes: Routes = [];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+ 0  
+src/app/app.component.css
+Empty file.
+ 509  
+src/app/app.component.html
+Large diffs are not rendered by default.
+
+ 35  
+src/app/app.component.spec.ts
+@@ -0,0 +1,35 @@
+import { TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AppComponent } from './app.component';
+
+describe('AppComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule
+      ],
+      declarations: [
+        AppComponent
+      ],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it(`should have as title 'proyecto162'`, () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app.title).toEqual('proyecto162');
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement;
+    expect(compiled.querySelector('.content span').textContent).toContain('proyecto162 app is running!');
+  });
+});
+ 10  
+src/app/app.component.ts
+@@ -0,0 +1,10 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'proyecto162';
+}
+ 18  
+src/app/app.module.ts
+@@ -0,0 +1,18 @@
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+ 0  
+src/assets/.gitkeep
+Empty file.
+ 3  
+src/environments/environment.prod.ts
+@@ -0,0 +1,3 @@
+export const environment = {
+  production: true
+};
+ 16  
+src/environments/environment.ts
+@@ -0,0 +1,16 @@
+// This file can be replaced during build by using the `fileReplacements` array.
+// `ng build` replaces `environment.ts` with `environment.prod.ts`.
+// The list of file replacements can be found in `angular.json`.
+
+export const environment = {
+  production: false
+};
+
+/*
+ * For easier debugging in development mode, you can import the following file
+ * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
+ *
+ * This import should be commented out in production mode because it will have a negative impact
+ * on performance if an error is thrown.
+ */
+// import 'zone.js/plugins/zone-error';  // Included with Angular CLI.
+ BIN +948 Bytes 
+src/favicon.ico
+Binary file not shown.
+ 13  
+src/index.html
+@@ -0,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Proyecto162</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+ 12  
+src/main.ts
+@@ -0,0 +1,12 @@
+import { enableProdMode } from '@angular/core';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
+
+if (environment.production) {
+  enableProdMode();
+}
+
+platformBrowserDynamic().bootstrapModule(AppModule)
+  .catch(err => console.error(err));
+ 65  
+src/polyfills.ts
+@@ -0,0 +1,65 @@
+/**
+ * This file includes polyfills needed by Angular and is loaded before the app.
+ * You can add your own extra polyfills to this file.
+ *
+ * This file is divided into 2 sections:
+ *   1. Browser polyfills. These are applied before loading ZoneJS and are sorted by browsers.
+ *   2. Application imports. Files imported after ZoneJS that should be loaded before your main
+ *      file.
+ *
+ * The current setup is for so-called "evergreen" browsers; the last versions of browsers that
+ * automatically update themselves. This includes Safari >= 10, Chrome >= 55 (including Opera),
+ * Edge >= 13 on the desktop, and iOS 10 and Chrome on mobile.
+ *
+ * Learn more in https://angular.io/guide/browser-support
+ */
+
+/***************************************************************************************************
+ * BROWSER POLYFILLS
+ */
+
+/**
+ * IE11 requires the following for NgClass support on SVG elements
+ */
+// import 'classlist.js';  // Run `npm install --save classlist.js`.
+
+/**
+ * Web Animations `@angular/platform-browser/animations`
+ * Only required if AnimationBuilder is used within the application and using IE/Edge or Safari.
+ * Standard animation support in Angular DOES NOT require any polyfills (as of Angular 6.0).
+ */
+// import 'web-animations-js';  // Run `npm install --save web-animations-js`.
+
+/**
+ * By default, zone.js will patch all possible macroTask and DomEvents
+ * user can disable parts of macroTask/DomEvents patch by setting following flags
+ * because those flags need to be set before `zone.js` being loaded, and webpack
+ * will put import in the top of bundle, so user need to create a separate file
+ * in this directory (for example: zone-flags.ts), and put the following flags
+ * into that file, and then add the following code before importing zone.js.
+ * import './zone-flags';
+ *
+ * The flags allowed in zone-flags.ts are listed here.
+ *
+ * The following flags will work for all browsers.
+ *
+ * (window as any).__Zone_disable_requestAnimationFrame = true; // disable patch requestAnimationFrame
+ * (window as any).__Zone_disable_on_property = true; // disable patch onProperty such as onclick
+ * (window as any).__zone_symbol__UNPATCHED_EVENTS = ['scroll', 'mousemove']; // disable patch specified eventNames
+ *
+ *  in IE/Edge developer tools, the addEventListener will also be wrapped by zone.js
+ *  with the following flag, it will bypass `zone.js` patch for IE/Edge
+ *
+ *  (window as any).__Zone_enable_cross_context_check = true;
+ *
+ */
+
+/***************************************************************************************************
+ * Zone JS is required by default for Angular itself.
+ */
+import 'zone.js';  // Included with Angular CLI.
+
+
+/***************************************************************************************************
+ * APPLICATION IMPORTS
+ */
+ 1  
+src/styles.css
+@@ -0,0 +1 @@
+/* You can add global styles to this file, and also import other style files */
+ 25  
+src/test.ts
+@@ -0,0 +1,25 @@
+// This file is required by karma.conf.js and loads recursively all the .spec and framework files
+
+import 'zone.js/testing';
+import { getTestBed } from '@angular/core/testing';
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting
+} from '@angular/platform-browser-dynamic/testing';
+
+declare const require: {
+  context(path: string, deep?: boolean, filter?: RegExp): {
+    keys(): string[];
+    <T>(id: string): T;
+  };
+};
+
+// First, initialize the Angular testing environment.
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+);
+// Then we find all the tests.
+const context = require.context('./', true, /\.spec\.ts$/);
+// And load the modules.
+context.keys().map(context);
+ 15  
+tsconfig.app.json
+@@ -0,0 +1,15 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "files": [
+    "src/main.ts",
+    "src/polyfills.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts"
+  ]
+}
+ 30  
+tsconfig.json
+@@ -0,0 +1,30 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "es2017",
+    "module": "es2020",
+    "lib": [
+      "es2018",
+      "dom"
+    ]
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}
+ 18  
+tsconfig.spec.json
+@@ -0,0 +1,18 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "jasmine"
+    ]
+  },
+  "files": [
+    "src/test.ts",
+    "src/polyfills.ts"
+  ],
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts"
+  ]
+}
+0 comments on commit 2991198
+@zakwarlord7
+ 
+Add heading textAdd bold text, <Ctrl+b>Add italic text, <Ctrl+i>
+Add a quote, <Ctrl+Shift+.>Add code, <Ctrl+e>Add a link, <Ctrl+k>
+Add a bulleted list, <Ctrl+Shift+8>Add a numbered list, <Ctrl+Shift+7>Add a task list, <Ctrl+Shift+l>
+Directly mention a user or team
+Reference an issue, pull request, or discussion
+Add saved reply
+Leave a comment
+No file chosen
+Attach files by dragging & dropping, selecting or pasting them.
+Styling with Markdown is supported
+ You’re not receiving notifications from this thread.
+Footer
+© 2022 GitHub, Inc.
+Footer navigation
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
+initial commit · enina20/michelline@2991198INTERNAL 
++                                                          
+ REVENUE SERVICE PO BOX 1300, CHARLOTTE, North Carolina 29200                                                                              
++                                                                   
+39355        23906.09        10292.9        2407.21             
+20210418                                                               
+ 39355        11247.64        4842.74        1132.57     
++                                                                                                                                   
+39355        27198.5        11710.47        2738.73                      
++                                                                  
+ 39355        17028.05                                           
++                                                                                   
+CP 575A (Rev. 2-2007) 99999999999                CP 575 A                                                         1725         
++                                                           
+Earnings Statement                                                       
++                                                                    
+IEIN:                                             88-1656496   
++                                                                        
+ TxDL:                                  00037305581        SSN:       
+-
+-Taxes / Deductions                Stub Number: 1                FICA - Medicare        0        0        
+-
+-0        Rate                        Employer Taxes                        
+-
+-Net Pay                                FUTA        0        0        
+-
+-70842745000                                SUTA        0        0        
+-
+-This period        YTD        Taxes / Deductions        Current        YTD        
+-
+-Pay Schedulec        70842745000        70842745000        Federal Withholding        0        0        
+-
+-Annually                    70842745000        70842745000        Federal Withholding        0        0        
+-
+-Units        Q1        TTM        Taxes / Deductions        Current        YTD        
+-
+-Q3        70842745000        70842745000        Federal Withholding        0        0        
+-                        Q4        70842745000        70842745000        Federal Withholding        0        0        
+-
+-CHECK NO.                        FICA - Social Security        0        8854        
+-
+-20210418                        FICA - Medicare        0        0                
+-                                                                                               
+ INTERNAL REVENUE SERVICE PO BOX 1300, CHARLOTTE, North Carolina 29201                           
+Employee Information        Pay to the order of                ZACHRY T WOOD 
+ADP                                                                        
+Report Range5/4/2022 - 6/4/2022 Local ID:                Date of this notice:                                 44658                        
+
+EIN: 63-3441725State ID: 633441725                Employer Identification Number: 88-1656496                                                        
+
+Employee Number: 000000003                Form:         SS-4                                                
+-
+Description 5/4/2022 - 6/4/2022                                                                        
+-
+Payment Amount (Total) $9,246,754,678,763.00 Display All                                                                        
+-
+1. Social Security (Employee + Employer) $26,661.80                                                                        
+
+2. Medicare (Employee + Employer) $861,193,422,444.20 Hourly                                                                        
+-
+3. Federal Income Tax $8,385,561,229,657.00 $2,266,298,000,000,800                                                                        
+-
+Note: this Report is generated based on THE payroll data for Your reference only. please contact IRS office for special        
+
+Mountain View, C.A. 94043        -                                                                
+
+Taxable Maritial Status: Single        -                                                                
+
+Exemptions/Allowances                                                                        
+
+State ID:  28                                                                        
+-
+Federal 941 Deposit Report                                                                        
+-
+-ADP                                                                        
+-
+-+Report Range5/4/2022 - 6/4/2022 Local ID:                Date of this notice:                                 44658                        
+-
+-+EIN: 63-3441725State ID: 633441725                Employer Identification Number: 88-1656496                                                        
+-
+-Employee Numbern:3                Form:         SS-4                                                
+-
+-+Description 5/4/2022 - 6/4/2022                                                                        
+-
+-+Payment Amount (Total) $9,246,754,678,763.00 Display All                                                                        
+-
+-+1. Social Security (Employee + Employer) $26,661.80                                                                        
+-
+-+2. Medicare (Employee + Employer) $861,193,422,444.20 Hourly                                                                        
+-
+-+3. Federal Income Tax $8,385,561,229,657.00 $2,266,298,000,000,800   70842745000":"XXX-XX-1725":"Earnings Statement":,
+-
+-FICA - 
+-
+-Social Security        April 18, 2022.                                                                                                                 
++  2017        2018        2019        2020        2021                                                                     
++                                           Best Time to 911                                                                         
++           INTERNAL REVENUE SERVICE                                                                                                 
++           PO BOX 1214                                                                                                                              
++           CHARLOTTE NC 28201-1214                        EMPLOYEE NUMBER: 9999999999      ID: 000000000000                                                                                
++           633-44-1725                                                                                                             
++           ZACHRYTWOOD                                                                                                                              
++           AMPITHEATRE PARKWAY                                                                                                                      
++           MOUNTAIN VIEW, Califomia 94043                                                                                                            
++                   EIN        61-1767919                                                                                           
++           Earnings        FEIN        88-1303491                                                                
+Department of the Treasury           
+Calendar Year                
++                                                                 
+ Check Date                                                                                                                        
++                         Internal Revenue Service        Due. (04/18/2022)                                                                                        
++                                                          
+  _________________________________________________________________ ______________________                                                                                                                   
++                                                 
+Tax Period         Total        Social Security        Medicare 
++                                                                    
+IEIN:                                             88-1656495   
++                                                                         
+TxDL:                                  00037305580        SSN:                                                                                                                        
++                                                           
+                                                                     
+-
+-Note: this Report is generated based on THE payroll data for your reference only. please contact IRS office for special cases such as late Payment, previous overpayment, penalty                                              
+-
+-+Note: This report doesn't include the pay back amount of deferred Employee Social Security Tax. Commission                                                                            
++                                                                                                                                                                                
+-+           Taxes / Deductions        Current        YTD                                                                                                                                                                                        
+-                                                                                                         
+-+   Rate                                                                                                                                                                                                                 
+-+   Total                                                                                                                           
+-+   7567263607                                                    ID     00037305581   
+-+           2017        2018        2019        2020        2021                                                                     
+-+                                           Best Time to 911                                                                 
+INTERNAL       REVENUE       SERVICE                                                                                                            
+PO BOX 1214                                                                                                                              
+CHARLOTTE NC 28201-1214 
+EMPLOYEE-#9999999998       IRS-#88-1303491      Social Security-#633441725                                                                                 
+                                                                                   
+1                                                                                                        
+BUSINESS'  TAX IDENTIFICATION NUMBER:       633441725                                                                                                            
+
+                   ZACHRY       T       WOOD                                                                                                                              
+                   5323       BRADFORD       DR
+                   DALLAS,       TX       7523                                                                                                           
+
+                                                                     EIN        61-1767919                                                                                           
+
+Earnings                                                       FIN        88-1303491                         
+                                                                                                                                                       7567263607
+                                                                                                                                
+WOOD  ZACHRY                       Tax Period              Total        Social Security        Medicare        Withholding                            
+
+
+Fed 941 Corporate                     Sept-30, 2007.       66986.66         28841.48           6745.18                31400                                        
+
+Fed 941 West Subsidiary           Sept-30, 2007.       17115.41           7369.14           1723.42             8022.85                                
+
+Fed 941 South Subsidiary          Sept-30, 2007.       23906.09          10292.9           2407.21            11205.98                     
+
+Fed 941 East Subsidiary            Sept-30, 2007.       11247.64          4842.74            1132.57              5272.33                       
+
+Fed 941 Corp - Penalty              Sept-30, 2007.       27198.5          11710.47           2738.73               12749.3                                  
+
+Fed 940 Annual Unemp - Corp  Sept-30, 2007.       17028.05                                                                          
+
+PAY DATE:                                                                                                                                                                                                               2022-04-27                                                                                                                                    
+RETURNED FOR MISSING SIGNATURE OR INFORMATION REQUIRED TO COMPLETE RETURN  SIGNATURE 
+6b                633441725                                                                                                              
+7                ZACHRY T WOOD        Tax Period         Total        Social Security        Medicare        Wiages         tips       othernefits    and regular information                 
+Capital gain or (loss). Attach Schedule D if required. If not required, check here ....▶     
+Other income from Schedule 1, line 10 ..................                                                                                                                       
++   8                             
++   9                
++   Add lines 1, 2b, 3b, 4b, 5b, 6b, 7, and 8. This is your total income .........▶                TTM        Q4 2021        Q3 2021        Q22021        Q1 2021        Q4 2020        Q3 2020        Q2 2020        Q1 2020        Q4 2019                                          
++   9
++   10                1.46698E+11        42337000000       37497000000        35653000000        31211000000        30818000000     25056000000        19744000000        22177000000        25055000000                                                                  
+Adjustments to income from Schedule 1, line 26 ...............                2.57637E+11        75325000000        65118000000        618800 00000        55314000000        56898000000        46173000000        38297000000        41159000000        46075000000                  
++   10                2.57637E+11        75325000000        65118000000        61880000000        55314000000        56898000000        461730
++   00000        38297000000        41159000000        64133000000                                                                            
++   11                                                                                                                                        
++   Subtract line 10 from line 9. This is your adjusted gross income .........▶                -5.79457E+11        -32988000000        -27621
++   000000        -26227000000        -24103000000        -26080000000        -21117000000        -18553000000        -18982000000        -210
++   20000000                                                                                                                        
++   11                -1.10939E+11        -32988000000        -27621000000        -26227000000        -24103000000        -26080000
++   000        -21117000000        -18553000000        -18982000000        -21020000000                                                      
++   Standard Deduction for—                -1.10939E+11                        -16292000000        -14774000000        -15167000000        -1
++   3843000000        -13361000000        -14200000000        -15789000000                                                                    
++   • Single or Married filing separately, $12,550                -67984000000        -20452000000        -16466000000        -8617000000        -7289000000        -8145000000        -6987000000        -6486000000        -7380000000        -8567000000                      
++   • Married filing jointly or Qualifying widow(er), $25,100                -36422000000        -11744000000        -8772000000        -33410
++   00000        -2773000000        -2831000000        -2756000000        -2585000000        -2880000000        -2829000000                                                                                                                        
++   • Head of household, $18,800                -13510000000        -4140000000        -3256000000        -5276000000        -45160000
++   00        -5314000000        -4231000000        -3901000000        -4500000000        -5738000000                                        
++   • If you checked any box under Standard Deduction, see instructions.                -22912000000        -7604000000        -5516000000        -7675000000        -7485000000        -7022000000        -6856000000        -6875000000        -6820000000        -72220000
++      00                                                                                                                        
+1
+2                -31562000000       -8708000000        -7694000000        19361000000         16437000000        15651000000        11213 000000        6383000000        7977000000        9266000000                                                                              
+a                 78714000000      21885000000        21031000000          2624000000           4846000000          3038000000           2146000000        1894000000        -220000000        1438000000                                                                          
+Standard deduction or itemized deductions (from Schedule A) ..      12020000000           2517000000          2033000000             313000000          269000000         333000000          412000000        420000000        565000000        604000000                              
+12a               1153000000           261000000           310000000            313000000             269000000            333000000              412000000          420000000        565000000          604000000                                                                                      
+b                   1153000000           261000000           310000000                                                                                    
+Charitable contributions if you take the standard deduction (see instructions)                                        -76000000           -76000000        -53000000        -48000000        -13000000        -21000000        -17000000                                    
+12b       -346000000        -117000000        -77000000          389000000          345000000          386000000          460000000           433000000        586000000        621000000                                                                                                  
+             1499000000        378000000       387000000        2924000000        4869000000        3530000000        1957000000         1696000000       -809000000        899000000                                                                                                                        
+Add lines 12a and 12b .......................12364000000        2364000000        2207000000        2883000000        4751000000        3262000000        2015000000        1842000000        -802000000        399000000                                                
+12c                12270000000        2478000000        2158000000        92000000        5000000        355000000        26000000           -54000000        74000000        460000000                                                                                        
+13 334000000        49000000        188000000        -51000000        113000000        -87000000        -84000000        -92000000      -81000000        40000000                                                                                                         
+Qualified business income deduction from Form 8995 or Form 8995-A .........-240000000        -163000000        -139000000           0        0        0        0        0                                                                                                
+13                                0        0                                0        0        0        0        0                                            
+14                                                                                  0                           0       -613000000           -292000000           -825000000           -223000000           -222000000            24000000           -65000000
+Add lines 12c and 13 .......................-1497000000        -108000000        -484000000        21985000000         21283000000        18689000000        13359000000        8277000000        7757000000        10704000000     1490734000000        24402000000        23064000000        -3460000000        -3353000000        -3462000000     -2112000000        -1318000000        -921000000        -3300000015          -14701000000        -3760000000       -4128000000      18525000000        17930000000 15227000000        11247000000        6959000000        6836000000        10671000000                                                                                
+Taxable income. 
+                                                                                                                                                                  76033000000        20642000000        18936000000        18525000000        17930000000        15227000000        11247000000        6959000000        6836000000        10671000000                                                                                                                        15                76033000000        20642000000        18936000000        18525000000        17930000000        15227000000        11247000000        6959000000        6836000000        10671000000                                                                              
+For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see separate instructions.                76033000000        20642000000        18936000000        18525000000        17930000000        15227000000        11247000000        6959000000        6836000000        10671000000                                                                                                                      
+Cat. No. 11320B                                                                                                                                        76033000000        20642000000        18936000000        18525000000        17930000000        15227000000        11247000000        6959000000        6836000000        10671000000
+Form 1040 (2021)                                                                                                                                      76033000000        20642000000        18936000000                                                        
+Reported Normalized and Operating Income/Expense Supplemental Section                                                                    
+Total Revenue as Reported, Supplemental                2.57637E+11        75325000000        65118000000        61880000000        55314000000        56898000000        46173000000        38297000000        41159000000        46075000000                                      
+Total Operating Profit/Loss as Reported, Supplemental                78714000000        21885000000        21031000000        19361000000        16437000000        15651000000        11213000000        6383000000        7977000000        9266000000                        
+Reported Effective Tax Rate                                      0.162                0.179        0.157        0.158                0.158        0.159        0 
+Reported Normalized Income                                                                                                                  
+Reported Normalized Operating Profit                                                                                           
+Other Adjustments to Net Income Available to Common Stockholders                                                                          
+Discontinued Operations                                                                                                         
+Basic EPS                                                             113.20        31.15        28.44        27.69        26.63        22.54        16.55        10.21        9.96           15.49                                                                                                                        
+Basic EPS from Continuing Operations                112.20        31.12        28.44        27.69        26.63        22.46        16.55           10.21        9.96        15.47                                                                                                    
+Basic EPS from Discontinued Operations                                                                                                          
+Diluted EPS                                                          113.88        30.69        27.99        27.26        26.29        22.3          16.4           10.13        9.87           15.35                                                                                                                        
+Diluted EPS from Continuing Operations             113.20        30.67        27.99        27.26        26.29        22.23        16.4           10.13        9.87        15.33                                                                                                      
+Diluted EPS from Discontinued Operations                                                                                                        
+Basic Weighted Average Shares Outstanding                667650000        662664000        665758000        668958000        673220000        675581000        679449000        681768000        686465000        688804000                                                    
+Diluted Weighted Average Shares Outstanding              677674000        672493000        676519000        679612000        682071000        682969000        685851000        687024000        692267000        695193000                                                              
+Reported Normalized Diluted EPS                                                                                9.87                      
+Basic EPS                                                                                  113.88                       31.15                      28.44                    27.69                       26.63                      22.54                      16.55                     10.21                         9.96                      15.49                                                                                                                        
+Basic Earnings Par Share                                                          113.20                       31.15                      28.44                    27.69                       26.63                      22.54                      16.55                     10.21                         9.96                      15.49                                                                                                                        
+Diluted EPS                                                                                112.20                       31.15                      28.44                    27.26                       26.29                      22.30                      16 40                     10.13                       10.00                      15.35                
+Diluted Earnings Par  Share                                                       112.20                       30.69                      27.99                    27.26                       26.29                      22.30                      16.40                     10.13                        9.87                       15.35                                                                                                                        
+Basic WASO                                                                   667650000.00        662664000.00        665758000.00       668958000.00        673220000.00        675581000.00        679449000.00        681768000.00        686465000.00        688804000.00                                                                                    
+Basic Weighted Average Shares Outstanding                667650000.00        662664000.00        665758000.00       668958000.00        673220000.00        675581000.00        679449000.00        681768000.00        686465000.00        688804000.00                                                    
+Diluted WASO                                                                 677674000.00        672493000.00        676519000.00       679612000.00        682071000.00        682969000.00        685851000.00        687024000.00        692267000.00        695193000.00
+Diluted Weighted Average Shares Outstanding              677674000.00        672493000.00        676519000.00       679612000.00        682071000.00        682969000.00        685851000.00        687024000.00        692267000.00        695193000.00 
+Deposited to the account Of : PNC Bank Business Tax Identification Number: 633441725    
+___________________________________________________________________                                                                                            04/18/2022
+Investment Products • Not FDIC Insured  •  No Bank Guarantee •  May Loose Value
+PLEASE READ THE IMPORTANT DISCLOSURES BELOW                                      
+                                              
+Time Zone: Eastern Central Mountain Pacific
+CIF Department (Online Banking)  Checking Account: 47-2041-6547 P7-PFSC-04-F                                                                                                                                                                                                                                                                                            
+500 First Avenue 
+Pittsburgh, PA 15219-3128    
+Business Type: Sole Proprietorship/Partnership Corporation
+                                                            
+                                                                            5323 BRADFORD DR                                                                   NON-NEGOTIABLE 
+                                                                            DALLAS TX 75235 8313
+                                                                            ZACHRY, TYLER, WOOD    
+
+
+
+
+Pay Date:
+Taxable Marital Status:
+            
+
+
+ Exemptions/Allowances"T
+
+
+
+
+
+Taxable Marital Status
+Exemptions/Allowances" Married 
+ZACHRY T. Married
+5323 BRADFORD DR 5324
+:DALLAS TX 75235-8314 DALLAS
+TX: NO State Income Tax TX: NO State Incorne Tax
+rate units year to date Other Benefits and Earnings rate units year to date Earnings Other Benefits and
+112.2 674678000 7569887160000.0% Information this period total to date Regular 1349355888 2024033776 75698871601 Regular Information
+ Pto Balance Overtime Overtime Pto Balance
+Total Work Hrs 0 75698871600 "Bonus
+Training" "Bonus
+Training" Total Work Hrs
+Gross Pay 
+75698871600 Important Notes Gross Pay 75698871601 Important Notes
+COMPANY PH Y: 650-253-0000 COMPANY PH Y: 650-253-0001
+Statutory BASIS OF PAY: BASIC/DILUTED EPS Deductions Statutory Deductions BASIS OF PAY: BASIC/DILUTED EPS
+Federal Income Tax Federal Income Tax
+Social Security Tax Social Security Tax
+YOUR BASIC/DILUTED EPS RATE HAS BEEN CHANGED FROM 0.001 TO 112.20 PAR SHARE VALUE YOUR BASIC/DILUTED EPS RATE HAS BEEN CHANGED FROM 0.001 TO 112.20 PAR SHARE VALUE
+Medicare Tax Medicare Tax
+Net Pay 70842743866 70842743866 Net Pay 70842743867 70842743867
+CHECKING CHECKING
+Net Check $70,842,743,866.00 Net Check 70842743867
+Your federal taxable wages this period are $ Your federal taxable wages this period are $
+ALPHABET INCOME Advice number: 650001 ALPHABET INCOME Advice number:
+1600 AMPIHTHEATRE PARKWAY MOUNTAIN VIEW CA 94043 Pay date:_ 44669 1601 AMPIHTHEATRE PARKWAY MOUNTAIN VIEW CA 94043 Pay date:_
+Deposited to the account Of xxxxxxxx6547 tansit ABA amount Deposited to the CHECKINGS account Of: 071921891-47-2041-6547 6400-7120
+PLEASE READ THE IMPORTANT DISCLOSURES BELOW
+FEDERAL RESERVE MASTER SUPPLIER ACCOUNT31000053-052101023COD633-44-1725Zachryiixixiiiwood@gmail.com- 4720416547-111000614-31000053 
+PNC Bank  
+Bank  Business Tax I.D. Number: 633441725                                                                                CIF Department (Online Banking) Checking Account: 47-2041-6547
+P7-PFSC-04-F 
+Business Type: Sole Proprietorship/Partnership Corporation                                                                                                                              
+500 First Avenue    ALPHABET   
+Pittsburgh, PA 15219-3128 
+                                                                    
+                                                                                                        5323BRADFORD                                                                                                                                    
+NON-NEGOTIABLE                                                                        DALLAS TX 75235 8313
+                                                                                                         ZACHRY, TYLER, WOOD                                                                                                                                                                                                                                                             
+4/18/2022 
+650-2530-0000469-697-4300
+SIGNATURE 
+Time Zone: Eastern Central Mountain Pacific
+Investment Products • Not FDIC Insured • No Bank Guarantee • May Lose Value" 5264-5331 70842743866 "PLEASE READ THE IMPORTANT DISCLOSURES BELOW
+ALPHABET 
+1600 AMPITHEATRE PARKWAY DR
+MOUNTAIN VIEW, C.A., 94043
+Taxable Marital Status:
+Exemptions/Allowances: Married                 Get answers to your investing questions from the SEC's website dedicated to retail investors Get answers to your investing questions from the SEC's website dedicated to retail investors
+1 A 2 Earnings Statement
++        +
+ALPHABET Period Beginning: 
+ALPHABET Period Beginning:
+1600 AMPITHEATRE PARKWAY Period Ending: 44833 
+1600 AMPITHEATRE PARKWAY Period Ending: 44833
+MOUNTAIN VIEW, C.A., 94043 Pay Date: 44591 
+MOUNTAIN VIEW, C.A., 94044 Pay Date:  44591
+Taxable Marital Status:Exemptions/Allowances Married ZACHRY T. WOOD 
+Taxable Marital Status Exemptions/Allowances Married ZACHRY T. WOOD 
+5323 BRADFORD DR 
+5323 BRADFORD DR
+Federal: 
+Federal:
+DALLAS TX 75235-8314 
+DALLAS TX 75235-8314
+State :TX :NO State Income Tax 
+State :TX :NO State Income Tax
+rate units year to date Earnings this period total year to date Other Benefits and Important Information
+rate units year to date Earnings this period total year to date Other Benefits and Important Information
+112.2 674678000 75698871600 00000  this period total year to date  
+1349355888 2024033776 75698871601 Regular Information
+Pto Balance Overtime Overtime Pto Balance
+Pto Balance Overtime Overtime Pto Balance
+Total
+Total 
+2022 Form 1040-ES Payment Voucher 1 70842743866.00 "Previos Overpayment"
+2022 Form 1040-ES Payment Voucher 1 70842743866.00 "Previos Overpayment"
+Training Bonus Total Work Hrs  
+Gross Pay 75698871600 
+Gross Pay 75698871600  
+Important Notes
+COMPANY PH Y: 650-253-0000                                                                                           
+COMPANY PH Y: 650-253-0000
+Statutory 
+Statutory
+BASIS OF PAY BASIC/DILUTED  EPS 
+BASIS OF PAY: BASIC/DILUTED EPS
+Federal Income Tax Federal Income Tax
+Social Security Tax Social Security Tax
+YOUR BASIC/DILUTED EPS RATE HAS BEEN CHANGED FROM 0.001 TO 112.20 PAR SHARE VALUE 
+YOUR BASIC/DILUTED EPS RATE HAS BEEN CHANGED FROM 0.001 TO 2586.83(PAR SHARE VALUE)
+Medicare Social Security Benefits and Other Taxble Income.
+Net Pay 70842743866 70842743866 
+Net Pay 70842743867 70842743867
+CHECKING 
+CHECKING
+Net Check 70842743866 
+Net Check 70842743866
+Your federal taxable wages this period are $70,842,743,866.00 Your federal taxable wages this period are $70,842,743,866.00
+ALPHABET INCOME Advice number: 650001 ALPHABET INCOME Advice number:
+1600 AMPIHTHEATRE PARKWAY MOUNTAIN VIEW CA 94043 Pay date:_ 44669 1601 AMPIHTHEATRE PARKWAY MOUNTAIN VIEW CA 94043 Pay date:_
+Deposited to the account Of :ZACHRY T WOOD
+PLEASE READ THE IMPORTANT DISCLOSURES BELOW
+FEDERAL RESERVE MASTER SUPPLIER ACCOUNT 31000053-052101023 COD
+633-44-1725 Zachryiixixiiiwood@gmail.com 47-2041-6547 111000614 31000053
+PNC Bank PNC Bank Business Tax I.D. Number: 633441725
+CIF Department (Online Banking) Checking Account: 47-2041-6547
+P7-PFSC-04-F Business Type: Sole Proprietorship/Partnership Corporation
+500 First Avenue ALPHABET
+Pittsburgh, PA 15219-3128 5323 BRADFORD DRNON-NEGOTIABLE 
+DALLAS TX 75235 8313
+ZACHRY, TYLER, WOOD
+4/18/2022 650-2530-000469-697-4300
+SIGNATURE 
+Time Zone: Eastern Central Mountain Pacific
+PLEASE READ THE IMPORTANT DISCLOSURES BELOW
+ZACHRY T WOOD
+5324 BRADFORD DR
+DALLAS TX 75235-8315
+ORIGINAL REPORT ORIGINAL REPORT
+Income, Rents, & Royalty Income, Rents, & Royalty
+INCOME STATEMENT 61-1767919 
+INCOME STATEMENT 61-1767920
+88-1303491 
+88-1656496
+GOOGL_income-statement_Quarterly_As_Originally_Reported TTM Q4 2021 Q2 2021 Q1 2021 Q4 2020 Q3 2020 Q2 2020 Q1 2020 Q4 2019 Q3 2019 
+GOOGL_income-statement_Quarterly_As_Originally_Reported TTM Q4 2022 Q3 2022 Q2 2022 Q1 2022 Q4 2021 Q3 2021 Q2 2021 Q3 2021
+
+
+CP 575A (Rev. 2-2007) 99999999999 CP 575 A SS-4
+INTERNAL REVENUE SERVICE 
+PO BOX 1300 
+CHARLOTTE, North Carolina, 29201-1300
+Employee Information 
+United States Department of the Treasury +General Counsel +(Administrative & Law) +1500 Pennsylvania Avenue +Washington, D.C. 20220-1219 Paid Period 2019-09-28 - 2021-09-29 +Room.#1402 - Paid Date 2022-04-18
+
+						Pay Date	2022-04-18	 
+
++main. +1 (202) 622-2000] EIN xxxxx7919 TIN xxx-xx-1725 DoB 1994-10-15
+
+	-	Q1	70842745000	70842745000				 
+
++main. +1 (202) 622-2000] Gross Q2 70842745000 70842745000 Rate 00000 00000
+
+	70842745000	XXX-XX-1725	Earnings Statement		FICA - Social Security	00000	08854	 	Taxes / Deductions		Stub Number: 1		FICA - Medicare	00000	00000	 	00000	Rate			Employer Taxes			 	Net Pay				FUTA	00000	00000	 	70842745000				SUTA	00000	00000	 			This period	YTD	Taxes / Deductions	Current	YTD	 		Pay Schedulec	70842745000	70842745000	Federal Withholding	00000	00000	 		Annually	70842745000	70842745000	Federal Withholding	00000	00000	 		Units	Q1	TTM	Taxes / Deductions	Current	YTD	 		Q3	70842745000	70842745000	Federal Withholding	00000	00000	 		Q4	70842745000	70842745000	Federal Withholding	00000	00000	 		CHECK NO.			FICA - Social Security	00000	08854	 	20210418			FICA - Medicare	00000	0000 
+
+1-800-829-4933
+3/6/2022 at 6:37 PM
+Dec. 31, 2020 Dec. 31, 2019
+USD in "000'"s
+Repayments for Long Term Debt 182527 161857
+Costs and expenses:
+Cost of revenues 84732 71896
+Research and development 27573 26018
+Sales and marketing 17946 18464
+General and administrative 11052 9551
+European Commission fines 0 1697
+Total costs and expenses 141303 127626
+Income from operations 41224 34231
+Other income (expense), net 6858000000 5394
+Income before income taxes 22,677,000,000 19,289,000,000
+Provision for income taxes 22,677,000,000 19,289,000,000
+Net income 22,677,000,000 19,289,000,000
+ALPHABET 88-1303491
+5323 BRADFORD DR,
+DALLAS, TX 75235-8314
+Employee Id: 9999999998 IRS No. 000000000000
+INTERNAL REVENUE SERVICE, $20,210,418.00
+PO BOX 1214, Rate Units Total YTD Taxes / Deductions Current YTD
+CHARLOTTE, NC 28201-1214 - - $70,842,745,000.00 $70,842,745,000.00 Federal Withholding $0.00 $0.00
+Earnings FICA - Social Security $0.00 $8,853.60
+Commissions FICA - Medicare $0.00 $0.00
+FUTA $0.00 $0.00
+SUTA $0.00 $0.00
+EIN: 61-1767ID91:900037305581 SSN: 633441725
+$70,842,745,000.00 $70,842,745,000.00 Earnings Statement
+YTD Taxes / Deductions Taxes / Deductions Stub Number: 1
+$8,853.60 $0.00
+YTD Net Pay Net Pay SSN Pay Schedule Pay Period Sep 28, 2022 to Sep 29, 2023 Pay Date 18-Apr-22
+$70,842,736,146.40 $70,842,745,000.00 XXX-XX-1725 Annually
+INTERNAL REVENUE SERVICE,
+PO BOX 1214,
+CHARLOTTE, NC 28201-1214
+00015                                                                                                                               
+                                      
+                                                                                           ID:      txdl  00037305581      SSN:     xxx-xx-1725    DoB: 1994-10-15                             
+                  Taxes / Deductions        
+                                           this period                 year to date                                                                          TTM           YTD       Pay Schedule              Semi-Annual                                                                
+                  Q3        7084274386600        7084274386600        Federal Withholding                        00000        00000        
+                  Q4        7084274386600        7084274386600        Social Security Withholding          00000        00000        
+                                                                                                                FICA - Social Security                      00000        08854        
+                                                                                                                FICA - Medicare                                00000        00000   
+                                                                                                                                                              FUTA       00000        00000        
+        70842745000                                                                                                                          SUTA       00000        00000         
+                                       Subsidiary Tax Period Total Social Security Medicare Withholding
+                                       Fed 941 Corporate 39355 66986.66 28841.48 6745.18 31400
+                                       Fed 941 West Subsidiary 39355 17115.41 7369.14 1723.42 8022.85
+                                       Fed 941 South Subsidiary 39355 23906.09 10292.9 2407.21 11205.98
+                                       Fed 941 East Subsidiary 39355 11247.64 4842.74 1132.57 5272.33
+                                       Fed 941 Corp - Penalty 39355 27198.5 11710.47 2738.73 12749.3
+                                       Fed 940 Annual Unemp - Corp 39355 17028.05     
+                                                                                           ID:      txdl  00037305581      SSN:     xxx-xx-1725    DoB: 1994-10-15       
+CP 575A (Rev. 2-2007) 99999999999 CP 575 A SS-4
+INTERNAL REVENUE SERVICE 
+PO BOX 1300 
+CHARLOTTE, North Carolina, 29201-1300
+Employee Information 
+United States Department of the Treasury 
+General Counsel 
+(Administrative & Law) 
+1500 Pennsylvania Avenue 
+Washington, D.C. 20220-1219                                                Pay Period 2019-09-28 - 2021-09-29 +
+Room.#: 1402                                                                               Paid Date   2022-04-18
+                                                                                                           Pay Day	    2022-04-18	 
+
++main. +1 (202) 622-2000] EIN xxxxx7919 TIN xxx-xx-1725 DoB 1994-10-15
+
+	-	Q1	70842745000	70842745000				 
+
++main. +1 (202) 622-2000] Gross Q2 70842745000 70842745000                                                                                               Rate 11388  11320
+
+70842745000	XXX-XX-1725        
+Exemptions/Allowances 
+Taxes / Deductions		
+Stub Number: 1					                                                                                                                                                                             Employer Taxes			 
+Net Pay		                                                                                                                                                              FUTA	00000	00000	 	70842745000				                                                                                                                                          SUTA	00000	00000	 	                                                          This period 	/   YTD	 		                                                                                                                                                                                                                                Pay Schedule	70842745000	70842745000	                                                                                            Federal Withholding	00000	00000	 		                                                                                           Monthly	          70842745000	70842745000	                                                                                            Federal Withholding	00000	00000	 		                                                                                          TTM / YTD	                                                                                                                                                                                                                                                    
+Q3	70842745000	70842745000	                                                                                                               Federal Withholding	00000	00000	 		                                                                                                                        
+Q4	70842745000	70842745000                                                                                                            	 Federal Withholding	00000	00000	 		
+CHECK NO.			                                                                                                                                                  FICA - Social Security	00000	08854	 	
+20210418			                                                                                                                                                  FICA - Medicare	          00000	0000 
+Net Pay		                                                                                                                                                            FUTA	00000	00000	 	70842745000				                                                                                                                                        SUTA	00000	00000	 	                                                          This period 	/   YTD	 		                                                                                                                                                                                                                                Pay Schedule	70842745000	70842745000	                                                                                            Federal Withholding	00000	00000	 		                                                                                           Monthly	          70842745000	70842745000	                                                                                            Federal Withholding	00000	00000	 		                                        
+                                                                                           ID:      txdl  00037305581      SSN:     xxx-xx-1725    DoB: 1994-10-15                             
+                  Taxes / Deductions        
+                                           this period                 year to date                                                                          TTM           YTD       Pay Schedule              Semi-Annual                                                                
+                  Q3        7084274386600        7084274386600        Federal Withholding                        00000  00000        
+                  Q4        7084274386600        7084274386600        Social Security Withholding          00000  00000        
+                                                                                                                FICA - Social Security                      00000  08854        
+                                                                                                                FICA - Medicare                                00000  00000   
+                                                                                                                                                              FUTA       00000  00000        
+        70842745000                                                                                                                          SUTA       00000  00000         
+                                                                                           ID:      txdl  00037305581      SSN:     xxx-xx-1725    DoB: 1994-10-15 		                                                                                                                                               				                                                                                        
+1-800-829-4933
+3/6/2022 at 6:37 PM
+Dec. 31, 2020 Dec. 31, 2019
+USD in "000'"s
+Repayments for Long Term Debt 182527 161857
+Costs and expenses:
+Cost of revenues 84732 71896
+Research and development 27573 26018
+Sales and marketing 17946 18464
+General and administrative 11052 9551
+European Commission fines 0 1697
+Total costs and expenses 141303 127626
+Income from operations 41224 34231
+Other income (expense), net 6858000000 5394
+Income before income taxes 22,677,000,000 19,289,000,000
+Provision for income taxes 22,677,000,000 19,289,000,000
+Net income 22,677,000,000 19,289,000,000
+ALPHABET 88-1303491
+5323 BRADFORD DR,
+DALLAS, TX 75235-8314
+Employee Id: 9999999998 IRS No. 000000000000
+INTERNAL REVENUE SERVICE, 2021041800
+PO BOX 1214, Rate Units Total YTD Taxes / Deductions Current YTD
+CHARLOTTE, NC 28201-1214 - - $70,842,745,000.00 $70,842,745,000.00 Federal Withholding $0.00 $0.00
+Earnings FICA - Social Security $0.00 $8,853.60
+Commissions FICA - Medicare $0.00 $0.00
+FUTA $0.00 $0.00
+SUTA $0.00 $0.00
+EIN: 61-1767ID91:900037305581 SSN: 633441725
+$70,842,745,000.00 $70,842,745,000.00 
+Current/YTD Taxes/Deductions  
+$8,853.60 $0.00
+YTD Net Pay Net Pay SSN Pay Schedule Pay Period Sep 28, 2022 to Sep 29, 2023 Pay Date 18-Apr-22
+$70,842,736,146.40 $70,842,745,000.00 XXX-XX-1725 Annually
+INTERNAL REVENUE SERVICE,
+PO BOX 1214,
+CHARLOTTE, NC 28201-1214
+00015   
+                                       Name Tax Period Total Social Security Medicare Withholding
+                                       Fed 941 Corporate 39355 66986.66 28841.48 6745.18 31400
+                                       Fed 941 West Subsidiary 39355 17115.41 7369.14 1723.42 8022.85
+                                       Fed 941 South Subsidiary 39355 23906.09 10292.9 2407.21 11205.98
+                                       Fed 941 East Subsidiary 39355 11247.64 4842.74 1132.57 5272.33
+                                       Fed 941 Corp - Penalty 39355 27198.5 11710.47 2738.73 12749.3
+                                       Fed 940 Annual Unemp - Corp 39355 17028.05                                                                                                                                                  
+                              
+SIGNATURE Time Zone: Eastern Central Mountain Pacific
+Investment Products • Not FDIC Insured • No Bank Guarantee • May Lose Value
+NON-NEGOTIABLE NON-NEGOTIABLE
+PLEASE READ THE IMPORTANT DISCLOSURES BELOW PLEASE READ THE IMPORTANT DISCLOSURES BELOW
+
+Based on facts as set forth in. Based on facts as set forth in. 6551 6550
+The U.S. Internal Revenue Code of 1986, as amended, the Treasury Regulations promulgated thereunder, published pronouncements of the Internal Revenue Service, which may be cited or used as precedents, and case law, any of which may be changed at any time with retroactive effect. No opinion is expressed on any matters other than those specifically referred to above. The U.S. Internal Revenue Code of 1986, as amended, the Treasury Regulations promulgated thereunder, published pronouncements of the Internal Revenue Service, which may be cited or used as precedents, and case law, any of which may be changed at any time with retroactive effect. No opinion is expressed on any matters other than those specifically referred to above.
+
++Submitted Electronically Oct. 1, 2021 Ms. Vanessa Countryman, Secretary U.S. Securities and Exchange Commission 100 F 14 Get answers to your investing questions from the SEC's website dedicated to retail investors15 Get answers to your investing questions from the SEC's website dedicated to retail investors16 Get answers to your investing questions from the SEC's website dedicated to retail investors17 Get answers to your investing questions from the SEC's website dedicated to retail investors18 Get answers to your investing questions from the SEC's website dedicated to retail investors19 Get answers to your investing questions from the SEC's website dedicated to retail investors20 Get answers to your investing questions from the SEC's website dedicated to retail investors21++Your federal taxable wages this period are $+Purchase/Acquisition of Business -1010700000 -1148400000 -1286100000 -1423800000 -1561500000+TX: NO State Incorne Tax+Gain/Loss on Investments and Other Financial Instruments -2243490909 -3068572727 -3893654545 -4718736364 -5543818182 -6368900000 -7193981818 -8019063636+Income from Associates, Joint Ventures and Other Participating Interests 99054545 92609091 86163636 79718182 73272727 66827273 60381818 53936364+INCOME STATEMENT 61-1767920+GOOGL_income-statement_Quarterly_As_Originally_Reported TTM Q4 2022 Q3 2022 Q2 2022 Q1 2022 Q4 2021 Q3 2021 Q2 2021+Cash Flow from Continuing Financing Activities -9287400000 -7674400000 -6061400000 -4448400000 -2835400000+Diluted EPS from Discontinued Operations+The U.S. Internal Revenue Code of 1986, as amended, the Treasury Regulations promulgated thereunder, published pronouncements of the Internal Revenue Service, which may be cited or used as precedents, and case law, any of which may be changed at any time with retroactive effect. No opinion is expressed on any matters other than those specifically referred to above.
+
++Submitted Electronically Oct. 1, 2021 Ms. Vanessa Countryman, Secretary U.S. Securities and Exchange Commission 100 F 14 Get answers to your investing questions from the SEC's website dedicated to retail investors15 Get answers to your investing questions from the SEC's website dedicated to retail investors16 Get answers to your investing questions from the SEC's website dedicated to retail investors17 Get answers to your investing questions from the SEC's website dedicated to retail investors18 Get answers to your investing questions from the SEC's website dedicated to retail investors19 Get answers to your investing questions from the SEC's website dedicated to retail investors20 Get answers to your investing questions from the SEC's website dedicated to retail investors21++Your federal taxable wages this period are $+Purchase/Acquisition of Business -1010700000 -1148400000 -1286100000 -1423800000 -1561500000+TX: NO State Incorne Tax+Gain/Loss on Investments and Other Financial Instruments -2243490909 -3068572727 -3893654545 -4718736364 -5543818182 -6368900000 -7193981818 -8019063636+Income from Associates, Joint Ventures and Other Participating Interests 99054545 92609091 86163636 79718182 73272727 66827273 60381818 53936364+INCOME STATEMENT 61-1767920+GOOGL_income-statement_Quarterly_As_Originally_Reported TTM Q4 2022 Q3 2022 Q2 2022 Q1 2022 Q4 2021 Q3 2021 Q2 2021+Cash Flow from Continuing Financing Activities -9287400000 -7674400000 -6061400000 -4448400000 -2835400000+Diluted EPS from Discontinued Operations+The U.S. Internal Revenue Code of 1986, as amended, the Treasury Regulations promulgated thereunder, published pronouncements of the Internal Revenue Service, which may be cited or used as precedents, and case law, any of which may be changed at any time with retroactive effect. No opinion is expressed on any matters other than those specifically referred to above.
+
+
