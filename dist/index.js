@@ -66,6 +66,18 @@ function run() {
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
             const labelsToRemove = [];
+            if (changedFiles.length === 0) {
+                core.debug(`exiting early because pr #${prNumber} has no changed files.`);
+                if (syncLabels) {
+                    for (let label of pullRequest.labels) {
+                        if (label.name !== undefined) {
+                            labelsToRemove.push(label.name);
+                        }
+                    }
+                    yield removeLabels(client, prNumber, labelsToRemove);
+                }
+                return;
+            }
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
