@@ -47,7 +47,48 @@ describe('run', () => {
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
-  it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
+  it("does not add labels to PRs that have no changed files", async () => {
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles();
+
+    await run();
+
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("(with sync-labels: true) removes all labels from PRs that have no changed files", async () => {
+    let mockInput = {
+      "repo-token": "foo",
+      "configuration-path": "bar",
+      "sync-labels": true,
+    };
+
+    jest
+      .spyOn(core, "getInput")
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+
+    usingLabelerConfigYaml("only_pdfs.yml");
+    mockGitHubResponseChangedFiles();
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{ name: "touched-a-pdf-file" }],
+      },
+    });
+
+    await run();
+
+    expect(removeLabelMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledWith({
+      owner: "monalisa",
+      repo: "helloworld",
+      issue_number: 123,
+      name: "touched-a-pdf-file",
+    });
+  });
+
+  it("(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern", async () => {
     let mockInput = {
       'repo-token': 'foo',
       'configuration-path': 'bar',
