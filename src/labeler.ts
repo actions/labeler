@@ -34,9 +34,9 @@ export async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const owners: string[] = await getCodeOwnersFromPaths(changedFiles)
-    const ownersStr = owners.toString()
-    core.debug(`found all codeowners: ${ownersStr}`)
+    const owners: string[] = await getCodeOwnersFromPaths(changedFiles);
+    const ownersStr = owners.toString();
+    core.debug(`found all codeowners: ${ownersStr}`);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
       client,
       configPath
