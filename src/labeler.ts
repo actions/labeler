@@ -34,9 +34,10 @@ export async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
+    core.debug("fetching codeowners");
     const owners: string[] = await getCodeOwnersFromPaths(changedFiles);
     const ownersStr = owners.toString();
-    core.debug(`found all codeowners: ${ownersStr}`);
+    core.debug("found all codeowners: " + ownersStr);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
       client,
       configPath
@@ -192,6 +193,7 @@ function checkAny(changedFiles: string[], globs: string[]): boolean {
   const matchers = globs.map((g) => new Minimatch(g));
   core.debug(`  checking "any" patterns`);
   for (const changedFile of changedFiles) {
+    core.debug(` checking ${changedFile}`)
     if (isMatch(changedFile, matchers)) {
       core.debug(`  "any" patterns matched against ${changedFile}`);
       return true;
