@@ -1,0 +1,17 @@
+name: Build & Test
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+  push:
+    branches:
+      - main
+      - releases/*
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  call-basic-validation: # The reusable workflow can be found here: https://github.com/actions/reusable-workflows/blob/main/.github/workflows/basic-validation.yml
+    name: Basic validation
+    uses: actions/reusable-workflows/.github/workflows/basic-validation.yml@main

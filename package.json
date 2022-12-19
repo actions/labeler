@@ -7,6 +7,7 @@
     "build": "tsc && ncc build lib/main.js",
     "format": "prettier --write \"**/*.ts\"",
     "format-check": "prettier --check \"**/*.ts\"",
+    "lint": "",
     "test": "jest"
   },
   "repository": {
