@@ -56,6 +56,11 @@ label1:
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
+
+# Add label3 to any change to .txt files within the entire repository. Quotation marks are required for the leading asterisk
+label3:
+- '**/*.txt'
+
 ```
 
 #### Common Examples
