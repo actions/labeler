@@ -5,8 +5,9 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc && ncc build lib/main.js",
-    "format": "prettier --write \"**/*.ts\"",
-    "format-check": "prettier --check \"**/*.ts\"",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "echo \"Fake command that does nothing. It is used in reusable workflows\"",
     "test": "jest"
   },
   "repository": {
@@ -22,7 +23,7 @@
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.9.1",
+    "@actions/core": "^1.10.0",
     "@actions/github": "^5.0.0",
     "js-yaml": "^4.1.0",
     "minimatch": "^3.0.4"
@@ -36,6 +37,6 @@
     "jest": "^27.5.1",
     "prettier": "^2.7.1",
     "ts-jest": "^27.1.3",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.4"
   }
 }

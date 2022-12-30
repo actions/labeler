@@ -71,7 +71,7 @@ repo:
 - '*'
 
 # Add '@domain/core' label to any change within the 'core' package
-@domain/core:
+'@domain/core':
 - package/core/*
 - package/core/**/*
 
