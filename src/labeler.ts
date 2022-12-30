@@ -131,15 +131,15 @@ async function getLabelGlobs(
   try {
     configurationContent = await fetchContent(client, configurationPath);
   } catch (e) {
-    console.error(e + " with type " + typeof e);
+    console.error(e + ' with type ' + typeof e);
     // ignoring error type as I can not import it without changing dependencies
     // all HTTP errors thrown should have the property "name"
     // @ts-ignore
-    if (e.name == "HttpError" || e.name == "NotFound") {
+    if (e.name == 'HttpError' || e.name == 'NotFound') {
       console.error(
-        "config not found at " +
+        'config not found at ' +
           configurationPath +
-          " make sure it exists and that this action has the correct access rights"
+          ' make sure it exists and that this action has the correct access rights'
       );
     }
 
