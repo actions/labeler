@@ -1,6 +1,6 @@
 ---
 name: before-after-hook
-version: 2.2.2
+version: 2.2.3
 type: npm
 summary: asynchronous before/error/after hooks for internal functionality
 homepage: 
