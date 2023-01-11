@@ -232,7 +232,7 @@ function checkBranch(glob) {
     }
     core.debug(` checking "branch" pattern against ${branchName}`);
     if (Array.isArray(glob)) {
-        const matchers = glob.map((g) => new minimatch_1.Minimatch(g));
+        const matchers = glob.map(g => new minimatch_1.Minimatch(g));
         for (const matcher of matchers) {
             if (matchBranchPattern(matcher, branchName)) {
                 core.debug(`  "branch" patterns matched against ${branchName}`);
