@@ -15,8 +15,8 @@ const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 
 const yamlFixtures = {
-  'branches.yml': fs.readFileSync("__tests__/fixtures/branches.yml"),
-  'only_pdfs.yml': fs.readFileSync("__tests__/fixtures/only_pdfs.yml"),
+  'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
+  'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -104,61 +104,61 @@ describe('run', () => {
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 
-  it("adds labels based on the branch names that match the glob pattern", async () => {
-    github.context.payload.pull_request!.head = { ref: "test/testing-time" };
-    usingLabelerConfigYaml("branches.yml");
+  it('adds labels based on the branch names that match the glob pattern', async () => {
+    github.context.payload.pull_request!.head = {ref: 'test/testing-time'};
+    usingLabelerConfigYaml('branches.yml');
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
-      owner: "monalisa",
-      repo: "helloworld",
+      owner: 'monalisa',
+      repo: 'helloworld',
       issue_number: 123,
-      labels: ["test-branch"],
+      labels: ['test-branch']
     });
   });
 
-  it("adds multiple labels based on branch names that match different glob patterns", async () => {
+  it('adds multiple labels based on branch names that match different glob patterns', async () => {
     github.context.payload.pull_request!.head = {
-      ref: "test/feature/123",
+      ref: 'test/feature/123'
     };
-    usingLabelerConfigYaml("branches.yml");
+    usingLabelerConfigYaml('branches.yml');
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
-      owner: "monalisa",
-      repo: "helloworld",
+      owner: 'monalisa',
+      repo: 'helloworld',
       issue_number: 123,
-      labels: ["test-branch", "feature-branch"],
+      labels: ['test-branch', 'feature-branch']
     });
   });
 
-  it("it can support multiple branches by batching", async () => {
-    github.context.payload.pull_request!.head = { ref: "fix/123" };
-    usingLabelerConfigYaml("branches.yml");
+  it('it can support multiple branches by batching', async () => {
+    github.context.payload.pull_request!.head = {ref: 'fix/123'};
+    usingLabelerConfigYaml('branches.yml');
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
-      owner: "monalisa",
-      repo: "helloworld",
+      owner: 'monalisa',
+      repo: 'helloworld',
       issue_number: 123,
-      labels: ["bug-branch"],
+      labels: ['bug-branch']
     });
   });
 
-  it("it can support multiple branches by providing an array", async () => {
-    github.context.payload.pull_request!.head = { ref: "array/123" };
-    usingLabelerConfigYaml("branches.yml");
+  it('it can support multiple branches by providing an array', async () => {
+    github.context.payload.pull_request!.head = {ref: 'array/123'};
+    usingLabelerConfigYaml('branches.yml');
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
-      owner: "monalisa",
-      repo: "helloworld",
+      owner: 'monalisa',
+      repo: 'helloworld',
       issue_number: 123,
-      labels: ["array-branch"],
+      labels: ['array-branch']
     });
   });
 });
