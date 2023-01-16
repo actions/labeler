@@ -1,11 +1,11 @@
 # Pull Request Labeler
 
 <p align="left">
-  <a href="https://github.com/actions/labeler/actions?query=workflow%3A%22Build+%26+Test%22++">
-    <img alt="build and test status" src="https://github.com/actions/labeler/actions/workflows/build_test.yml/badge.svg">
+  <a href="https://github.com/actions/labeler/actions/workflows/basic-validation.yml">
+    <img alt="basic validation status" src="https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg">
   </a>
-  <a href="https://david-dm.org/actions/labeler">
-    <img alt="dependencies" src="https://status.david-dm.org/gh/actions/labeler.svg">
+  <a href="https://libraries.io/github/actions/labeler">
+    <img alt="dependencies" src="https://img.shields.io/librariesio/github/actions/labeler">
   </a>
 </p>
 
@@ -61,6 +61,11 @@ label1:
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
+
+# Add label3 to any change to .txt files within the entire repository. Quotation marks are required for the leading asterisk
+label3:
+- '**/*.txt'
+
 ```
 
 #### Common Examples
@@ -71,7 +76,7 @@ repo:
 - '*'
 
 # Add '@domain/core' label to any change within the 'core' package
-@domain/core:
+'@domain/core':
 - package/core/**
 
 # Add 'test' label to any change to *.spec.js files within the source dir
