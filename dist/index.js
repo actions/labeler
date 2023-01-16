@@ -47,10 +47,10 @@ const minimatch_1 = __nccwpck_require__(3973);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput("repo-token", { required: true });
-            const configPath = core.getInput("configuration-path", { required: true });
-            const syncLabels = !!core.getInput("sync-labels", { required: false });
-            const dot = !!core.getInput("dot", { required: false });
+            const token = core.getInput('repo-token', { required: true });
+            const configPath = core.getInput('configuration-path', { required: true });
+            const syncLabels = !!core.getInput('sync-labels', { required: false });
+            const dot = !!core.getInput('dot', { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
                 console.log('Could not get pull request number from context, exiting');
@@ -184,7 +184,7 @@ function isMatch(changedFile, matchers) {
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(changedFiles, globs, dot) {
-    const matchers = globs.map((g) => new minimatch_1.Minimatch(g, { dot }));
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     core.debug(`  checking "any" patterns`);
     for (const changedFile of changedFiles) {
         if (isMatch(changedFile, matchers)) {
@@ -197,7 +197,7 @@ function checkAny(changedFiles, globs, dot) {
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(changedFiles, globs, dot) {
-    const matchers = globs.map((g) => new minimatch_1.Minimatch(g));
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     core.debug(` checking "all" patterns`);
     for (const changedFile of changedFiles) {
         if (!isMatch(changedFile, matchers)) {
