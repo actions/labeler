@@ -6,6 +6,7 @@ import {Minimatch, IMinimatch} from 'minimatch';
 interface MatchConfig {
   all?: string[];
   any?: string[];
+  allofany?: string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -183,6 +184,20 @@ function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
   return true;
 }
 
+function isMatchAny(changedFile: string, matchers: IMinimatch[]): boolean {
+  core.debug(`    matching patterns against file ${changedFile}`);
+  for (const matcher of matchers) {
+    core.debug(`   - ${printPattern(matcher)}`);
+    if (matcher.match(changedFile)) {
+      core.debug(`   ${printPattern(matcher)} matched`);
+      return true;
+    }
+  }
+
+  core.debug(`   no patterns matched`);
+  return false;
+}
+
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(changedFiles: string[], globs: string[]): boolean {
   const matchers = globs.map(g => new Minimatch(g));
@@ -213,6 +228,20 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
+function checkAllOfAny(changedFiles: string[], globs: string[]): boolean {
+  const matchers = globs.map(g => new Minimatch(g));
+  core.debug(` checking "all" patterns`);
+  for (const changedFile of changedFiles) {
+    if (!isMatchAny(changedFile, matchers)) {
+      core.debug(`  "allofany" pattern did not match against ${changedFile}`);
+      return false;
+    }
+  }
+
+  core.debug(`  "allofany" patterns matched all files`);
+  return true;
+}
+
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all)) {
@@ -222,6 +251,12 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 
   if (matchConfig.any !== undefined) {
     if (!checkAny(changedFiles, matchConfig.any)) {
+      return false;
+    }
+  }
+
+  if (matchConfig.allofany !== undefined) {
+    if (!checkAllOfAny(changedFiles, matchConfig.allofany)) {
       return false;
     }
   }
