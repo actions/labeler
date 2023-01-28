@@ -6,7 +6,7 @@ import {Minimatch, IMinimatch} from 'minimatch';
 interface MatchConfig {
   all?: string[];
   any?: string[];
-  branch?: string | string[];
+  branch?: string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -156,6 +156,11 @@ function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
     return {
       any: [config]
     };
+  } else if (typeof config.branch === 'string') {
+    return {
+      ...config,
+      branch: [config.branch]
+    };
   }
 
   return config;
@@ -223,18 +228,18 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function matchBranchPattern(matcher: IMinimatch, branchName: string): boolean {
-  core.debug(`  - ${printPattern(matcher)}`);
-  if (matcher.match(branchName)) {
+function matchBranchPattern(matcher: RegExp, branchName: string): boolean {
+  core.debug(`  - ${matcher}`);
+  if (matcher.test(branchName)) {
     core.debug(`   "branch" pattern matched`);
     return true;
   }
 
-  core.debug(`   ${printPattern(matcher)} did not match`);
+  core.debug(`   ${matcher} did not match`);
   return false;
 }
 
-function checkBranch(glob: string | string[]): boolean {
+function checkBranch(glob: string[]): boolean {
   const branchName = getHeadBranchName();
   if (!branchName) {
     core.debug(` no branch name`);
@@ -242,21 +247,16 @@ function checkBranch(glob: string | string[]): boolean {
   }
 
   core.debug(` checking "branch" pattern against ${branchName}`);
-  if (Array.isArray(glob)) {
-    const matchers = glob.map(g => new Minimatch(g));
-    for (const matcher of matchers) {
-      if (matchBranchPattern(matcher, branchName)) {
-        core.debug(`  "branch" patterns matched against ${branchName}`);
-        return true;
-      }
+  const matchers = glob.map(g => new RegExp(g));
+  for (const matcher of matchers) {
+    if (matchBranchPattern(matcher, branchName)) {
+      core.debug(`  "branch" patterns matched against ${branchName}`);
+      return true;
     }
-
-    core.debug(`  "branch" patterns did not match against ${branchName}`);
-    return false;
-  } else {
-    const matcher = new Minimatch(glob);
-    return matchBranchPattern(matcher, branchName);
   }
+
+  core.debug(`  "branch" patterns did not match against ${branchName}`);
+  return false;
 }
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
