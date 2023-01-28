@@ -32,6 +32,9 @@ describe('checkBranch', () => {
     github.context.payload.pull_request!.head = {
       ref: 'test/feature/123'
     };
+    github.context.payload.pull_request!.base = {
+      ref: 'main'
+    };
   });
 
   describe('when a single pattern is provided', () => {
@@ -69,6 +72,15 @@ describe('checkBranch', () => {
       it('returns false', () => {
         const result = checkBranch(['^feature/', '/test$']);
         expect(result).toBe(false);
+      });
+    });
+  });
+
+  describe('when the branch to check is specified as the base branch', () => {
+    describe('and the pattern matches the base branch', () => {
+      it('returns true', () => {
+        const result = checkBranch(['^main$'], 'base');
+        expect(result).toBe(true);
       });
     });
   });
