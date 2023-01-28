@@ -72,7 +72,7 @@ function getPrNumber(): number | undefined {
   return pullRequest.number;
 }
 
-function getBranchName(): string | undefined {
+function getHeadBranchName(): string | undefined {
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {
     return undefined;
@@ -235,7 +235,7 @@ function matchBranchPattern(matcher: IMinimatch, branchName: string): boolean {
 }
 
 function checkBranch(glob: string | string[]): boolean {
-  const branchName = getBranchName();
+  const branchName = getHeadBranchName();
   if (!branchName) {
     core.debug(` no branch name`);
     return false;
