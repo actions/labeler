@@ -9,6 +9,8 @@ interface MatchConfig {
   all?: string[];
   any?: string[];
   branch?: string[];
+  headBranch?: string[];
+  baseBranch?: string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -236,6 +238,18 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 
   if (matchConfig.branch !== undefined) {
     if (!checkBranch(matchConfig.branch)) {
+      return false;
+    }
+  }
+
+  if (matchConfig.headBranch !== undefined) {
+    if (!checkBranch(matchConfig.headBranch, 'head')) {
+      return false;
+    }
+  }
+
+  if (matchConfig.baseBranch !== undefined) {
+    if (!checkBranch(matchConfig.baseBranch, 'base')) {
       return false;
     }
   }

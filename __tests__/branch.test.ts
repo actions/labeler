@@ -1,17 +1,40 @@
-import {checkBranch} from '../src/branch';
+import {getBranchName, checkBranch} from '../src/branch';
 import * as github from '@actions/github';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
-describe('checkBranch', () => {
-  describe('when a single pattern is provided', () => {
-    beforeEach(() => {
-      github.context.payload.pull_request!.head = {
-        ref: 'test/feature/123'
-      };
+describe('getBranchName', () => {
+  describe('when the pull requests base branch is requested', () => {
+    it('returns the base branch name', () => {
+      const result = getBranchName('base');
+      expect(result).toEqual('base-branch-name');
     });
+  });
 
+  describe('when the pull requests head branch is requested', () => {
+    it('returns the head branch name', () => {
+      const result = getBranchName('head');
+      expect(result).toEqual('head-branch-name');
+    });
+  });
+
+  describe('when no branch is specified', () => {
+    it('returns the head branch name', () => {
+      const result = getBranchName('base');
+      expect(result).toEqual('base-branch-name');
+    });
+  });
+});
+
+describe('checkBranch', () => {
+  beforeEach(() => {
+    github.context.payload.pull_request!.head = {
+      ref: 'test/feature/123'
+    };
+  });
+
+  describe('when a single pattern is provided', () => {
     describe('and the pattern matches the head branch', () => {
       it('returns true', () => {
         const result = checkBranch(['^test']);
@@ -28,12 +51,6 @@ describe('checkBranch', () => {
   });
 
   describe('when multiple patterns are provided', () => {
-    beforeEach(() => {
-      github.context.payload.pull_request!.head = {
-        ref: 'test/feature/123'
-      };
-    });
-
     describe('and at least one pattern matches', () => {
       it('returns true', () => {
         const result = checkBranch(['^test/', '^feature/']);

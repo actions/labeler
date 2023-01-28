@@ -1,17 +1,23 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
-function getHeadBranchName(): string | undefined {
+type BranchBase = 'base' | 'head';
+
+export function getBranchName(branchBase?: BranchBase): string | undefined {
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {
     return undefined;
   }
 
-  return pullRequest.head?.ref;
+  if (branchBase === 'base') {
+    return pullRequest.base?.ref;
+  } else {
+    return pullRequest.head?.ref;
+  }
 }
 
-export function checkBranch(glob: string[]): boolean {
-  const branchName = getHeadBranchName();
+export function checkBranch(glob: string[], branchBase?: BranchBase): boolean {
+  const branchName = getBranchName(branchBase);
   if (!branchName) {
     core.debug(` no branch name`);
     return false;
