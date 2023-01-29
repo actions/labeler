@@ -10,7 +10,7 @@ beforeAll(() => {
   });
 });
 
-const matchConfig = [{any: ['*.txt']}];
+const matchConfig = [{changedFiles: {any: ['*.txt']}}];
 
 describe('checkGlobs', () => {
   it('returns true when our pattern does match changed files', () => {

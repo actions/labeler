@@ -10,7 +10,7 @@ type BranchBase = 'base' | 'head';
 
 export function toBranchMatchConfig(config: any): BranchMatchConfig {
   if (!config['head-branch'] || config['base-branch']) {
-    return config;
+    return {};
   }
 
   const branchConfig = {

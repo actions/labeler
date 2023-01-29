@@ -5,18 +5,15 @@ import {Minimatch} from 'minimatch';
 
 import {checkBranch, toBranchMatchConfig, BranchMatchConfig} from './branch';
 
-interface FilesChangedMatchConfig {
-  all?: string[];
-  any?: string[];
-  filesChanged?: {
+interface ChangedFilesMatchConfig {
+  changedFiles?: {
     all?: string[];
     any?: string[];
   };
 }
 
-type MatchConfig = FilesChangedMatchConfig & BranchMatchConfig;
+export type MatchConfig = ChangedFilesMatchConfig & BranchMatchConfig;
 
-type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 export async function run() {
@@ -41,7 +38,7 @@ export async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
+    const labelGlobs: Map<string, MatchConfig[]> = await getLabelGlobs(
       client,
       configPath
     );
@@ -103,7 +100,7 @@ async function getChangedFiles(
 async function getLabelGlobs(
   client: ClientType,
   configurationPath: string
-): Promise<Map<string, StringOrMatchConfig[]>> {
+): Promise<Map<string, MatchConfig[]>> {
   const configurationContent: string = await fetchContent(
     client,
     configurationPath
@@ -132,8 +129,8 @@ async function fetchContent(
 
 function getLabelGlobMapFromObject(
   configObject: any
-): Map<string, StringOrMatchConfig[]> {
-  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
+): Map<string, MatchConfig[]> {
+  const labelGlobs: Map<string, MatchConfig[]> = new Map();
   for (const label in configObject) {
     if (typeof configObject[label] === 'string') {
       labelGlobs.set(label, [configObject[label]]);
@@ -149,17 +146,48 @@ function getLabelGlobMapFromObject(
   return labelGlobs;
 }
 
-function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
-  if (typeof config === 'string') {
+function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
+  if (!config['changed-files']) {
+    return {};
+  }
+  const changedFiles = config['changed-files'];
+
+  // If the value provided is a string or an array of strings then default to `any` matching
+  if (typeof changedFiles === 'string') {
     return {
-      any: [config]
+      changedFiles: {
+        any: [changedFiles]
+      }
     };
   }
 
+  const changedFilesMatchConfig = {
+    changedFiles: {}
+  };
+
+  if (Array.isArray(changedFiles)) {
+    if (changedFiles.every(entry => typeof entry === 'string')) {
+      changedFilesMatchConfig.changedFiles = {
+        any: changedFiles
+      };
+    } else {
+      // If it is not an array of strings then it should be array of further config options
+      // so assign them to our `changedFilesMatchConfig`
+      changedFiles.forEach(element => {
+        Object.assign(changedFilesMatchConfig.changedFiles, element);
+      });
+    }
+  }
+
+  return changedFilesMatchConfig;
+}
+
+function toMatchConfig(config: MatchConfig): MatchConfig {
+  const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
 
   return {
-    ...config,
+    ...changedFilesConfig,
     ...branchConfig
   };
 }
@@ -170,7 +198,7 @@ function printPattern(matcher: Minimatch): string {
 
 export function checkGlobs(
   changedFiles: string[],
-  globs: StringOrMatchConfig[]
+  globs: MatchConfig[]
 ): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -227,14 +255,14 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
 }
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
-  if (matchConfig.all !== undefined) {
-    if (!checkAll(changedFiles, matchConfig.all)) {
+  if (matchConfig.changedFiles?.all !== undefined) {
+    if (!checkAll(changedFiles, matchConfig.changedFiles.all)) {
       return false;
     }
   }
 
-  if (matchConfig.any !== undefined) {
-    if (!checkAny(changedFiles, matchConfig.any)) {
+  if (matchConfig.changedFiles?.any !== undefined) {
+    if (!checkAny(changedFiles, matchConfig.changedFiles.any)) {
       return false;
     }
   }
