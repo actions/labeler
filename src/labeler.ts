@@ -256,30 +256,30 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   if (matchConfig.changedFiles?.all !== undefined) {
-    if (!checkAll(changedFiles, matchConfig.changedFiles.all)) {
-      return false;
+    if (checkAll(changedFiles, matchConfig.changedFiles.all)) {
+      return true;
     }
   }
 
   if (matchConfig.changedFiles?.any !== undefined) {
-    if (!checkAny(changedFiles, matchConfig.changedFiles.any)) {
-      return false;
+    if (checkAny(changedFiles, matchConfig.changedFiles.any)) {
+      return true;
     }
   }
 
   if (matchConfig.headBranch !== undefined) {
-    if (!checkBranch(matchConfig.headBranch, 'head')) {
-      return false;
+    if (checkBranch(matchConfig.headBranch, 'head')) {
+      return true;
     }
   }
 
   if (matchConfig.baseBranch !== undefined) {
-    if (!checkBranch(matchConfig.baseBranch, 'base')) {
-      return false;
+    if (checkBranch(matchConfig.baseBranch, 'base')) {
+      return true;
     }
   }
 
-  return true;
+  return false;
 }
 
 async function addLabels(
