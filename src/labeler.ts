@@ -3,14 +3,18 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
-import {checkBranch, toMatchConfigWithBranches} from './branch';
+import {checkBranch, toBranchMatchConfig, BranchMatchConfig} from './branch';
 
-interface MatchConfig {
+interface FilesChangedMatchConfig {
   all?: string[];
   any?: string[];
-  headBranch?: string[];
-  baseBranch?: string[];
+  filesChanged?: {
+    all?: string[];
+    any?: string[];
+  };
 }
+
+type MatchConfig = FilesChangedMatchConfig & BranchMatchConfig;
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
@@ -152,7 +156,12 @@ function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
     };
   }
 
-  return toMatchConfigWithBranches(config);
+  const branchConfig = toBranchMatchConfig(config);
+
+  return {
+    ...config,
+    ...branchConfig
+  };
 }
 
 function printPattern(matcher: Minimatch): string {

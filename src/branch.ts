@@ -1,9 +1,14 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
+export interface BranchMatchConfig {
+  headBranch?: string[];
+  baseBranch?: string[];
+}
+
 type BranchBase = 'base' | 'head';
 
-export function toMatchConfigWithBranches(config: any) {
+export function toBranchMatchConfig(config: any): BranchMatchConfig {
   if (!config['head-branch'] || config['base-branch']) {
     return config;
   }
@@ -27,12 +32,7 @@ export function toMatchConfigWithBranches(config: any) {
     }
   }
 
-  return {
-    ...config,
-    ['head-branch']: undefined,
-    ['base-branch']: undefined,
-    ...branchConfig
-  };
+  return branchConfig;
 }
 
 export function getBranchName(branchBase?: BranchBase): string | undefined {
