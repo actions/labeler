@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import {Minimatch, IMinimatch} from 'minimatch';
+import {Minimatch} from 'minimatch';
 
 import {checkBranch, toMatchConfigWithBranches} from './branch';
 
@@ -155,7 +155,7 @@ function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
   return toMatchConfigWithBranches(config);
 }
 
-function printPattern(matcher: IMinimatch): string {
+function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
@@ -173,7 +173,7 @@ export function checkGlobs(
   return false;
 }
 
-function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
+function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);
