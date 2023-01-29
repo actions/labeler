@@ -3,6 +3,38 @@ import * as github from '@actions/github';
 
 type BranchBase = 'base' | 'head';
 
+export function toMatchConfigWithBranches(config: any) {
+  if (!config['head-branch'] || config['base-branch']) {
+    return config;
+  }
+
+  const branchConfig = {
+    headBranch: config['head-branch'],
+    baseBranch: config['base-branch']
+  };
+
+  if (branchConfig.headBranch) {
+    const patterns = branchConfig.headBranch;
+    if (typeof patterns === 'string') {
+      branchConfig.headBranch = [patterns];
+    }
+  }
+
+  if (branchConfig.baseBranch) {
+    const patterns = branchConfig.baseBranch;
+    if (typeof patterns === 'string') {
+      branchConfig.baseBranch = [patterns];
+    }
+  }
+
+  return {
+    ...config,
+    ['head-branch']: undefined,
+    ['base-branch']: undefined,
+    ...branchConfig
+  };
+}
+
 export function getBranchName(branchBase?: BranchBase): string | undefined {
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {

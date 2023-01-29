@@ -3,12 +3,11 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch, IMinimatch} from 'minimatch';
 
-import {checkBranch} from './branch';
+import {checkBranch, toMatchConfigWithBranches} from './branch';
 
 interface MatchConfig {
   all?: string[];
   any?: string[];
-  branch?: string[];
   headBranch?: string[];
   baseBranch?: string[];
 }
@@ -151,14 +150,9 @@ function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
     return {
       any: [config]
     };
-  } else if (typeof config.branch === 'string') {
-    return {
-      ...config,
-      branch: [config.branch]
-    };
   }
 
-  return config;
+  return toMatchConfigWithBranches(config);
 }
 
 function printPattern(matcher: IMinimatch): string {
@@ -232,12 +226,6 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 
   if (matchConfig.any !== undefined) {
     if (!checkAny(changedFiles, matchConfig.any)) {
-      return false;
-    }
-  }
-
-  if (matchConfig.branch !== undefined) {
-    if (!checkBranch(matchConfig.branch)) {
       return false;
     }
   }

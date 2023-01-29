@@ -1,11 +1,11 @@
 test-branch:
-  - branch: "^test/"
+  - head-branch: "^test/"
 
 feature-branch:
-  - branch: "/feature/"
+  - head-branch: "/feature/"
 
 bug-branch:
-  - branch: "^bug/|fix/"
+  - head-branch: "^bug/|fix/"
 
 array-branch:
-  - branch: ["^array/"]
+  - head-branch: ["^array/"]
