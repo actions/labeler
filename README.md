@@ -1,13 +1,6 @@
 # Pull Request Labeler
 
-<p align="left">
-  <a href="https://github.com/actions/labeler/actions/workflows/basic-validation.yml">
-    <img alt="basic validation status" src="https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg">
-  </a>
-  <a href="https://libraries.io/github/actions/labeler">
-    <img alt="dependencies" src="https://img.shields.io/librariesio/github/actions/labeler">
-  </a>
-</p>
+[![Basic validation](https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg?branch=main)](https://github.com/actions/labeler/actions/workflows/basic-validation.yml)
 
 Automatically label new pull requests based on the paths of files being changed.
 
