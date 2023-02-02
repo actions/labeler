@@ -11,6 +11,9 @@ interface MatchConfig {
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
 
+// Github Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
+
 export async function run() {
   try {
     const token = core.getInput('repo-token', {required: true});
@@ -40,21 +43,30 @@ export async function run() {
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
+    const excessLabels: string[] = [];
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
-        labels.push(label);
+        if (labels.length >= GITHUB_MAX_LABELS) {
+          excessLabels.push(label);
+        } else {
+          labels.push(label);
+        }
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
       }
+    }
+
+    if (syncLabels && labelsToRemove.length) {
+      await removeLabels(client, prNumber, labelsToRemove);
     }
 
     if (labels.length > 0) {
       await addLabels(client, prNumber, labels);
     }
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
+    if (excessLabels.length > 0) {
+      core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
     }
   } catch (error: any) {
     core.error(error);
