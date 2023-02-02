@@ -44,6 +44,8 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const yaml = __importStar(__nccwpck_require__(1917));
 const minimatch_1 = __nccwpck_require__(3973);
+// Github Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -66,20 +68,29 @@ function run() {
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
             const labelsToRemove = [];
+            const excessLabels = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
-                    labels.push(label);
+                    if (labels.length >= GITHUB_MAX_LABELS) {
+                        excessLabels.push(label);
+                    }
+                    else {
+                        labels.push(label);
+                    }
                 }
                 else if (pullRequest.labels.find(l => l.name === label)) {
                     labelsToRemove.push(label);
                 }
             }
+            if (syncLabels && labelsToRemove.length) {
+                yield removeLabels(client, prNumber, labelsToRemove);
+            }
             if (labels.length > 0) {
                 yield addLabels(client, prNumber, labels);
             }
-            if (syncLabels && labelsToRemove.length) {
-                yield removeLabels(client, prNumber, labelsToRemove);
+            if (excessLabels.length > 0) {
+                core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
             }
         }
         catch (error) {
