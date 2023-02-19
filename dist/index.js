@@ -70,14 +70,14 @@ function getBranchName(branchBase) {
     }
 }
 exports.getBranchName = getBranchName;
-function checkBranch(glob, branchBase) {
+function checkBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
         core.debug(` no branch name`);
         return false;
     }
     core.debug(` checking "branch" pattern against ${branchName}`);
-    const matchers = glob.map(g => new RegExp(g));
+    const matchers = regexps.map(regexp => new RegExp(regexp));
     for (const matcher of matchers) {
         if (matchBranchPattern(matcher, branchName)) {
             core.debug(`  "branch" patterns matched against ${branchName}`);
@@ -164,12 +164,12 @@ function run() {
             });
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
+            const labelConfigs = yield getMatchConfigs(client, configPath);
             const labels = [];
             const labelsToRemove = [];
-            for (const [label, globs] of labelGlobs.entries()) {
+            for (const [label, configs] of labelConfigs.entries()) {
                 core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs)) {
+                if (checkGlobs(changedFiles, configs)) {
                     labels.push(label);
                 }
                 else if (pullRequest.labels.find(l => l.name === label)) {
@@ -213,13 +213,13 @@ function getChangedFiles(client, prNumber) {
         return changedFiles;
     });
 }
-function getLabelGlobs(client, configurationPath) {
+function getMatchConfigs(client, configurationPath) {
     return __awaiter(this, void 0, void 0, function* () {
         const configurationContent = yield fetchContent(client, configurationPath);
         // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
         const configObject = yaml.load(configurationContent);
         // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-        return getLabelGlobMapFromObject(configObject);
+        return getLabelConfigMapFromObject(configObject);
     });
 }
 function fetchContent(client, repoPath) {
@@ -233,7 +233,7 @@ function fetchContent(client, repoPath) {
         return Buffer.from(response.data.content, response.data.encoding).toString();
     });
 }
-function getLabelGlobMapFromObject(configObject) {
+function getLabelConfigMapFromObject(configObject) {
     const labelGlobs = new Map();
     for (const label in configObject) {
         if (typeof configObject[label] === 'string') {
@@ -252,28 +252,28 @@ function toChangedFilesMatchConfig(config) {
     if (!config['changed-files']) {
         return {};
     }
-    const changedFiles = config['changed-files'];
+    const changedFilesConfig = config['changed-files'];
     // If the value provided is a string or an array of strings then default to `any` matching
-    if (typeof changedFiles === 'string') {
+    if (typeof changedFilesConfig === 'string') {
         return {
             changedFiles: {
-                any: [changedFiles]
+                any: [changedFilesConfig]
             }
         };
     }
     const changedFilesMatchConfig = {
         changedFiles: {}
     };
-    if (Array.isArray(changedFiles)) {
-        if (changedFiles.every(entry => typeof entry === 'string')) {
+    if (Array.isArray(changedFilesConfig)) {
+        if (changedFilesConfig.every(entry => typeof entry === 'string')) {
             changedFilesMatchConfig.changedFiles = {
-                any: changedFiles
+                any: changedFilesConfig
             };
         }
         else {
             // If it is not an array of strings then it should be array of further config options
             // so assign them to our `changedFilesMatchConfig`
-            changedFiles.forEach(element => {
+            changedFilesConfig.forEach(element => {
                 Object.assign(changedFilesMatchConfig.changedFiles, element);
             });
         }

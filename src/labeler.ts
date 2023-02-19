@@ -38,16 +38,16 @@ export async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, MatchConfig[]> = await getLabelGlobs(
+    const labelConfigs: Map<string, MatchConfig[]> = await getMatchConfigs(
       client,
       configPath
     );
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
-    for (const [label, globs] of labelGlobs.entries()) {
+    for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
+      if (checkGlobs(changedFiles, configs)) {
         labels.push(label);
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
@@ -97,7 +97,7 @@ async function getChangedFiles(
   return changedFiles;
 }
 
-async function getLabelGlobs(
+async function getMatchConfigs(
   client: ClientType,
   configurationPath: string
 ): Promise<Map<string, MatchConfig[]>> {
@@ -110,7 +110,7 @@ async function getLabelGlobs(
   const configObject: any = yaml.load(configurationContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-  return getLabelGlobMapFromObject(configObject);
+  return getLabelConfigMapFromObject(configObject);
 }
 
 async function fetchContent(
@@ -127,7 +127,7 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelGlobMapFromObject(
+function getLabelConfigMapFromObject(
   configObject: any
 ): Map<string, MatchConfig[]> {
   const labelGlobs: Map<string, MatchConfig[]> = new Map();
@@ -150,13 +150,13 @@ function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
   if (!config['changed-files']) {
     return {};
   }
-  const changedFiles = config['changed-files'];
+  const changedFilesConfig = config['changed-files'];
 
   // If the value provided is a string or an array of strings then default to `any` matching
-  if (typeof changedFiles === 'string') {
+  if (typeof changedFilesConfig === 'string') {
     return {
       changedFiles: {
-        any: [changedFiles]
+        any: [changedFilesConfig]
       }
     };
   }
@@ -165,15 +165,15 @@ function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
     changedFiles: {}
   };
 
-  if (Array.isArray(changedFiles)) {
-    if (changedFiles.every(entry => typeof entry === 'string')) {
+  if (Array.isArray(changedFilesConfig)) {
+    if (changedFilesConfig.every(entry => typeof entry === 'string')) {
       changedFilesMatchConfig.changedFiles = {
-        any: changedFiles
+        any: changedFilesConfig
       };
     } else {
       // If it is not an array of strings then it should be array of further config options
       // so assign them to our `changedFilesMatchConfig`
-      changedFiles.forEach(element => {
+      changedFilesConfig.forEach(element => {
         Object.assign(changedFilesMatchConfig.changedFiles, element);
       });
     }

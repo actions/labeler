@@ -10,7 +10,8 @@ beforeAll(() => {
   });
 });
 
-// I have to double cast here as this is what comes from js-yaml looks like which then gets transformed in toMatchConfig
+// I have to double cast here as this is what the output from js-yaml looks like which then gets
+// transformed in toMatchConfig
 const matchConfig = [
   {'changed-files': [{any: ['*.txt']}]}
 ] as unknown as MatchConfig[];
