@@ -104,7 +104,7 @@ describe('run', () => {
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 
-  it('adds labels based on the branch names that match the glob pattern', async () => {
+  it('adds labels based on the branch names that match the regexp pattern', async () => {
     github.context.payload.pull_request!.head = {ref: 'test/testing-time'};
     usingLabelerConfigYaml('branches.yml');
     await run();
@@ -118,7 +118,7 @@ describe('run', () => {
     });
   });
 
-  it('adds multiple labels based on branch names that match different glob patterns', async () => {
+  it('adds multiple labels based on branch names that match different regexp patterns', async () => {
     github.context.payload.pull_request!.head = {
       ref: 'test/feature/123'
     };

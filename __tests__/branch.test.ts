@@ -21,8 +21,8 @@ describe('getBranchName', () => {
 
   describe('when no branch is specified', () => {
     it('returns the head branch name', () => {
-      const result = getBranchName('base');
-      expect(result).toEqual('base-branch-name');
+      const result = getBranchName();
+      expect(result).toEqual('head-branch-name');
     });
   });
 });

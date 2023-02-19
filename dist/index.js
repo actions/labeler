@@ -34,7 +34,7 @@ exports.checkBranch = exports.getBranchName = exports.toBranchMatchConfig = void
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 function toBranchMatchConfig(config) {
-    if (!config['head-branch'] || config['base-branch']) {
+    if (!config['head-branch'] && !config['base-branch']) {
         return {};
     }
     const branchConfig = {
@@ -340,26 +340,26 @@ function checkAll(changedFiles, globs) {
 function checkMatch(changedFiles, matchConfig) {
     var _a, _b;
     if (((_a = matchConfig.changedFiles) === null || _a === void 0 ? void 0 : _a.all) !== undefined) {
-        if (!checkAll(changedFiles, matchConfig.changedFiles.all)) {
-            return false;
+        if (checkAll(changedFiles, matchConfig.changedFiles.all)) {
+            return true;
         }
     }
     if (((_b = matchConfig.changedFiles) === null || _b === void 0 ? void 0 : _b.any) !== undefined) {
-        if (!checkAny(changedFiles, matchConfig.changedFiles.any)) {
-            return false;
+        if (checkAny(changedFiles, matchConfig.changedFiles.any)) {
+            return true;
         }
     }
     if (matchConfig.headBranch !== undefined) {
-        if (!(0, branch_1.checkBranch)(matchConfig.headBranch, 'head')) {
-            return false;
+        if ((0, branch_1.checkBranch)(matchConfig.headBranch, 'head')) {
+            return true;
         }
     }
     if (matchConfig.baseBranch !== undefined) {
-        if (!(0, branch_1.checkBranch)(matchConfig.baseBranch, 'base')) {
-            return false;
+        if ((0, branch_1.checkBranch)(matchConfig.baseBranch, 'base')) {
+            return true;
         }
     }
-    return true;
+    return false;
 }
 function addLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
