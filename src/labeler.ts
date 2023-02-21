@@ -1,15 +1,19 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import {Minimatch, IMinimatch} from 'minimatch';
+import {Minimatch} from 'minimatch';
 
-interface MatchConfig {
-  all?: string[];
-  any?: string[];
-  branch?: string | string[];
+import {checkBranch, toBranchMatchConfig, BranchMatchConfig} from './branch';
+
+interface ChangedFilesMatchConfig {
+  changedFiles?: {
+    all?: string[];
+    any?: string[];
+  };
 }
 
-type StringOrMatchConfig = string | MatchConfig;
+export type MatchConfig = ChangedFilesMatchConfig & BranchMatchConfig;
+
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 export async function run() {
@@ -34,16 +38,16 @@ export async function run() {
 
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
+    const labelConfigs: Map<string, MatchConfig[]> = await getMatchConfigs(
       client,
       configPath
     );
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
-    for (const [label, globs] of labelGlobs.entries()) {
+    for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
+      if (checkGlobs(changedFiles, configs)) {
         labels.push(label);
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
@@ -72,15 +76,6 @@ function getPrNumber(): number | undefined {
   return pullRequest.number;
 }
 
-function getBranchName(): string | undefined {
-  const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
-  }
-
-  return pullRequest.head?.ref;
-}
-
 async function getChangedFiles(
   client: ClientType,
   prNumber: number
@@ -102,10 +97,10 @@ async function getChangedFiles(
   return changedFiles;
 }
 
-async function getLabelGlobs(
+async function getMatchConfigs(
   client: ClientType,
   configurationPath: string
-): Promise<Map<string, StringOrMatchConfig[]>> {
+): Promise<Map<string, MatchConfig[]>> {
   const configurationContent: string = await fetchContent(
     client,
     configurationPath
@@ -115,7 +110,7 @@ async function getLabelGlobs(
   const configObject: any = yaml.load(configurationContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-  return getLabelGlobMapFromObject(configObject);
+  return getLabelConfigMapFromObject(configObject);
 }
 
 async function fetchContent(
@@ -132,10 +127,10 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelGlobMapFromObject(
+function getLabelConfigMapFromObject(
   configObject: any
-): Map<string, StringOrMatchConfig[]> {
-  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
+): Map<string, MatchConfig[]> {
+  const labelGlobs: Map<string, MatchConfig[]> = new Map();
   for (const label in configObject) {
     if (typeof configObject[label] === 'string') {
       labelGlobs.set(label, [configObject[label]]);
@@ -151,23 +146,65 @@ function getLabelGlobMapFromObject(
   return labelGlobs;
 }
 
-function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
-  if (typeof config === 'string') {
+function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
+  if (!config['changed-files']) {
+    return {};
+  }
+  const changedFilesConfig = config['changed-files'];
+
+  // If the value provided is a string or an array of strings then default to `any` matching
+  if (typeof changedFilesConfig === 'string') {
     return {
-      any: [config]
+      changedFiles: {
+        any: [changedFilesConfig]
+      }
     };
   }
 
-  return config;
+  const changedFilesMatchConfig = {
+    changedFiles: {}
+  };
+
+  if (Array.isArray(changedFilesConfig)) {
+    if (changedFilesConfig.every(entry => typeof entry === 'string')) {
+      changedFilesMatchConfig.changedFiles = {
+        any: changedFilesConfig
+      };
+    } else {
+      // If it is not an array of strings then it should be array of further config options
+      // so assign them to our `changedFilesMatchConfig`
+      changedFilesConfig.forEach(config => {
+        // Make sure that the values that we assign to our match config are an array
+        Object.entries(config).forEach(([key, value]) => {
+          const element = {
+            [key]: Array.isArray(value) ? value : [value]
+          };
+          Object.assign(changedFilesMatchConfig.changedFiles, element);
+        });
+      });
+    }
+  }
+
+  return changedFilesMatchConfig;
 }
 
-function printPattern(matcher: IMinimatch): string {
+function toMatchConfig(config: MatchConfig): MatchConfig {
+  const changedFilesConfig = toChangedFilesMatchConfig(config);
+  const branchConfig = toBranchMatchConfig(config);
+
+  return {
+    ...changedFilesConfig,
+    ...branchConfig
+  };
+}
+
+function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
 export function checkGlobs(
   changedFiles: string[],
-  globs: StringOrMatchConfig[]
+  globs: MatchConfig[]
 ): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -179,7 +216,7 @@ export function checkGlobs(
   return false;
 }
 
-function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
+function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);
@@ -223,62 +260,32 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function matchBranchPattern(matcher: IMinimatch, branchName: string): boolean {
-  core.debug(`  - ${printPattern(matcher)}`);
-  if (matcher.match(branchName)) {
-    core.debug(`   "branch" pattern matched`);
-    return true;
-  }
-
-  core.debug(`   ${printPattern(matcher)} did not match`);
-  return false;
-}
-
-function checkBranch(glob: string | string[]): boolean {
-  const branchName = getBranchName();
-  if (!branchName) {
-    core.debug(` no branch name`);
-    return false;
-  }
-
-  core.debug(` checking "branch" pattern against ${branchName}`);
-  if (Array.isArray(glob)) {
-    const matchers = glob.map(g => new Minimatch(g));
-    for (const matcher of matchers) {
-      if (matchBranchPattern(matcher, branchName)) {
-        core.debug(`  "branch" patterns matched against ${branchName}`);
-        return true;
-      }
-    }
-
-    core.debug(`  "branch" patterns did not match against ${branchName}`);
-    return false;
-  } else {
-    const matcher = new Minimatch(glob);
-    return matchBranchPattern(matcher, branchName);
-  }
-}
-
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
-  if (matchConfig.all !== undefined) {
-    if (!checkAll(changedFiles, matchConfig.all)) {
-      return false;
+  if (matchConfig.changedFiles?.all !== undefined) {
+    if (checkAll(changedFiles, matchConfig.changedFiles.all)) {
+      return true;
     }
   }
 
-  if (matchConfig.any !== undefined) {
-    if (!checkAny(changedFiles, matchConfig.any)) {
-      return false;
+  if (matchConfig.changedFiles?.any !== undefined) {
+    if (checkAny(changedFiles, matchConfig.changedFiles.any)) {
+      return true;
     }
   }
 
-  if (matchConfig.branch !== undefined) {
-    if (!checkBranch(matchConfig.branch)) {
-      return false;
+  if (matchConfig.headBranch !== undefined) {
+    if (checkBranch(matchConfig.headBranch, 'head')) {
+      return true;
     }
   }
 
-  return true;
+  if (matchConfig.baseBranch !== undefined) {
+    if (checkBranch(matchConfig.baseBranch, 'base')) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function addLabels(

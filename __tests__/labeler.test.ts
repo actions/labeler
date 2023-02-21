@@ -1,4 +1,4 @@
-import {checkGlobs} from '../src/labeler';
+import {checkGlobs, MatchConfig} from '../src/labeler';
 
 import * as core from '@actions/core';
 
@@ -10,7 +10,11 @@ beforeAll(() => {
   });
 });
 
-const matchConfig = [{any: ['*.txt']}];
+// I have to double cast here as this is what the output from js-yaml looks like which then gets
+// transformed in toMatchConfig
+const matchConfig = [
+  {'changed-files': [{any: ['*.txt']}]}
+] as unknown as MatchConfig[];
 
 describe('checkGlobs', () => {
   it('returns true when our pattern does match changed files', () => {
