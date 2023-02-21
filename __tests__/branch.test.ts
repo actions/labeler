@@ -1,4 +1,9 @@
-import {getBranchName, checkBranch} from '../src/branch';
+import {
+  getBranchName,
+  checkBranch,
+  toBranchMatchConfig,
+  BranchMatchConfig
+} from '../src/branch';
 import * as github from '@actions/github';
 
 jest.mock('@actions/core');
@@ -81,6 +86,69 @@ describe('checkBranch', () => {
       it('returns true', () => {
         const result = checkBranch(['^main$'], 'base');
         expect(result).toBe(true);
+      });
+    });
+  });
+});
+
+describe('toBranchMatchConfig', () => {
+  describe('when there are no branch keys in the config', () => {
+    const config = {'changed-files': [{any: ['testing']}]};
+    it('returns an empty object', () => {
+      const result = toBranchMatchConfig(config);
+      expect(result).toMatchObject({});
+    });
+  });
+
+  describe('when the config contains a head-branch option', () => {
+    const config = {'head-branch': ['testing']};
+    it('sets headBranch in the matchConfig', () => {
+      const result = toBranchMatchConfig(config);
+      expect(result).toMatchObject<BranchMatchConfig>({
+        headBranch: ['testing']
+      });
+    });
+
+    describe('and the matching option is a string', () => {
+      const stringConfig = {'head-branch': 'testing'};
+
+      it('sets headBranch in the matchConfig', () => {
+        const result = toBranchMatchConfig(stringConfig);
+        expect(result).toMatchObject<BranchMatchConfig>({
+          headBranch: ['testing']
+        });
+      });
+    });
+  });
+
+  describe('when the config contains a base-branch option', () => {
+    const config = {'base-branch': ['testing']};
+    it('sets headBranch in the matchConfig', () => {
+      const result = toBranchMatchConfig(config);
+      expect(result).toMatchObject<BranchMatchConfig>({
+        baseBranch: ['testing']
+      });
+    });
+
+    describe('and the matching option is a string', () => {
+      const stringConfig = {'base-branch': 'testing'};
+
+      it('sets headBranch in the matchConfig', () => {
+        const result = toBranchMatchConfig(stringConfig);
+        expect(result).toMatchObject<BranchMatchConfig>({
+          baseBranch: ['testing']
+        });
+      });
+    });
+  });
+
+  describe('when the config contains both a base-branch and head-branch option', () => {
+    const config = {'base-branch': ['testing'], 'head-branch': ['testing']};
+    it('sets headBranch in the matchConfig', () => {
+      const result = toBranchMatchConfig(config);
+      expect(result).toMatchObject<BranchMatchConfig>({
+        baseBranch: ['testing'],
+        headBranch: ['testing']
       });
     });
   });
