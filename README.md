@@ -15,36 +15,42 @@ Automatically label new pull requests based on the paths of files being changed 
 
 ### Create `.github/labeler.yml`
 
-Create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
+Create a `.github/labeler.yml` file with a list of labels and config options to match and apply the label.
 
-The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
+The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is a match object.
 
 #### Match Object
 
-For more control over matching, you can provide a match object instead of a simple path glob. The match object is defined as:
+The match object allows control over the matching options, you can specify the label to be applied based on the files that have changed or the name of the branch. For the changed files options you provide a path glob, and a regexp for the branch names.
+The match object is defined as:
 
 ```yml
-- any: ['list', 'of', 'globs']
-  all: ['list', 'of', 'globs']
-  branch: ['list', 'of, 'globs']
+- changed-files:
+  - any: ['list', 'of', 'globs']
+  - all: ['list', 'of', 'globs']
+- base-branch: ['list', 'of, 'regexps']
+- head-branch: ['list', 'of, 'regexps']
 ```
 
 One or all fields can be provided for fine-grained matching. Unlike the top-level list, the list of path globs provided to `any` and `all` must ALL match against a path for the label to be applied.
 
 The fields are defined as follows:
-* `any`: match ALL globs against ANY changed path
-* `all`: match ALL globs against ALL changed paths
-* `branch`: match ANY glob against the branch name
+* `changed-files`
+  * `any`: match ALL globs against ANY changed path
+  * `all`: match ALL globs against ALL changed paths
+* `base-branch`: match a regexp against the base branch name
+* `head-branch`: match a regexp against the head branch name
 
 A simple path glob is the equivalent to `any: ['glob']`. More specifically, the following two configurations are equivalent:
 ```yml
 label1:
-- example1/*
+- changed-files: example1/*
 ```
 and
 ```yml
 label1:
-- any: ['example1/*']
+- changed-files:
+  - any: ['example1/*']
 ```
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
@@ -54,19 +60,23 @@ From a boolean logic perspective, top-level match objects are `OR`-ed together a
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
 label1:
-- example/**/*
+- changed-files: example/**/*
 
 # Add 'label2' to any file changes within 'example2' folder
-label2: example2/*
+label2:
+- changed-files: example2/*
 
 # Add label3 to any change to .txt files within the entire repository. Quotation marks are required for the leading asterisk
 label3:
-- '**/*.txt'
+- changed-files: '**/*.txt'
 
-
-# Add 'label4' to any PR where the branch name starts with 'example4'
+# Add 'label4' to any PR where the head branch name starts with 'example4'
 label4:
-- branch: 'example4/**'
+- head-branch: '^example4/**'
+
+# Add 'label5' to any PR where the base branch name starts with 'example5'
+label5:
+- base-branch: '^example4/'
 ```
 
 #### Common Examples
@@ -74,29 +84,36 @@ label4:
 ```yml
 # Add 'repo' label to any root file changes
 repo:
-- '*'
+- changed-files: '*'
 
 # Add '@domain/core' label to any change within the 'core' package
 '@domain/core':
-- package/core/*
-- package/core/**/*
+- changed-files:
+  - package/core/*
+  - package/core/**/*
 
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
-- src/**/*.spec.js
+- changed-files: src/**/*.spec.js
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
-- any: ['src/**/*', '!src/docs/*']
+- changed-files:
+  - any: ['src/**/*', '!src/docs/*']
 
 # Add 'frontend` label to any change to *.js files as long as the `main.js` hasn't changed
 frontend:
-- any: ['src/**/*.js']
-  all: ['!src/main.js']
+- changed-files:
+  - any: ['src/**/*.js']
+    all: ['!src/main.js']
 
  # Add 'feature' label to any branch that starts with `feature` or has a `feature` section in the name
- feature:
- - branch: ['feature/**', '*/feature/**']
+feature:
+ - head-branch: ['^feature/**', '/feature/']
+
+ # Add 'release' label to any PR that is opened against the `main` branch
+release:
+ - base-branch: 'main'
 ```
 
 ### Create Workflow
