@@ -1,0 +1,8 @@
+# Ignore list
+/*
+
+# Do not ignore these folders:
+!__tests__/
+!__mocks__/
+!.github/
+!src/
