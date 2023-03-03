@@ -21,7 +21,7 @@ The key is the name of the label in your repository that you want to add (eg: "m
 
 #### Match Object
 
-The match object allows control over the matching options, you can specify the label to be applied based on the files that have changed or the name of the branch. For the changed files options you provide a path glob, and a regexp for the branch names.
+The match object allows control over the matching options, you can specify the label to be applied based on the files that have changed or the name of the branch. For the changed files options you provide a [path glob](https://github.com/isaacs/minimatch#minimatch), and a regexp for the branch names.
 The match object is defined as:
 
 ```yml
