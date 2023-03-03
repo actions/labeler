@@ -23,13 +23,6 @@ describe('getBranchName', () => {
       expect(result).toEqual('head-branch-name');
     });
   });
-
-  describe('when no branch is specified', () => {
-    it('returns the head branch name', () => {
-      const result = getBranchName();
-      expect(result).toEqual('head-branch-name');
-    });
-  });
 });
 
 describe('checkBranch', () => {
@@ -45,14 +38,14 @@ describe('checkBranch', () => {
   describe('when a single pattern is provided', () => {
     describe('and the pattern matches the head branch', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test']);
+        const result = checkBranch(['^test'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and the pattern does not match the head branch', () => {
       it('returns false', () => {
-        const result = checkBranch(['^feature/']);
+        const result = checkBranch(['^feature/'], 'head');
         expect(result).toBe(false);
       });
     });
@@ -61,21 +54,21 @@ describe('checkBranch', () => {
   describe('when multiple patterns are provided', () => {
     describe('and at least one pattern matches', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test/', '^feature/']);
+        const result = checkBranch(['^test/', '^feature/'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and all patterns match', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test/', '/feature/']);
+        const result = checkBranch(['^test/', '/feature/'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and no patterns match', () => {
       it('returns false', () => {
-        const result = checkBranch(['^feature/', '/test$']);
+        const result = checkBranch(['^feature/', '/test$'], 'head');
         expect(result).toBe(false);
       });
     });

@@ -35,7 +35,7 @@ export function toBranchMatchConfig(config: any): BranchMatchConfig {
   return branchConfig;
 }
 
-export function getBranchName(branchBase?: BranchBase): string | undefined {
+export function getBranchName(branchBase: BranchBase): string | undefined {
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {
     return undefined;
@@ -50,7 +50,7 @@ export function getBranchName(branchBase?: BranchBase): string | undefined {
 
 export function checkBranch(
   regexps: string[],
-  branchBase?: BranchBase
+  branchBase: BranchBase
 ): boolean {
   const branchName = getBranchName(branchBase);
   if (!branchName) {
