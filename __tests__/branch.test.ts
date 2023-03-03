@@ -123,7 +123,7 @@ describe('toBranchMatchConfig', () => {
 
   describe('when the config contains a base-branch option', () => {
     const config = {'base-branch': ['testing']};
-    it('sets headBranch in the matchConfig', () => {
+    it('sets baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
       expect(result).toMatchObject<BranchMatchConfig>({
         baseBranch: ['testing']
@@ -133,7 +133,7 @@ describe('toBranchMatchConfig', () => {
     describe('and the matching option is a string', () => {
       const stringConfig = {'base-branch': 'testing'};
 
-      it('sets headBranch in the matchConfig', () => {
+      it('sets baseBranch in the matchConfig', () => {
         const result = toBranchMatchConfig(stringConfig);
         expect(result).toMatchObject<BranchMatchConfig>({
           baseBranch: ['testing']
@@ -144,7 +144,7 @@ describe('toBranchMatchConfig', () => {
 
   describe('when the config contains both a base-branch and head-branch option', () => {
     const config = {'base-branch': ['testing'], 'head-branch': ['testing']};
-    it('sets headBranch in the matchConfig', () => {
+    it('sets headBranch and baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
       expect(result).toMatchObject<BranchMatchConfig>({
         baseBranch: ['testing'],
