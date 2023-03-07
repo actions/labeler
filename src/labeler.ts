@@ -13,7 +13,7 @@ type ClientType = ReturnType<typeof github.getOctokit>;
 
 export async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
+    const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
     const syncLabels = !!core.getInput('sync-labels', {required: false});
 
