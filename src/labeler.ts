@@ -261,25 +261,25 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
 }
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
-  if (matchConfig.changedFiles?.all !== undefined) {
+  if (matchConfig.changedFiles?.all) {
     if (checkAll(changedFiles, matchConfig.changedFiles.all)) {
       return true;
     }
   }
 
-  if (matchConfig.changedFiles?.any !== undefined) {
+  if (matchConfig.changedFiles?.any) {
     if (checkAny(changedFiles, matchConfig.changedFiles.any)) {
       return true;
     }
   }
 
-  if (matchConfig.headBranch !== undefined) {
+  if (matchConfig.headBranch) {
     if (checkBranch(matchConfig.headBranch, 'head')) {
       return true;
     }
   }
 
-  if (matchConfig.baseBranch !== undefined) {
+  if (matchConfig.baseBranch) {
     if (checkBranch(matchConfig.baseBranch, 'base')) {
       return true;
     }
