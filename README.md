@@ -21,8 +21,8 @@ The match object is defined as:
 - changed-files:
   - any: ['list', 'of', 'globs']
   - all: ['list', 'of', 'globs']
-- base-branch: ['list', 'of, 'regexps']
-- head-branch: ['list', 'of, 'regexps']
+- base-branch: ['list', 'of', 'regexps']
+- head-branch: ['list', 'of', 'regexps']
 ```
 
 One or all fields can be provided for fine-grained matching. Unlike the top-level list, the list of path globs provided to `any` and `all` must ALL match against a path for the label to be applied.
@@ -65,11 +65,11 @@ label3:
 
 # Add 'label4' to any PR where the head branch name starts with 'example4'
 label4:
-- head-branch: '^example4/**'
+- head-branch: '^example4'
 
 # Add 'label5' to any PR where the base branch name starts with 'example5'
 label5:
-- base-branch: '^example4/'
+- base-branch: '^example5'
 ```
 
 #### Common Examples
@@ -102,7 +102,7 @@ frontend:
 
  # Add 'feature' label to any branch that starts with `feature` or has a `feature` section in the name
 feature:
- - head-branch: ['^feature/**', '/feature/']
+ - head-branch: ['^feature', 'feature']
 
  # Add 'release' label to any PR that is opened against the `main` branch
 release:
