@@ -120,7 +120,8 @@ function getLabelConfigMapFromObject(
       );
     }
 
-    labelMap.set(label, configOptions);
+    const matchConfigs = configOptions.map(toMatchConfig);
+    labelMap.set(label, matchConfigs);
   }
 
   return labelMap;
@@ -141,9 +142,8 @@ export function checkMatchConfigs(
   matchConfigs: MatchConfig[]
 ): boolean {
   for (const config of matchConfigs) {
-    core.debug(` checking pattern ${JSON.stringify(config)}`);
-    const matchConfig = toMatchConfig(config);
-    if (!checkMatch(changedFiles, matchConfig)) {
+    core.debug(` checking config ${JSON.stringify(config)}`);
+    if (!checkMatch(changedFiles, config)) {
       return false;
     }
   }
