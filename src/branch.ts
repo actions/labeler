@@ -18,17 +18,9 @@ export function toBranchMatchConfig(config: any): BranchMatchConfig {
     baseBranch: config['base-branch']
   };
 
-  if (branchConfig.headBranch) {
-    const patterns = branchConfig.headBranch;
-    if (typeof patterns === 'string') {
-      branchConfig.headBranch = [patterns];
-    }
-  }
-
-  if (branchConfig.baseBranch) {
-    const patterns = branchConfig.baseBranch;
-    if (typeof patterns === 'string') {
-      branchConfig.baseBranch = [patterns];
+  for (const branchName in branchConfig) {
+    if (typeof branchConfig[branchName] === 'string') {
+      branchConfig[branchName] = [branchConfig[branchName]];
     }
   }
 
