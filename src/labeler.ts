@@ -127,7 +127,7 @@ function getLabelConfigMapFromObject(
   return labelMap;
 }
 
-function toMatchConfig(config: MatchConfig): MatchConfig {
+function toMatchConfig(config: any): MatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
 
