@@ -134,7 +134,7 @@ describe('run', () => {
     });
   });
 
-  it('it can support multiple branches by batching', async () => {
+  it('can support multiple branches by batching', async () => {
     github.context.payload.pull_request!.head = {ref: 'fix/123'};
     usingLabelerConfigYaml('branches.yml');
     await run();
@@ -148,7 +148,7 @@ describe('run', () => {
     });
   });
 
-  it('it can support multiple branches by providing an array', async () => {
+  it('can support multiple branches by providing an array', async () => {
     github.context.payload.pull_request!.head = {ref: 'array/123'};
     usingLabelerConfigYaml('branches.yml');
     await run();
