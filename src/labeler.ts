@@ -47,7 +47,7 @@ export async function run() {
     const labelsToRemove: string[] = [];
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, configs)) {
+      if (checkMatchConfigs(changedFiles, configs)) {
         labels.push(label);
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
@@ -205,18 +205,18 @@ function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
-export function checkGlobs(
+export function checkMatchConfigs(
   changedFiles: string[],
-  globs: MatchConfig[]
+  matchConfigs: MatchConfig[]
 ): boolean {
-  for (const glob of globs) {
-    core.debug(` checking pattern ${JSON.stringify(glob)}`);
-    const matchConfig = toMatchConfig(glob);
-    if (checkMatch(changedFiles, matchConfig)) {
-      return true;
+  for (const config of matchConfigs) {
+    core.debug(` checking pattern ${JSON.stringify(config)}`);
+    const matchConfig = toMatchConfig(config);
+    if (!checkMatch(changedFiles, matchConfig)) {
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 function isMatch(changedFile: string, matchers: Minimatch[]): boolean {

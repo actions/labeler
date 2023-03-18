@@ -1,4 +1,4 @@
-import {checkGlobs, MatchConfig} from '../src/labeler';
+import {checkMatchConfigs, MatchConfig} from '../src/labeler';
 
 import * as core from '@actions/core';
 
@@ -16,17 +16,17 @@ const matchConfig = [
   {'changed-files': [{any: ['*.txt']}]}
 ] as unknown as MatchConfig[];
 
-describe('checkGlobs', () => {
+describe('checkMatchConfigs', () => {
   it('returns true when our pattern does match changed files', () => {
     const changedFiles = ['foo.txt', 'bar.txt'];
-    const result = checkGlobs(changedFiles, matchConfig);
+    const result = checkMatchConfigs(changedFiles, matchConfig);
 
     expect(result).toBeTruthy();
   });
 
   it('returns false when our pattern does not match changed files', () => {
     const changedFiles = ['foo.docx'];
-    const result = checkGlobs(changedFiles, matchConfig);
+    const result = checkMatchConfigs(changedFiles, matchConfig);
 
     expect(result).toBeFalsy();
   });
