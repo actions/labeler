@@ -153,7 +153,7 @@ function run() {
             const syncLabels = !!core.getInput('sync-labels', { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
-                console.log('Could not get pull request number from context, exiting');
+                core.info('Could not get pull request number from context, exiting');
                 return;
             }
             const client = github.getOctokit(token);

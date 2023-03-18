@@ -1,4 +1,4 @@
-* text=auto
+* text=auto eol=lf
 .licenses/** -diff linguist-generated=true
 
 # don't diff machine generated files
