@@ -1,4 +1,3 @@
-import * as github from '@actions/github';
 import {
   ChangedFilesMatchConfig,
   checkAll,
@@ -9,23 +8,47 @@ import {
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
-describe(checkAll, () => {
-  describe('when all the patterns match', () => {
-    it.todo('returns true');
+describe('checkAll', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
+
+  describe('when the globs match every file that has changed', () => {
+    const globs = ['*.txt'];
+
+    it('returns true', () => {
+      const result = checkAll(changedFiles, globs);
+      expect(result).toBe(true);
+    });
   });
 
-  describe('when no the patterns match', () => {
-    it.todo('returns false');
+  describe(`when the globs don't match every file that has changed`, () => {
+    const globs = ['foo.txt'];
+
+    it('returns false', () => {
+      const result = checkAll(changedFiles, globs);
+      expect(result).toBe(false);
+    });
   });
 });
 
-describe(checkAny, () => {
-  describe('when any provided patterns matches one of the files changed', () => {
-    it.todo('returns true');
+describe('checkAny', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
+
+  describe('when the globs match any of the files that have changed', () => {
+    const globs = ['foo.txt'];
+
+    it('returns true', () => {
+      const result = checkAny(changedFiles, globs);
+      expect(result).toBe(true);
+    });
   });
 
-  describe('when no the patterns match', () => {
-    it.todo('returns false');
+  describe('when none of the globs match any files that have changed', () => {
+    const globs = ['*.md'];
+
+    it('returns false', () => {
+      const result = checkAny(changedFiles, globs);
+      expect(result).toBe(false);
+    });
   });
 });
 
@@ -125,6 +148,7 @@ describe('toChangedFilesMatchConfig', () => {
 
     describe('and the value is an array of strings', () => {
       const config = {'changed-files': ['testing']};
+
       it(`sets the array under an 'any' key`, () => {
         const result = toChangedFilesMatchConfig(config);
         expect(result).toMatchObject<ChangedFilesMatchConfig>({
