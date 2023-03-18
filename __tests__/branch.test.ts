@@ -87,6 +87,7 @@ describe('checkBranch', () => {
 describe('toBranchMatchConfig', () => {
   describe('when there are no branch keys in the config', () => {
     const config = {'changed-files': [{any: ['testing']}]};
+
     it('returns an empty object', () => {
       const result = toBranchMatchConfig(config);
       expect(result).toMatchObject({});
@@ -95,6 +96,7 @@ describe('toBranchMatchConfig', () => {
 
   describe('when the config contains a head-branch option', () => {
     const config = {'head-branch': ['testing']};
+
     it('sets headBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
       expect(result).toMatchObject<BranchMatchConfig>({

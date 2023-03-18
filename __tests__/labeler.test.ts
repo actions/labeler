@@ -1,4 +1,4 @@
-import {checkMatchConfigs, MatchConfig} from '../src/labeler';
+import {checkMatchConfigs, MatchConfig, toMatchConfig} from '../src/labeler';
 
 import * as core from '@actions/core';
 
@@ -10,9 +10,47 @@ beforeAll(() => {
   });
 });
 
-const matchConfig: MatchConfig[] = [{changedFiles: {any: ['*.txt']}}];
+describe('toMatchConfig', () => {
+  describe('when all expected config options are present', () => {
+    const config = {
+      'changed-files': [{any: ['testing-any']}, {all: ['testing-all']}],
+      'head-branch': ['testing-head'],
+      'base-branch': ['testing-base']
+    };
+
+    it('returns a MatchConfig object with all options', () => {
+      const result = toMatchConfig(config);
+      expect(result).toMatchObject<MatchConfig>({
+        changedFiles: {
+          all: ['testing-all'],
+          any: ['testing-any']
+        },
+        headBranch: ['testing-head'],
+        baseBranch: ['testing-base']
+      });
+    });
+
+    describe('and there are also unexpected options present', () => {
+      config['test-test'] = 'testing';
+
+      it('does not include the unexpected items in the returned MatchConfig object', () => {
+        const result = toMatchConfig(config);
+        expect(result).toMatchObject<MatchConfig>({
+          changedFiles: {
+            all: ['testing-all'],
+            any: ['testing-any']
+          },
+          headBranch: ['testing-head'],
+          baseBranch: ['testing-base']
+        });
+      });
+    });
+  });
+});
 
 describe('checkMatchConfigs', () => {
+  const matchConfig: MatchConfig[] = [{changedFiles: {any: ['*.txt']}}];
+
   it('returns true when our pattern does match changed files', () => {
     const changedFiles = ['foo.txt', 'bar.txt'];
     const result = checkMatchConfigs(changedFiles, matchConfig);
