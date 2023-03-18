@@ -106,10 +106,10 @@ async function getMatchConfigs(
     configurationPath
   );
 
-  // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+  // loads (hopefully) a `{[label:string]: MatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
 
-  // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
+  // transform `any` => `Map<string,MatchConfig[]>` or throw if yaml is malformed:
   return getLabelConfigMapFromObject(configObject);
 }
 
