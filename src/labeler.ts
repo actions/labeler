@@ -130,20 +130,22 @@ async function fetchContent(
 function getLabelConfigMapFromObject(
   configObject: any
 ): Map<string, MatchConfig[]> {
-  const labelGlobs: Map<string, MatchConfig[]> = new Map();
+  const labelMap: Map<string, MatchConfig[]> = new Map();
   for (const label in configObject) {
-    if (typeof configObject[label] === 'string') {
-      labelGlobs.set(label, [configObject[label]]);
-    } else if (configObject[label] instanceof Array) {
-      labelGlobs.set(label, configObject[label]);
-    } else {
+    const configOptions = configObject[label];
+    if (
+      !Array.isArray(configOptions) ||
+      !configOptions.every(opts => typeof opts === 'object')
+    ) {
       throw Error(
-        `found unexpected type for label ${label} (should be string or array of globs)`
+        `found unexpected type for label ${label} (should be array of config options)`
       );
     }
+
+    labelMap.set(label, configOptions);
   }
 
-  return labelGlobs;
+  return labelMap;
 }
 
 function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
