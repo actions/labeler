@@ -175,14 +175,15 @@ function toChangedFilesMatchConfig(config: any): ChangedFilesMatchConfig {
     } else {
       // If it is not an array of strings then it should be array of further config options
       // so assign them to our `changedFilesMatchConfig`
-      changedFilesConfig.forEach(config => {
-        // Make sure that the values that we assign to our match config are an array
-        Object.entries(config).forEach(([key, value]) => {
-          const element = {
-            [key]: Array.isArray(value) ? value : [value]
-          };
-          Object.assign(changedFilesMatchConfig.changedFiles, element);
-        });
+      Object.assign(
+        changedFilesMatchConfig.changedFiles,
+        ...changedFilesConfig
+      );
+      Object.keys(changedFilesMatchConfig.changedFiles).forEach(key => {
+        const value = changedFilesMatchConfig.changedFiles[key];
+        changedFilesMatchConfig.changedFiles[key] = Array.isArray(value)
+          ? value
+          : [value];
       });
     }
   }
