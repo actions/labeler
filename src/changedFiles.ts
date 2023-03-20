@@ -61,16 +61,22 @@ export function toChangedFilesMatchConfig(
     } else {
       // If it is not an array of strings then it should be array of further config options
       // so assign them to our `changedFilesMatchConfig`
-      Object.assign(
-        changedFilesMatchConfig.changedFiles,
-        ...changedFilesConfig
+      changedFilesMatchConfig.changedFiles = changedFilesConfig.reduce(
+        (updatedMatchConfig, configValue) => {
+          if (!configValue) {
+            return updatedMatchConfig;
+          }
+
+          Object.entries(configValue).forEach(([key, value]) => {
+            if (key === 'any' || key === 'all') {
+              updatedMatchConfig[key] = Array.isArray(value) ? value : [value];
+            }
+          });
+
+          return updatedMatchConfig;
+        },
+        {}
       );
-      Object.keys(changedFilesMatchConfig.changedFiles).forEach(key => {
-        const value = changedFilesMatchConfig.changedFiles[key];
-        changedFilesMatchConfig.changedFiles[key] = Array.isArray(value)
-          ? value
-          : [value];
-      });
     }
   }
 
