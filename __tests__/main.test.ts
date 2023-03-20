@@ -49,7 +49,7 @@ describe('run', () => {
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
-  it('does not add a label when no match config options match', async () => {
+  it('does not add a label when the match config options are not supported', async () => {
     usingLabelerConfigYaml('not_supported.yml');
     await run();
 
