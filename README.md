@@ -100,7 +100,7 @@ frontend:
   - any: ['src/**/*.js']
     all: ['!src/main.js']
 
- # Add 'feature' label to any branch that starts with `feature` or has a `feature` section in the name
+ # Add 'feature' label to any PR where the head branch name starts with `feature` or has a `feature` section in the name
 feature:
  - head-branch: ['^feature', 'feature']
 
