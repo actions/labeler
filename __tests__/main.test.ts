@@ -16,7 +16,8 @@ const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 
 const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
-  'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
+  'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
+  'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml')
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -46,6 +47,14 @@ describe('run', () => {
 
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('does not add a label when no match config options match', async () => {
+    usingLabelerConfigYaml('not_supported.yml');
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {

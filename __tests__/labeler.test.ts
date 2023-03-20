@@ -17,17 +17,18 @@ describe('toMatchConfig', () => {
       'head-branch': ['testing-head'],
       'base-branch': ['testing-base']
     };
+    const expected: MatchConfig = {
+      changedFiles: {
+        all: ['testing-all'],
+        any: ['testing-any']
+      },
+      headBranch: ['testing-head'],
+      baseBranch: ['testing-base']
+    };
 
     it('returns a MatchConfig object with all options', () => {
       const result = toMatchConfig(config);
-      expect(result).toEqual<MatchConfig>({
-        changedFiles: {
-          all: ['testing-all'],
-          any: ['testing-any']
-        },
-        headBranch: ['testing-head'],
-        baseBranch: ['testing-base']
-      });
+      expect(result).toEqual(expected);
     });
 
     describe('and there are also unexpected options present', () => {
@@ -35,14 +36,7 @@ describe('toMatchConfig', () => {
 
       it('does not include the unexpected items in the returned MatchConfig object', () => {
         const result = toMatchConfig(config);
-        expect(result).toEqual<MatchConfig>({
-          changedFiles: {
-            all: ['testing-all'],
-            any: ['testing-any']
-          },
-          headBranch: ['testing-head'],
-          baseBranch: ['testing-base']
-        });
+        expect(result).toEqual(expected);
       });
     });
   });

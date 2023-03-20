@@ -151,6 +151,10 @@ export function checkMatchConfigs(
 }
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+  if (!Object.keys(matchConfig).length) {
+    return false;
+  }
+
   if (matchConfig.changedFiles?.all) {
     if (!checkAll(changedFiles, matchConfig.changedFiles.all)) {
       return false;
