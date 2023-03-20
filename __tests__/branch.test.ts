@@ -90,7 +90,7 @@ describe('toBranchMatchConfig', () => {
 
     it('returns an empty object', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toMatchObject({});
+      expect(result).toEqual({});
     });
   });
 
@@ -99,7 +99,7 @@ describe('toBranchMatchConfig', () => {
 
     it('sets headBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toMatchObject<BranchMatchConfig>({
+      expect(result).toEqual<BranchMatchConfig>({
         headBranch: ['testing']
       });
     });
@@ -109,7 +109,7 @@ describe('toBranchMatchConfig', () => {
 
       it('sets headBranch in the matchConfig', () => {
         const result = toBranchMatchConfig(stringConfig);
-        expect(result).toMatchObject<BranchMatchConfig>({
+        expect(result).toEqual<BranchMatchConfig>({
           headBranch: ['testing']
         });
       });
@@ -120,7 +120,7 @@ describe('toBranchMatchConfig', () => {
     const config = {'base-branch': ['testing']};
     it('sets baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toMatchObject<BranchMatchConfig>({
+      expect(result).toEqual<BranchMatchConfig>({
         baseBranch: ['testing']
       });
     });
@@ -130,7 +130,7 @@ describe('toBranchMatchConfig', () => {
 
       it('sets baseBranch in the matchConfig', () => {
         const result = toBranchMatchConfig(stringConfig);
-        expect(result).toMatchObject<BranchMatchConfig>({
+        expect(result).toEqual<BranchMatchConfig>({
           baseBranch: ['testing']
         });
       });
@@ -141,7 +141,7 @@ describe('toBranchMatchConfig', () => {
     const config = {'base-branch': ['testing'], 'head-branch': ['testing']};
     it('sets headBranch and baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toMatchObject<BranchMatchConfig>({
+      expect(result).toEqual<BranchMatchConfig>({
         baseBranch: ['testing'],
         headBranch: ['testing']
       });

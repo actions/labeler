@@ -20,7 +20,7 @@ describe('toMatchConfig', () => {
 
     it('returns a MatchConfig object with all options', () => {
       const result = toMatchConfig(config);
-      expect(result).toMatchObject<MatchConfig>({
+      expect(result).toEqual<MatchConfig>({
         changedFiles: {
           all: ['testing-all'],
           any: ['testing-any']
@@ -35,7 +35,7 @@ describe('toMatchConfig', () => {
 
       it('does not include the unexpected items in the returned MatchConfig object', () => {
         const result = toMatchConfig(config);
-        expect(result).toMatchObject<MatchConfig>({
+        expect(result).toEqual<MatchConfig>({
           changedFiles: {
             all: ['testing-all'],
             any: ['testing-any']

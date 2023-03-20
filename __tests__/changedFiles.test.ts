@@ -58,32 +58,32 @@ describe('toChangedFilesMatchConfig', () => {
 
     it('returns an empty object', () => {
       const result = toChangedFilesMatchConfig(config);
-      expect(result).toMatchObject<ChangedFilesMatchConfig>({});
-    });
-  });
-
-  describe(`when both 'any' and 'all' keys are present`, () => {
-    const config = {'changed-files': [{all: 'testing'}, {any: 'testing'}]};
-
-    it('sets both values in the config object', () => {
-      const result = toChangedFilesMatchConfig(config);
-      expect(result).toMatchObject<ChangedFilesMatchConfig>({
-        changedFiles: {
-          any: ['testing'],
-          all: ['testing']
-        }
-      });
+      expect(result).toEqual<ChangedFilesMatchConfig>({});
     });
   });
 
   describe(`when there is a 'changed-files' key in the config`, () => {
+    describe(`and both 'any' and 'all' keys are present`, () => {
+      const config = {'changed-files': [{all: 'testing'}, {any: 'testing'}]};
+
+      it('sets both values in the config object', () => {
+        const result = toChangedFilesMatchConfig(config);
+        expect(result).toEqual<ChangedFilesMatchConfig>({
+          changedFiles: {
+            any: ['testing'],
+            all: ['testing']
+          }
+        });
+      });
+    });
+
     describe(`and it contains a 'all' key`, () => {
       describe('with a value of a string', () => {
         const config = {'changed-files': [{all: 'testing'}]};
 
         it('sets the value to be an array of strings in the config object', () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toMatchObject<ChangedFilesMatchConfig>({
+          expect(result).toEqual<ChangedFilesMatchConfig>({
             changedFiles: {
               all: ['testing']
             }
@@ -96,7 +96,7 @@ describe('toChangedFilesMatchConfig', () => {
 
         it('sets the value in the config object', () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toMatchObject<ChangedFilesMatchConfig>({
+          expect(result).toEqual<ChangedFilesMatchConfig>({
             changedFiles: {
               all: ['testing']
             }
@@ -111,7 +111,7 @@ describe('toChangedFilesMatchConfig', () => {
 
         it('sets the value to be an array of strings on the config object', () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toMatchObject<ChangedFilesMatchConfig>({
+          expect(result).toEqual<ChangedFilesMatchConfig>({
             changedFiles: {
               any: ['testing']
             }
@@ -124,7 +124,7 @@ describe('toChangedFilesMatchConfig', () => {
 
         it('sets the value in the config object', () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toMatchObject<ChangedFilesMatchConfig>({
+          expect(result).toEqual<ChangedFilesMatchConfig>({
             changedFiles: {
               any: ['testing']
             }
@@ -138,7 +138,7 @@ describe('toChangedFilesMatchConfig', () => {
 
       it(`sets the string as an array under an 'any' key`, () => {
         const result = toChangedFilesMatchConfig(config);
-        expect(result).toMatchObject<ChangedFilesMatchConfig>({
+        expect(result).toEqual<ChangedFilesMatchConfig>({
           changedFiles: {
             any: ['testing']
           }
@@ -151,7 +151,20 @@ describe('toChangedFilesMatchConfig', () => {
 
       it(`sets the array under an 'any' key`, () => {
         const result = toChangedFilesMatchConfig(config);
-        expect(result).toMatchObject<ChangedFilesMatchConfig>({
+        expect(result).toEqual<ChangedFilesMatchConfig>({
+          changedFiles: {
+            any: ['testing']
+          }
+        });
+      });
+    });
+
+    describe('and there is an unknown value in the config', () => {
+      const config = {'changed-files': [{any: 'testing'}, {sneaky: 'test'}]};
+
+      it(`does not set the value in the match config`, () => {
+        const result = toChangedFilesMatchConfig(config);
+        expect(result).toEqual<ChangedFilesMatchConfig>({
           changedFiles: {
             any: ['testing']
           }
