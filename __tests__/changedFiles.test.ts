@@ -159,6 +159,15 @@ describe('toChangedFilesMatchConfig', () => {
       });
     });
 
+    describe('but it has empty values', () => {
+      const config = {'changed-files': []};
+
+      it(`returns an empty object`, () => {
+        const result = toChangedFilesMatchConfig(config);
+        expect(result).toEqual<ChangedFilesMatchConfig>({});
+      });
+    });
+
     describe('and there is an unknown value in the config', () => {
       const config = {'changed-files': [{any: 'testing'}, {sneaky: 'test'}]};
 

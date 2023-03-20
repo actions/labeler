@@ -54,7 +54,10 @@ export function toChangedFilesMatchConfig(
   };
 
   if (Array.isArray(changedFilesConfig)) {
-    if (changedFilesConfig.every(entry => typeof entry === 'string')) {
+    if (
+      changedFilesConfig.length &&
+      changedFilesConfig.every(entry => typeof entry === 'string')
+    ) {
       changedFilesMatchConfig.changedFiles = {
         any: changedFilesConfig
       };
@@ -78,6 +81,11 @@ export function toChangedFilesMatchConfig(
         {}
       );
     }
+  }
+
+  // If no items were added to `changedFiles` then return an empty object
+  if (!Object.keys(changedFilesMatchConfig.changedFiles).length) {
+    return {};
   }
 
   return changedFilesMatchConfig;
