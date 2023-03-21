@@ -66,30 +66,27 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const labels = [];
-            const labelsToRemove = [];
+            const pullRequestLabels = pullRequest.labels.map(label => label.name);
+            const labels = new Set(syncLabels ? [] : pullRequestLabels);
             const excessLabels = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
-                    if (labels.length >= GITHUB_MAX_LABELS) {
-                        excessLabels.push(label);
+                    if (labels.size < GITHUB_MAX_LABELS) {
+                        labels.add(label);
                     }
                     else {
-                        labels.push(label);
+                        excessLabels.push(label);
                     }
                 }
-                else if (pullRequest.labels.find(l => l.name === label)) {
-                    labelsToRemove.push(label);
-                }
             }
-            if (syncLabels && labelsToRemove.length) {
-                yield removeLabels(client, prNumber, labelsToRemove);
+            if (syncLabels) {
+                yield setLabels(client, prNumber, Array.from(labels));
             }
-            if (labels.length > 0) {
-                yield addLabels(client, prNumber, labels);
+            else {
+                yield addLabels(client, prNumber, Array.from(labels));
             }
-            if (excessLabels.length > 0) {
+            if (excessLabels.length) {
                 core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
             }
         }
@@ -241,14 +238,14 @@ function addLabels(client, prNumber, labels) {
         });
     });
 }
-function removeLabels(client, prNumber, labels) {
+function setLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all(labels.map(label => client.rest.issues.removeLabel({
+        yield client.rest.issues.setLabels({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
-            name: label
-        })));
+            labels: labels
+        });
     });
 }
 

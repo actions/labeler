@@ -41,31 +41,30 @@ export async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
+    const pullRequestLabels: string[] = pullRequest.labels.map(
+      label => label.name
+    );
+    const labels: Set<string> = new Set(syncLabels ? [] : pullRequestLabels);
     const excessLabels: string[] = [];
+
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
-        if (labels.length >= GITHUB_MAX_LABELS) {
-          excessLabels.push(label);
+        if (labels.size < GITHUB_MAX_LABELS) {
+          labels.add(label);
         } else {
-          labels.push(label);
+          excessLabels.push(label);
         }
-      } else if (pullRequest.labels.find(l => l.name === label)) {
-        labelsToRemove.push(label);
       }
     }
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
+    if (syncLabels) {
+      await setLabels(client, prNumber, Array.from(labels));
+    } else {
+      await addLabels(client, prNumber, Array.from(labels));
     }
 
-    if (labels.length > 0) {
-      await addLabels(client, prNumber, labels);
-    }
-
-    if (excessLabels.length > 0) {
+    if (excessLabels.length) {
       core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
     }
   } catch (error: any) {
@@ -254,19 +253,15 @@ async function addLabels(
   });
 }
 
-async function removeLabels(
+async function setLabels(
   client: ClientType,
   prNumber: number,
   labels: string[]
 ) {
-  await Promise.all(
-    labels.map(label =>
-      client.rest.issues.removeLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        issue_number: prNumber,
-        name: label
-      })
-    )
-  );
+  await client.rest.issues.setLabels({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    issue_number: prNumber,
+    labels: labels
+  });
 }
