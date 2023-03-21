@@ -170,7 +170,8 @@ function toChangedFilesMatchConfig(config) {
         changedFiles: {}
     };
     if (Array.isArray(changedFilesConfig)) {
-        if (changedFilesConfig.every(entry => typeof entry === 'string')) {
+        if (changedFilesConfig.length &&
+            changedFilesConfig.every(entry => typeof entry === 'string')) {
             changedFilesMatchConfig.changedFiles = {
                 any: changedFilesConfig
             };
@@ -178,14 +179,22 @@ function toChangedFilesMatchConfig(config) {
         else {
             // If it is not an array of strings then it should be array of further config options
             // so assign them to our `changedFilesMatchConfig`
-            Object.assign(changedFilesMatchConfig.changedFiles, ...changedFilesConfig);
-            Object.keys(changedFilesMatchConfig.changedFiles).forEach(key => {
-                const value = changedFilesMatchConfig.changedFiles[key];
-                changedFilesMatchConfig.changedFiles[key] = Array.isArray(value)
-                    ? value
-                    : [value];
-            });
+            changedFilesMatchConfig.changedFiles = changedFilesConfig.reduce((updatedMatchConfig, configValue) => {
+                if (!configValue) {
+                    return updatedMatchConfig;
+                }
+                Object.entries(configValue).forEach(([key, value]) => {
+                    if (key === 'any' || key === 'all') {
+                        updatedMatchConfig[key] = Array.isArray(value) ? value : [value];
+                    }
+                });
+                return updatedMatchConfig;
+            }, {});
         }
+    }
+    // If no items were added to `changedFiles` then return an empty object
+    if (!Object.keys(changedFilesMatchConfig.changedFiles).length) {
+        return {};
     }
     return changedFilesMatchConfig;
 }
@@ -384,6 +393,9 @@ function checkMatchConfigs(changedFiles, matchConfigs) {
 exports.checkMatchConfigs = checkMatchConfigs;
 function checkMatch(changedFiles, matchConfig) {
     var _a, _b;
+    if (!Object.keys(matchConfig).length) {
+        return false;
+    }
     if ((_a = matchConfig.changedFiles) === null || _a === void 0 ? void 0 : _a.all) {
         if (!(0, changedFiles_1.checkAll)(changedFiles, matchConfig.changedFiles.all)) {
             return false;
