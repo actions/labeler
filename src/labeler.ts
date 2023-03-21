@@ -41,22 +41,19 @@ export async function run() {
       configPath
     );
 
-    const pullRequestLabels: string[] = pullRequest.labels.map(
-      label => label.name
-    );
-    const labels: Set<string> = new Set(syncLabels ? [] : pullRequestLabels);
-    const excessLabels: string[] = [];
+    const pullRequestLabels = pullRequest.labels.map(label => label.name);
+    const labels = syncLabels ? [] : pullRequestLabels;
 
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
-        if (labels.size < GITHUB_MAX_LABELS) {
-          labels.add(label);
-        } else {
-          excessLabels.push(label);
-        }
+      if (checkGlobs(changedFiles, globs) && !labels.includes(label)) {
+        labels.push(label);
       }
     }
+
+    // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
+    // and extract the excess into `excessLabels`
+    const excessLabels = labels.splice(GITHUB_MAX_LABELS);
 
     if (syncLabels) {
       await setLabels(client, prNumber, Array.from(labels));

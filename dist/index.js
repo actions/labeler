@@ -67,19 +67,16 @@ function run() {
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const pullRequestLabels = pullRequest.labels.map(label => label.name);
-            const labels = new Set(syncLabels ? [] : pullRequestLabels);
-            const excessLabels = [];
+            const labels = syncLabels ? [] : pullRequestLabels;
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs)) {
-                    if (labels.size < GITHUB_MAX_LABELS) {
-                        labels.add(label);
-                    }
-                    else {
-                        excessLabels.push(label);
-                    }
+                if (checkGlobs(changedFiles, globs) && !labels.includes(label)) {
+                    labels.push(label);
                 }
             }
+            // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
+            // and extract the excess into `excessLabels`
+            const excessLabels = labels.splice(GITHUB_MAX_LABELS);
             if (syncLabels) {
                 yield setLabels(client, prNumber, Array.from(labels));
             }
