@@ -48,7 +48,7 @@ describe('run', () => {
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
-    const mockInput: {[key: string]: string} = {
+    const mockInput = {
       'repo-token': 'foo',
       'configuration-path': 'bar',
       'sync-labels': 'true'
@@ -84,7 +84,7 @@ describe('run', () => {
   });
 
   it('(with sync-labels: false) it issues no delete calls even when there are preexisting PR labels that no longer match the glob pattern', async () => {
-    const mockInput: {[key: string]: string} = {
+    const mockInput = {
       'repo-token': 'foo',
       'configuration-path': 'bar',
       'sync-labels': 'false'
