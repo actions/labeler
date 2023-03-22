@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import { Minimatch } from 'minimatch';
+import {Minimatch} from 'minimatch';
 
 interface MatchConfig {
   all?: string[];
@@ -14,8 +14,8 @@ type ClientType = ReturnType<typeof github.getOctokit>;
 export async function run() {
   try {
     const token = core.getInput('repo-token');
-    const configPath = core.getInput('configuration-path', { required: true });
-    const syncLabels = !!core.getInput('sync-labels', { required: false });
+    const configPath = core.getInput('configuration-path', {required: true});
+    const syncLabels = !!core.getInput('sync-labels', {required: false});
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -25,7 +25,7 @@ export async function run() {
 
     const client: ClientType = github.getOctokit(token);
 
-    const { data: pullRequest } = await client.rest.pulls.get({
+    const {data: pullRequest} = await client.rest.pulls.get({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       pull_number: prNumber
