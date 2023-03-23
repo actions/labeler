@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
+import {Minimatch} from 'minimatch';
 
 import {
   ChangedFilesMatchConfig,
@@ -19,7 +20,7 @@ export async function run() {
   try {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
-    const syncLabels = !!core.getInput('sync-labels', {required: false});
+    const syncLabels = core.getBooleanInput('sync-labels');
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -127,23 +128,30 @@ function getLabelConfigMapFromObject(
   return labelMap;
 }
 
-export function toMatchConfig(config: any): MatchConfig {
-  const changedFilesConfig = toChangedFilesMatchConfig(config);
-  const branchConfig = toBranchMatchConfig(config);
-
-  return {
-    ...changedFilesConfig,
-    ...branchConfig
-  };
+function printPattern(matcher: Minimatch): string {
+  return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
 export function checkMatchConfigs(
   changedFiles: string[],
   matchConfigs: MatchConfig[]
 ): boolean {
-  for (const config of matchConfigs) {
-    core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config)) {
+  for (const glob of globs) {
+    core.debug(` checking pattern ${JSON.stringify(glob)}`);
+    const matchConfig = toMatchConfig(glob);
+    if (checkMatch(changedFiles, matchConfig)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
+  core.debug(`    matching patterns against file ${changedFile}`);
+  for (const matcher of matchers) {
+    core.debug(`   - ${printPattern(matcher)}`);
+    if (!matcher.match(changedFile)) {
+      core.debug(`   ${printPattern(matcher)} did not match`);
       return false;
     }
   }
