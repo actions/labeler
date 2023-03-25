@@ -63,7 +63,6 @@ function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
   return true;
 }
 
-// equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAnyChangedFiles(
   changedFiles: string[],
   globs: string[]
@@ -81,7 +80,6 @@ export function checkAnyChangedFiles(
   return false;
 }
 
-// equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAllChangedFiles(
   changedFiles: string[],
   globs: string[]

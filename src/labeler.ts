@@ -167,7 +167,9 @@ export function getLabelConfigMapFromObject(
       []
     );
 
-    labelMap.set(label, matchConfigs);
+    if (matchConfigs.length) {
+      labelMap.set(label, matchConfigs);
+    }
   }
 
   return labelMap;
@@ -203,16 +205,14 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   }
 
   if (matchConfig.all) {
-    // check the options and if anything fails then return false
     if (!checkAll(matchConfig.all, changedFiles)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    // Check all the various options if any pass return true
-    if (checkAny(matchConfig.any, changedFiles)) {
-      return true;
+    if (!checkAny(matchConfig.any, changedFiles)) {
+      return false;
     }
   }
 
@@ -225,6 +225,11 @@ export function checkAny(
   changedFiles: string[]
 ): boolean {
   core.debug(`  checking "any" patterns`);
+  if (!Object.keys(matchConfigs).length) {
+    core.debug(`  no "any" patterns to check`);
+    return false;
+  }
+
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
       if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
@@ -255,6 +260,11 @@ export function checkAll(
   changedFiles: string[]
 ): boolean {
   core.debug(` checking "all" patterns`);
+  if (!Object.keys(matchConfigs).length) {
+    core.debug(`  no "all" patterns to check`);
+    return false;
+  }
+
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
       if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
