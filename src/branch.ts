@@ -77,12 +77,12 @@ export function checkAllBranch(
   const matchers = regexps.map(regexp => new RegExp(regexp));
   for (const matcher of matchers) {
     if (!matchBranchPattern(matcher, branchName)) {
-      core.debug(`  "branch" patterns matched against ${branchName}`);
+      core.debug(`  "branch" patterns did not match against ${branchName}`);
       return false;
     }
   }
 
-  core.debug(`  "branch" patterns did not match against ${branchName}`);
+  core.debug(`  "branch" patterns matched against ${branchName}`);
   return true;
 }
 

@@ -274,7 +274,7 @@ export function checkAll(
 
     if (matchConfig.changedFiles) {
       if (checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
-        return true;
+        return false;
       }
     }
 
