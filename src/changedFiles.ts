@@ -3,10 +3,7 @@ import * as github from '@actions/github';
 import {Minimatch} from 'minimatch';
 
 export interface ChangedFilesMatchConfig {
-  changedFiles?: {
-    all?: string[];
-    any?: string[];
-  };
+  changedFiles?: string[];
 }
 
 type ClientType = ReturnType<typeof github.getOctokit>;
@@ -35,60 +32,17 @@ export async function getChangedFiles(
 export function toChangedFilesMatchConfig(
   config: any
 ): ChangedFilesMatchConfig {
-  if (!config['changed-files']) {
+  if (!config['changed-files'] || !config['changed-files'].length) {
     return {};
   }
+
   const changedFilesConfig = config['changed-files'];
 
-  // If the value provided is a string or an array of strings then default to `any` matching
-  if (typeof changedFilesConfig === 'string') {
-    return {
-      changedFiles: {
-        any: [changedFilesConfig]
-      }
-    };
-  }
-
-  const changedFilesMatchConfig = {
-    changedFiles: {}
+  return {
+    changedFiles: Array.isArray(changedFilesConfig)
+      ? changedFilesConfig
+      : [changedFilesConfig]
   };
-
-  if (Array.isArray(changedFilesConfig)) {
-    if (
-      changedFilesConfig.length &&
-      changedFilesConfig.every(entry => typeof entry === 'string')
-    ) {
-      changedFilesMatchConfig.changedFiles = {
-        any: changedFilesConfig
-      };
-    } else {
-      // If it is not an array of strings then it should be array of further config options
-      // so assign them to our `changedFilesMatchConfig`
-      changedFilesMatchConfig.changedFiles = changedFilesConfig.reduce(
-        (updatedMatchConfig, configValue) => {
-          if (!configValue) {
-            return updatedMatchConfig;
-          }
-
-          Object.entries(configValue).forEach(([key, value]) => {
-            if (key === 'any' || key === 'all') {
-              updatedMatchConfig[key] = Array.isArray(value) ? value : [value];
-            }
-          });
-
-          return updatedMatchConfig;
-        },
-        {}
-      );
-    }
-  }
-
-  // If no items were added to `changedFiles` then return an empty object
-  if (!Object.keys(changedFilesMatchConfig.changedFiles).length) {
-    return {};
-  }
-
-  return changedFilesMatchConfig;
 }
 
 function printPattern(matcher: Minimatch): string {

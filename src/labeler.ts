@@ -5,13 +5,16 @@ import * as yaml from 'js-yaml';
 import {
   ChangedFilesMatchConfig,
   getChangedFiles,
-  toChangedFilesMatchConfig,
-  checkAny,
-  checkAll
+  toChangedFilesMatchConfig
 } from './changedFiles';
 import {checkBranch, toBranchMatchConfig, BranchMatchConfig} from './branch';
 
-export type MatchConfig = ChangedFilesMatchConfig & BranchMatchConfig;
+export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
+
+export type MatchConfig = {
+  any?: BaseMatchConfig[];
+  all?: BaseMatchConfig[];
+};
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
@@ -105,7 +108,7 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelConfigMapFromObject(
+export function getLabelConfigMapFromObject(
   configObject: any
 ): Map<string, MatchConfig[]> {
   const labelMap: Map<string, MatchConfig[]> = new Map();
@@ -119,15 +122,51 @@ function getLabelConfigMapFromObject(
         `found unexpected type for label ${label} (should be array of config options)`
       );
     }
+    const matchConfigs = configOptions.reduce<MatchConfig[]>(
+      (updatedConfig, configValue) => {
+        if (!configValue) {
+          return updatedConfig;
+        }
 
-    const matchConfigs = configOptions.map(toMatchConfig);
+        Object.entries(configValue).forEach(([key, value]) => {
+          // If the top level `any` or `all` keys are provided then set them, and convert their values to
+          // our config objects.
+          if (key === 'any' || key === 'all') {
+            if (Array.isArray(value)) {
+              const newConfigs = value.map(toMatchConfig);
+              updatedConfig.push({[key]: newConfigs});
+            }
+          } else if (
+            // These are the keys that we accept and know how to process
+            ['changed-files', 'head-branch', 'base-branch'].includes(key)
+          ) {
+            const newMatchConfig = toMatchConfig({[key]: value});
+            // Find or set the `any` key so that we can add these properties to that rule,
+            // Or create a new `any` key and add that to our array of configs.
+            const indexOfAny = updatedConfig.findIndex(mc => !!mc['any']);
+            if (indexOfAny >= 0) {
+              updatedConfig[indexOfAny].any?.push(newMatchConfig);
+            } else {
+              updatedConfig.push({any: [newMatchConfig]});
+            }
+          } else {
+            // Log the key that we don't know what to do with.
+            core.info(`An unknown config option was under ${label}: ${key}`);
+          }
+        });
+
+        return updatedConfig;
+      },
+      []
+    );
+
     labelMap.set(label, matchConfigs);
   }
 
   return labelMap;
 }
 
-export function toMatchConfig(config: any): MatchConfig {
+export function toMatchConfig(config: any): BaseMatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
 
@@ -156,30 +195,80 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
     return false;
   }
 
-  if (matchConfig.changedFiles?.all) {
-    if (!checkAll(changedFiles, matchConfig.changedFiles.all)) {
+  if (matchConfig.all) {
+    // check the options and if anything fails then return false
+    if (!checkAll(matchConfig.all, changedFiles)) {
       return false;
     }
   }
 
-  if (matchConfig.changedFiles?.any) {
-    if (!checkAny(changedFiles, matchConfig.changedFiles.any)) {
-      return false;
+  if (matchConfig.any) {
+    // Check all the various options if any pass return true
+    if (checkAny(matchConfig.any, changedFiles)) {
+      return true;
     }
   }
 
-  if (matchConfig.headBranch) {
-    if (!checkBranch(matchConfig.headBranch, 'head')) {
-      return false;
+  return true;
+}
+
+// equivalent to "Array.some()" but expanded for debugging and clarity
+export function checkAny(
+  matchConfigs: BaseMatchConfig[],
+  _changedFiles: string[]
+): boolean {
+  core.debug(`  checking "any" patterns`);
+  for (const matchConfig of matchConfigs) {
+    if (matchConfig.baseBranch) {
+      if (checkBranch(matchConfig.baseBranch, 'base')) {
+        return true;
+      }
+    }
+
+    // if (matchConfig.changedFiles) {
+    //   if (checkFiles(matchConfig.changedFiles, changedFiles)) {
+    //     return true;
+    //   }
+    // }
+
+    if (matchConfig.headBranch) {
+      if (checkBranch(matchConfig.headBranch, 'head')) {
+        return true;
+      }
     }
   }
 
-  if (matchConfig.baseBranch) {
-    if (!checkBranch(matchConfig.baseBranch, 'base')) {
-      return false;
+  core.debug(`  "any" patterns did not match any configs`);
+  return false;
+}
+
+// equivalent to "Array.every()" but expanded for debugging and clarity
+export function checkAll(
+  matchConfigs: BaseMatchConfig[],
+  _changedFiles: string[]
+): boolean {
+  core.debug(` checking "all" patterns`);
+  for (const matchConfig of matchConfigs) {
+    if (matchConfig.baseBranch) {
+      if (!checkBranch(matchConfig.baseBranch, 'base')) {
+        return false;
+      }
+    }
+
+    // if (matchConfig.changedFiles) {
+    //   if (checkFiles(matchConfig.changedFiles, changedFiles)) {
+    //     return true;
+    //   }
+    // }
+
+    if (matchConfig.headBranch) {
+      if (!checkBranch(matchConfig.headBranch, 'head')) {
+        return false;
+      }
     }
   }
 
+  core.debug(`  "all" patterns matched all files`);
   return true;
 }
 
