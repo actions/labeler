@@ -1,6 +1,6 @@
 import {
   getBranchName,
-  checkBranch,
+  checkAnyBranch,
   toBranchMatchConfig,
   BranchMatchConfig
 } from '../src/branch';
@@ -25,7 +25,7 @@ describe('getBranchName', () => {
   });
 });
 
-describe('checkBranch', () => {
+describe('checkAnyBranch', () => {
   beforeEach(() => {
     github.context.payload.pull_request!.head = {
       ref: 'test/feature/123'
@@ -38,14 +38,14 @@ describe('checkBranch', () => {
   describe('when a single pattern is provided', () => {
     describe('and the pattern matches the head branch', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test'], 'head');
+        const result = checkAnyBranch(['^test'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and the pattern does not match the head branch', () => {
       it('returns false', () => {
-        const result = checkBranch(['^feature/'], 'head');
+        const result = checkAnyBranch(['^feature/'], 'head');
         expect(result).toBe(false);
       });
     });
@@ -54,21 +54,21 @@ describe('checkBranch', () => {
   describe('when multiple patterns are provided', () => {
     describe('and at least one pattern matches', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test/', '^feature/'], 'head');
+        const result = checkAnyBranch(['^test/', '^feature/'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and all patterns match', () => {
       it('returns true', () => {
-        const result = checkBranch(['^test/', '/feature/'], 'head');
+        const result = checkAnyBranch(['^test/', '/feature/'], 'head');
         expect(result).toBe(true);
       });
     });
 
     describe('and no patterns match', () => {
       it('returns false', () => {
-        const result = checkBranch(['^feature/', '/test$'], 'head');
+        const result = checkAnyBranch(['^feature/', '/test$'], 'head');
         expect(result).toBe(false);
       });
     });
@@ -77,7 +77,7 @@ describe('checkBranch', () => {
   describe('when the branch to check is specified as the base branch', () => {
     describe('and the pattern matches the base branch', () => {
       it('returns true', () => {
-        const result = checkBranch(['^main$'], 'base');
+        const result = checkAnyBranch(['^main$'], 'base');
         expect(result).toBe(true);
       });
     });

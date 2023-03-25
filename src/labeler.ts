@@ -5,9 +5,16 @@ import * as yaml from 'js-yaml';
 import {
   ChangedFilesMatchConfig,
   getChangedFiles,
-  toChangedFilesMatchConfig
+  toChangedFilesMatchConfig,
+  checkAllChangedFiles,
+  checkAnyChangedFiles
 } from './changedFiles';
-import {checkBranch, toBranchMatchConfig, BranchMatchConfig} from './branch';
+import {
+  checkAnyBranch,
+  checkAllBranch,
+  toBranchMatchConfig,
+  BranchMatchConfig
+} from './branch';
 
 export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
 
@@ -215,24 +222,24 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 // equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
-  _changedFiles: string[]
+  changedFiles: string[]
 ): boolean {
   core.debug(`  checking "any" patterns`);
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (checkBranch(matchConfig.baseBranch, 'base')) {
+      if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
         return true;
       }
     }
 
-    // if (matchConfig.changedFiles) {
-    //   if (checkFiles(matchConfig.changedFiles, changedFiles)) {
-    //     return true;
-    //   }
-    // }
+    if (matchConfig.changedFiles) {
+      if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles)) {
+        return true;
+      }
+    }
 
     if (matchConfig.headBranch) {
-      if (checkBranch(matchConfig.headBranch, 'head')) {
+      if (checkAnyBranch(matchConfig.headBranch, 'head')) {
         return true;
       }
     }
@@ -245,24 +252,24 @@ export function checkAny(
 // equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
-  _changedFiles: string[]
+  changedFiles: string[]
 ): boolean {
   core.debug(` checking "all" patterns`);
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (!checkBranch(matchConfig.baseBranch, 'base')) {
+      if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
         return false;
       }
     }
 
-    // if (matchConfig.changedFiles) {
-    //   if (checkFiles(matchConfig.changedFiles, changedFiles)) {
-    //     return true;
-    //   }
-    // }
+    if (matchConfig.changedFiles) {
+      if (checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
+        return true;
+      }
+    }
 
     if (matchConfig.headBranch) {
-      if (!checkBranch(matchConfig.headBranch, 'head')) {
+      if (!checkAllBranch(matchConfig.headBranch, 'head')) {
         return false;
       }
     }

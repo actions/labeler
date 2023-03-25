@@ -40,7 +40,7 @@ export function getBranchName(branchBase: BranchBase): string | undefined {
   }
 }
 
-export function checkBranch(
+export function checkAnyBranch(
   regexps: string[],
   branchBase: BranchBase
 ): boolean {
@@ -61,6 +61,29 @@ export function checkBranch(
 
   core.debug(`  "branch" patterns did not match against ${branchName}`);
   return false;
+}
+
+export function checkAllBranch(
+  regexps: string[],
+  branchBase: BranchBase
+): boolean {
+  const branchName = getBranchName(branchBase);
+  if (!branchName) {
+    core.debug(` no branch name`);
+    return false;
+  }
+
+  core.debug(` checking "branch" pattern against ${branchName}`);
+  const matchers = regexps.map(regexp => new RegExp(regexp));
+  for (const matcher of matchers) {
+    if (!matchBranchPattern(matcher, branchName)) {
+      core.debug(`  "branch" patterns matched against ${branchName}`);
+      return false;
+    }
+  }
+
+  core.debug(`  "branch" patterns did not match against ${branchName}`);
+  return true;
 }
 
 function matchBranchPattern(matcher: RegExp, branchName: string): boolean {

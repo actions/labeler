@@ -1,21 +1,21 @@
 import {
   ChangedFilesMatchConfig,
-  checkAll,
-  checkAny,
+  checkAllChangedFiles,
+  checkAnyChangedFiles,
   toChangedFilesMatchConfig
 } from '../src/changedFiles';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
-describe('checkAll', () => {
+describe('checkAllChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
   describe('when the globs match every file that has changed', () => {
     const globs = ['*.txt'];
 
     it('returns true', () => {
-      const result = checkAll(changedFiles, globs);
+      const result = checkAllChangedFiles(changedFiles, globs);
       expect(result).toBe(true);
     });
   });
@@ -24,20 +24,20 @@ describe('checkAll', () => {
     const globs = ['foo.txt'];
 
     it('returns false', () => {
-      const result = checkAll(changedFiles, globs);
+      const result = checkAllChangedFiles(changedFiles, globs);
       expect(result).toBe(false);
     });
   });
 });
 
-describe('checkAny', () => {
+describe('checkAnyChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
   describe('when the globs match any of the files that have changed', () => {
     const globs = ['foo.txt'];
 
     it('returns true', () => {
-      const result = checkAny(changedFiles, globs);
+      const result = checkAnyChangedFiles(changedFiles, globs);
       expect(result).toBe(true);
     });
   });
@@ -46,7 +46,7 @@ describe('checkAny', () => {
     const globs = ['*.md'];
 
     it('returns false', () => {
-      const result = checkAny(changedFiles, globs);
+      const result = checkAnyChangedFiles(changedFiles, globs);
       expect(result).toBe(false);
     });
   });
