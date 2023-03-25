@@ -480,7 +480,7 @@ function checkAll(matchConfigs, changedFiles) {
             }
         }
         if (matchConfig.changedFiles) {
-            if ((0, changedFiles_1.checkAllChangedFiles)(changedFiles, matchConfig.changedFiles)) {
+            if (!(0, changedFiles_1.checkAllChangedFiles)(changedFiles, matchConfig.changedFiles)) {
                 return false;
             }
         }
