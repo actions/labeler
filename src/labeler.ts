@@ -273,7 +273,7 @@ export function checkAll(
     }
 
     if (matchConfig.changedFiles) {
-      if (checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
+      if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
         return false;
       }
     }
