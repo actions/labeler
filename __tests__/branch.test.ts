@@ -1,6 +1,7 @@
 import {
   getBranchName,
   checkAnyBranch,
+  checkAllBranch,
   toBranchMatchConfig,
   BranchMatchConfig
 } from '../src/branch';
@@ -21,6 +22,65 @@ describe('getBranchName', () => {
     it('returns the head branch name', () => {
       const result = getBranchName('head');
       expect(result).toEqual('head-branch-name');
+    });
+  });
+});
+
+describe('checkAllBranch', () => {
+  beforeEach(() => {
+    github.context.payload.pull_request!.head = {
+      ref: 'test/feature/123'
+    };
+    github.context.payload.pull_request!.base = {
+      ref: 'main'
+    };
+  });
+
+  describe('when a single pattern is provided', () => {
+    describe('and the pattern matches the head branch', () => {
+      it('returns true', () => {
+        const result = checkAllBranch(['^test'], 'head');
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('and the pattern does not match the head branch', () => {
+      it('returns false', () => {
+        const result = checkAllBranch(['^feature/'], 'head');
+        expect(result).toBe(false);
+      });
+    });
+  });
+
+  describe('when multiple patterns are provided', () => {
+    describe('and not all patterns matched', () => {
+      it('returns false', () => {
+        const result = checkAllBranch(['^test/', '^feature/'], 'head');
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('and all patterns match', () => {
+      it('returns true', () => {
+        const result = checkAllBranch(['^test/', '/feature/'], 'head');
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('and no patterns match', () => {
+      it('returns false', () => {
+        const result = checkAllBranch(['^feature/', '/test$'], 'head');
+        expect(result).toBe(false);
+      });
+    });
+  });
+
+  describe('when the branch to check is specified as the base branch', () => {
+    describe('and the pattern matches the base branch', () => {
+      it('returns true', () => {
+        const result = checkAllBranch(['^main$'], 'base');
+        expect(result).toBe(true);
+      });
     });
   });
 });
