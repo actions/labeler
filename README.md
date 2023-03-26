@@ -55,7 +55,7 @@ label1:
   - changed-files: ['example1/*']
 ```
 
-From a boolean logic perspective, top-level match objects are `AND`-ed together and individual match rules within an object are `OR`-ed. If path globs are combined with `!` negation, you can write complex matching rules.
+From a boolean logic perspective, top-level match objects, and options within `all`  are `AND`-ed together and individual match rules within the `any` object are `OR`-ed. If path globs are combined with `!` negation, you can write complex matching rules.
 
 #### Basic Examples
 
