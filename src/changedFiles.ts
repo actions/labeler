@@ -82,7 +82,6 @@ export function checkAnyChangedFiles(
   globs: string[]
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));
-  core.debug(`  checking "any" patterns`);
   for (const changedFile of changedFiles) {
     if (isAnyMatch(changedFile, matchers)) {
       core.debug(`  "any" patterns matched against ${changedFile}`);
@@ -99,7 +98,6 @@ export function checkAllChangedFiles(
   globs: string[]
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));
-  core.debug(` checking "all" patterns`);
   for (const changedFile of changedFiles) {
     if (!isAllMatch(changedFile, matchers)) {
       core.debug(`  "all" patterns did not match against ${changedFile}`);

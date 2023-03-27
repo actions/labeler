@@ -201,6 +201,7 @@ export function checkMatchConfigs(
 
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   if (!Object.keys(matchConfig).length) {
+    core.debug(`  no "any" or "all" patterns to check`);
     return false;
   }
 
