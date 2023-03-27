@@ -46,7 +46,7 @@ export function checkAnyBranch(
 ): boolean {
   const branchName = getBranchName(branchBase);
   if (!branchName) {
-    core.debug(` no branch name`);
+    core.debug(`   no branch name`);
     return false;
   }
 
@@ -69,7 +69,7 @@ export function checkAllBranch(
 ): boolean {
   const branchName = getBranchName(branchBase);
   if (!branchName) {
-    core.debug(` no branch name`);
+    core.debug(`   no branch name`);
     return false;
   }
 

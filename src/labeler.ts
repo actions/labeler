@@ -260,7 +260,7 @@ export function checkAll(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[]
 ): boolean {
-  core.debug(` checking "all" patterns`);
+  core.debug(`  checking "all" patterns`);
   if (!Object.keys(matchConfigs).length) {
     core.debug(`  no "all" patterns to check`);
     return false;
@@ -286,7 +286,7 @@ export function checkAll(
     }
   }
 
-  core.debug(`  "all" patterns matched all files`);
+  core.debug(`  "all" patterns matched all configs`);
   return true;
 }
 

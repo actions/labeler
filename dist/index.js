@@ -66,7 +66,7 @@ exports.getBranchName = getBranchName;
 function checkAnyBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
-        core.debug(` no branch name`);
+        core.debug(`   no branch name`);
         return false;
     }
     core.debug(`   checking "branch" pattern against ${branchName}`);
@@ -84,7 +84,7 @@ exports.checkAnyBranch = checkAnyBranch;
 function checkAllBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
-        core.debug(` no branch name`);
+        core.debug(`   no branch name`);
         return false;
     }
     core.debug(`   checking "branch" pattern against ${branchName}`);
@@ -187,38 +187,38 @@ function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 function isAnyMatch(changedFile, matchers) {
-    core.debug(`   matching patterns against file ${changedFile}`);
+    core.debug(`    matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
-        core.debug(`    - ${printPattern(matcher)}`);
+        core.debug(`     - ${printPattern(matcher)}`);
         if (matcher.match(changedFile)) {
-            core.debug(`   ${printPattern(matcher)} matched`);
+            core.debug(`    ${printPattern(matcher)} matched`);
             return true;
         }
     }
-    core.debug(`   no patterns matched`);
+    core.debug(`    no patterns matched`);
     return false;
 }
 function isAllMatch(changedFile, matchers) {
-    core.debug(`   matching patterns against file ${changedFile}`);
+    core.debug(`    matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
-        core.debug(`    - ${printPattern(matcher)}`);
+        core.debug(`     - ${printPattern(matcher)}`);
         if (!matcher.match(changedFile)) {
-            core.debug(`   ${printPattern(matcher)} did not match`);
+            core.debug(`    ${printPattern(matcher)} did not match`);
             return false;
         }
     }
-    core.debug(`   all patterns matched`);
+    core.debug(`    all patterns matched`);
     return true;
 }
 function checkAnyChangedFiles(changedFiles, globs) {
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const changedFile of changedFiles) {
         if (isAnyMatch(changedFile, matchers)) {
-            core.debug(`  "any" patterns matched against ${changedFile}`);
+            core.debug(`   "any" patterns matched against ${changedFile}`);
             return true;
         }
     }
-    core.debug(`  "any" patterns did not match any files`);
+    core.debug(`   "any" patterns did not match any files`);
     return false;
 }
 exports.checkAnyChangedFiles = checkAnyChangedFiles;
@@ -226,11 +226,11 @@ function checkAllChangedFiles(changedFiles, globs) {
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const changedFile of changedFiles) {
         if (!isAllMatch(changedFile, matchers)) {
-            core.debug(`  "all" patterns did not match against ${changedFile}`);
+            core.debug(`   "all" patterns did not match against ${changedFile}`);
             return false;
         }
     }
-    core.debug(`  "all" patterns matched all files`);
+    core.debug(`   "all" patterns matched all files`);
     return true;
 }
 exports.checkAllChangedFiles = checkAllChangedFiles;
@@ -467,7 +467,7 @@ function checkAny(matchConfigs, changedFiles) {
 exports.checkAny = checkAny;
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(matchConfigs, changedFiles) {
-    core.debug(` checking "all" patterns`);
+    core.debug(`  checking "all" patterns`);
     if (!Object.keys(matchConfigs).length) {
         core.debug(`  no "all" patterns to check`);
         return false;
@@ -489,7 +489,7 @@ function checkAll(matchConfigs, changedFiles) {
             }
         }
     }
-    core.debug(`  "all" patterns matched all files`);
+    core.debug(`  "all" patterns matched all configs`);
     return true;
 }
 exports.checkAll = checkAll;
