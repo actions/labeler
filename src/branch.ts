@@ -50,16 +50,16 @@ export function checkAnyBranch(
     return false;
   }
 
-  core.debug(` checking "branch" pattern against ${branchName}`);
+  core.debug(`   checking "branch" pattern against ${branchName}`);
   const matchers = regexps.map(regexp => new RegExp(regexp));
   for (const matcher of matchers) {
     if (matchBranchPattern(matcher, branchName)) {
-      core.debug(`  "branch" patterns matched against ${branchName}`);
+      core.debug(`   "branch" patterns matched against ${branchName}`);
       return true;
     }
   }
 
-  core.debug(`  "branch" patterns did not match against ${branchName}`);
+  core.debug(`   "branch" patterns did not match against ${branchName}`);
   return false;
 }
 
@@ -73,26 +73,26 @@ export function checkAllBranch(
     return false;
   }
 
-  core.debug(` checking "branch" pattern against ${branchName}`);
+  core.debug(`   checking "branch" pattern against ${branchName}`);
   const matchers = regexps.map(regexp => new RegExp(regexp));
   for (const matcher of matchers) {
     if (!matchBranchPattern(matcher, branchName)) {
-      core.debug(`  "branch" patterns did not match against ${branchName}`);
+      core.debug(`   "branch" patterns did not match against ${branchName}`);
       return false;
     }
   }
 
-  core.debug(`  "branch" patterns matched against ${branchName}`);
+  core.debug(`   "branch" patterns matched against ${branchName}`);
   return true;
 }
 
 function matchBranchPattern(matcher: RegExp, branchName: string): boolean {
-  core.debug(`  - ${matcher}`);
+  core.debug(`    - ${matcher}`);
   if (matcher.test(branchName)) {
-    core.debug(`   "branch" pattern matched`);
+    core.debug(`    "branch" pattern matched`);
     return true;
   }
 
-  core.debug(`   ${matcher} did not match`);
+  core.debug(`    ${matcher} did not match`);
   return false;
 }
