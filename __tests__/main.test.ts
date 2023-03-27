@@ -22,13 +22,16 @@ const configureInput = (
   mockInput: Partial<{
     'repo-token': string;
     'configuration-path': string;
-    'sync-labels': boolean;
-    dot: boolean;
+    'sync-labels': string;
+    dot: string;
   }>
 ) => {
   jest
     .spyOn(core, 'getInput')
     .mockImplementation((name: string, ...opts) => mockInput[name]);
+  jest
+    .spyOn(core, 'getBooleanInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name] === 'true');
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -52,7 +55,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) adds labels to PRs that match our glob patterns', async () => {
-    configureInput({dot: true});
+    configureInput({dot: 'true'});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('.foo.pdf');
 
@@ -80,7 +83,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
-    configureInput({dot: true});
+    configureInput({dot: 'true'});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
 
@@ -91,20 +94,11 @@ describe('run', () => {
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
-    const mockInput = {
+    configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
       'sync-labels': 'true'
-    };
-
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
-    jest
-      .spyOn(core, 'getBooleanInput')
-      .mockImplementation(
-        (name: string, ...opts) => mockInput[name] === 'true'
-      );
+    });
 
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
@@ -127,20 +121,11 @@ describe('run', () => {
   });
 
   it('(with sync-labels: false) it issues no delete calls even when there are preexisting PR labels that no longer match the glob pattern', async () => {
-    const mockInput = {
+    configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
       'sync-labels': 'false'
-    };
-
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
-    jest
-      .spyOn(core, 'getBooleanInput')
-      .mockImplementation(
-        (name: string, ...opts) => mockInput[name] === 'true'
-      );
+    });
 
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
