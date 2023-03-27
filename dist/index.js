@@ -187,9 +187,9 @@ function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 function isAnyMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
+    core.debug(`   matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
-        core.debug(`   - ${printPattern(matcher)}`);
+        core.debug(`    - ${printPattern(matcher)}`);
         if (matcher.match(changedFile)) {
             core.debug(`   ${printPattern(matcher)} matched`);
             return true;
@@ -199,9 +199,9 @@ function isAnyMatch(changedFile, matchers) {
     return false;
 }
 function isAllMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
+    core.debug(`   matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
-        core.debug(`   - ${printPattern(matcher)}`);
+        core.debug(`    - ${printPattern(matcher)}`);
         if (!matcher.match(changedFile)) {
             core.debug(`   ${printPattern(matcher)} did not match`);
             return false;

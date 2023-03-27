@@ -50,9 +50,9 @@ function printPattern(matcher: Minimatch): string {
 }
 
 function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
-  core.debug(`    matching patterns against file ${changedFile}`);
+  core.debug(`   matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
-    core.debug(`   - ${printPattern(matcher)}`);
+    core.debug(`    - ${printPattern(matcher)}`);
     if (matcher.match(changedFile)) {
       core.debug(`   ${printPattern(matcher)} matched`);
       return true;
@@ -64,9 +64,9 @@ function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
 }
 
 function isAllMatch(changedFile: string, matchers: Minimatch[]): boolean {
-  core.debug(`    matching patterns against file ${changedFile}`);
+  core.debug(`   matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
-    core.debug(`   - ${printPattern(matcher)}`);
+    core.debug(`    - ${printPattern(matcher)}`);
     if (!matcher.match(changedFile)) {
       core.debug(`   ${printPattern(matcher)} did not match`);
       return false;
