@@ -1,6 +1,13 @@
-import {checkMatchConfigs, MatchConfig, toMatchConfig} from '../src/labeler';
-
+import {
+  checkMatchConfigs,
+  MatchConfig,
+  toMatchConfig,
+  getLabelConfigMapFromObject,
+  BaseMatchConfig
+} from '../src/labeler';
+import * as yaml from 'js-yaml';
 import * as core from '@actions/core';
+import * as fs from 'fs';
 
 jest.mock('@actions/core');
 
@@ -10,18 +17,56 @@ beforeAll(() => {
   });
 });
 
+const loadYaml = (filepath: string) => {
+  const loadedFile = fs.readFileSync(filepath);
+  const content = Buffer.from(loadedFile).toString();
+  return yaml.load(content);
+};
+
+describe('getLabelConfigMapFromObject', () => {
+  const yamlObject = loadYaml('__tests__/fixtures/all_options.yml');
+  const expected = new Map<string, MatchConfig[]>();
+  expected.set('label1', [
+    {
+      any: [
+        {changedFiles: ['glob']},
+        {baseBranch: undefined, headBranch: ['regexp']},
+        {baseBranch: ['regexp'], headBranch: undefined}
+      ]
+    },
+    {
+      all: [
+        {changedFiles: ['glob']},
+        {baseBranch: undefined, headBranch: ['regexp']},
+        {baseBranch: ['regexp'], headBranch: undefined}
+      ]
+    }
+  ]);
+  expected.set('label2', [
+    {
+      any: [
+        {changedFiles: ['glob']},
+        {baseBranch: undefined, headBranch: ['regexp']},
+        {baseBranch: ['regexp'], headBranch: undefined}
+      ]
+    }
+  ]);
+
+  it('returns a MatchConfig', () => {
+    const result = getLabelConfigMapFromObject(yamlObject);
+    expect(result).toEqual(expected);
+  });
+});
+
 describe('toMatchConfig', () => {
   describe('when all expected config options are present', () => {
     const config = {
-      'changed-files': [{any: ['testing-any']}, {all: ['testing-all']}],
+      'changed-files': ['testing-files'],
       'head-branch': ['testing-head'],
       'base-branch': ['testing-base']
     };
-    const expected: MatchConfig = {
-      changedFiles: {
-        all: ['testing-all'],
-        any: ['testing-any']
-      },
+    const expected: BaseMatchConfig = {
+      changedFiles: ['testing-files'],
       headBranch: ['testing-head'],
       baseBranch: ['testing-base']
     };
@@ -43,19 +88,53 @@ describe('toMatchConfig', () => {
 });
 
 describe('checkMatchConfigs', () => {
-  const matchConfig: MatchConfig[] = [{changedFiles: {any: ['*.txt']}}];
+  describe('when a single match config is provided', () => {
+    const matchConfig: MatchConfig[] = [{any: [{changedFiles: ['*.txt']}]}];
 
-  it('returns true when our pattern does match changed files', () => {
-    const changedFiles = ['foo.txt', 'bar.txt'];
-    const result = checkMatchConfigs(changedFiles, matchConfig);
+    it('returns true when our pattern does match changed files', () => {
+      const changedFiles = ['foo.txt', 'bar.txt'];
+      const result = checkMatchConfigs(changedFiles, matchConfig);
 
-    expect(result).toBeTruthy();
+      expect(result).toBeTruthy();
+    });
+
+    it('returns false when our pattern does not match changed files', () => {
+      const changedFiles = ['foo.docx'];
+      const result = checkMatchConfigs(changedFiles, matchConfig);
+
+      expect(result).toBeFalsy();
+    });
+
+    it('returns true when either the branch or changed files patter matches', () => {
+      const matchConfig: MatchConfig[] = [
+        {any: [{changedFiles: ['*.txt']}, {headBranch: ['some-branch']}]}
+      ];
+      const changedFiles = ['foo.txt', 'bar.txt'];
+
+      const result = checkMatchConfigs(changedFiles, matchConfig);
+      expect(result).toBe(true);
+    });
   });
 
-  it('returns false when our pattern does not match changed files', () => {
-    const changedFiles = ['foo.docx'];
-    const result = checkMatchConfigs(changedFiles, matchConfig);
+  describe('when multiple MatchConfigs are supplied', () => {
+    const matchConfig: MatchConfig[] = [
+      {any: [{changedFiles: ['*.txt']}]},
+      {any: [{headBranch: ['some-branch']}]}
+    ];
+    const changedFiles = ['foo.txt', 'bar.md'];
 
-    expect(result).toBeFalsy();
+    it('returns false when only one config matches', () => {
+      const result = checkMatchConfigs(changedFiles, matchConfig);
+      expect(result).toBe(false);
+    });
+
+    it('returns true when only both config matches', () => {
+      const matchConfig: MatchConfig[] = [
+        {any: [{changedFiles: ['*.txt']}]},
+        {any: [{headBranch: ['head-branch']}]}
+      ];
+      const result = checkMatchConfigs(changedFiles, matchConfig);
+      expect(result).toBe(true);
+    });
   });
 });

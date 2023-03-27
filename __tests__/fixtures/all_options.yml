@@ -1,0 +1,14 @@
+label1:
+  - any:
+      - changed-files: ['glob']
+      - head-branch: ['regexp']
+      - base-branch: ['regexp']
+  - all:
+      - changed-files: ['glob']
+      - head-branch: ['regexp']
+      - base-branch: ['regexp']
+
+label2:
+  - changed-files: ['glob']
+  - head-branch: ['regexp']
+  - base-branch: ['regexp']

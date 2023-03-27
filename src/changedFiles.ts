@@ -3,10 +3,7 @@ import * as github from '@actions/github';
 import {Minimatch} from 'minimatch';
 
 export interface ChangedFilesMatchConfig {
-  changedFiles?: {
-    all?: string[];
-    any?: string[];
-  };
+  changedFiles?: string[];
 }
 
 type ClientType = ReturnType<typeof github.getOctokit>;
@@ -35,106 +32,79 @@ export async function getChangedFiles(
 export function toChangedFilesMatchConfig(
   config: any
 ): ChangedFilesMatchConfig {
-  if (!config['changed-files']) {
+  if (!config['changed-files'] || !config['changed-files'].length) {
     return {};
   }
+
   const changedFilesConfig = config['changed-files'];
 
-  // If the value provided is a string or an array of strings then default to `any` matching
-  if (typeof changedFilesConfig === 'string') {
-    return {
-      changedFiles: {
-        any: [changedFilesConfig]
-      }
-    };
-  }
-
-  const changedFilesMatchConfig = {
-    changedFiles: {}
+  return {
+    changedFiles: Array.isArray(changedFilesConfig)
+      ? changedFilesConfig
+      : [changedFilesConfig]
   };
-
-  if (Array.isArray(changedFilesConfig)) {
-    if (
-      changedFilesConfig.length &&
-      changedFilesConfig.every(entry => typeof entry === 'string')
-    ) {
-      changedFilesMatchConfig.changedFiles = {
-        any: changedFilesConfig
-      };
-    } else {
-      // If it is not an array of strings then it should be array of further config options
-      // so assign them to our `changedFilesMatchConfig`
-      changedFilesMatchConfig.changedFiles = changedFilesConfig.reduce(
-        (updatedMatchConfig, configValue) => {
-          if (!configValue) {
-            return updatedMatchConfig;
-          }
-
-          Object.entries(configValue).forEach(([key, value]) => {
-            if (key === 'any' || key === 'all') {
-              updatedMatchConfig[key] = Array.isArray(value) ? value : [value];
-            }
-          });
-
-          return updatedMatchConfig;
-        },
-        {}
-      );
-    }
-  }
-
-  // If no items were added to `changedFiles` then return an empty object
-  if (!Object.keys(changedFilesMatchConfig.changedFiles).length) {
-    return {};
-  }
-
-  return changedFilesMatchConfig;
 }
 
 function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
-function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
+function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
-    core.debug(`   - ${printPattern(matcher)}`);
-    if (!matcher.match(changedFile)) {
-      core.debug(`   ${printPattern(matcher)} did not match`);
-      return false;
-    }
-  }
-
-  core.debug(`   all patterns matched`);
-  return true;
-}
-
-// equivalent to "Array.some()" but expanded for debugging and clarity
-export function checkAny(changedFiles: string[], globs: string[]): boolean {
-  const matchers = globs.map(g => new Minimatch(g));
-  core.debug(`  checking "any" patterns`);
-  for (const changedFile of changedFiles) {
-    if (isMatch(changedFile, matchers)) {
-      core.debug(`  "any" patterns matched against ${changedFile}`);
+    core.debug(`     - ${printPattern(matcher)}`);
+    if (matcher.match(changedFile)) {
+      core.debug(`    ${printPattern(matcher)} matched`);
       return true;
     }
   }
 
-  core.debug(`  "any" patterns did not match any files`);
+  core.debug(`    no patterns matched`);
   return false;
 }
 
-// equivalent to "Array.every()" but expanded for debugging and clarity
-export function checkAll(changedFiles: string[], globs: string[]): boolean {
-  const matchers = globs.map(g => new Minimatch(g));
-  core.debug(` checking "all" patterns`);
-  for (const changedFile of changedFiles) {
-    if (!isMatch(changedFile, matchers)) {
-      core.debug(`  "all" patterns did not match against ${changedFile}`);
+function isAllMatch(changedFile: string, matchers: Minimatch[]): boolean {
+  core.debug(`    matching patterns against file ${changedFile}`);
+  for (const matcher of matchers) {
+    core.debug(`     - ${printPattern(matcher)}`);
+    if (!matcher.match(changedFile)) {
+      core.debug(`    ${printPattern(matcher)} did not match`);
       return false;
     }
   }
 
-  core.debug(`  "all" patterns matched all files`);
+  core.debug(`    all patterns matched`);
+  return true;
+}
+
+export function checkAnyChangedFiles(
+  changedFiles: string[],
+  globs: string[]
+): boolean {
+  const matchers = globs.map(g => new Minimatch(g));
+  for (const changedFile of changedFiles) {
+    if (isAnyMatch(changedFile, matchers)) {
+      core.debug(`   "any" patterns matched against ${changedFile}`);
+      return true;
+    }
+  }
+
+  core.debug(`   "any" patterns did not match any files`);
+  return false;
+}
+
+export function checkAllChangedFiles(
+  changedFiles: string[],
+  globs: string[]
+): boolean {
+  const matchers = globs.map(g => new Minimatch(g));
+  for (const changedFile of changedFiles) {
+    if (!isAllMatch(changedFile, matchers)) {
+      core.debug(`   "all" patterns did not match against ${changedFile}`);
+      return false;
+    }
+  }
+
+  core.debug(`   "all" patterns matched all files`);
   return true;
 }
