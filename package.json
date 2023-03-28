@@ -5,10 +5,10 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc && ncc build lib/main.js",
-    "format": "prettier --no-error-on-unmatched-pattern --config ./.prettierrc.js --write **/*.{ts,yml,yaml}",
-    "format-check": "prettier --no-error-on-unmatched-pattern --config ./.prettierrc.js --check **/*.{ts,yml,yaml}",
-    "lint": "eslint --config ./.eslintrc.js **/*.ts",
-    "lint:fix": "eslint --config ./.eslintrc.js **/*.ts --fix",
+    "format": "prettier --no-error-on-unmatched-pattern --config ./.prettierrc.js --write \"**/*.{ts,yml,yaml}\"",
+    "format-check": "prettier --no-error-on-unmatched-pattern --config ./.prettierrc.js --check \"**/*.{ts,yml,yaml}\"",
+    "lint": "eslint --config ./.eslintrc.js \"**/*.ts\"",
+    "lint:fix": "eslint --config ./.eslintrc.js \"**/*.ts\" --fix",
     "test": "jest"
   },
   "repository": {
