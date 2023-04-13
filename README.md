@@ -39,9 +39,9 @@ One or all fields can be provided for fine-grained matching.
 The fields are defined as follows:
 * `all`: all of the provided options must match in order for the label to be applied
 * `any`: if any of the provided options match then a label will be applied
-* `base-branch`: match a regexp against the base branch name
-* `changed-files`: match a glob against the changed paths
-* `head-branch`: match a regexp against the head branch name
+* `base-branch`: match regexps against the base branch name
+* `changed-files`: match glob patterns against the changed paths
+* `head-branch`: match regexps against the head branch name
 
 If a base option is provided without a top-level key then it will default to `any`. More specifically, the following two configurations are equivalent:
 ```yml
