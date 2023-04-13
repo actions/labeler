@@ -51,7 +51,7 @@ describe('checkAnyChangedFiles', () => {
     });
   });
 
-  describe('when all globs do match match any of the files that have changed', () => {
+  describe('when all globs do not match any of the files that have changed', () => {
     const globs = ['*.txt', '*.md'];
 
     it('returns false', () => {
