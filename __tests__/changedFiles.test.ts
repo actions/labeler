@@ -50,6 +50,15 @@ describe('checkAnyChangedFiles', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('when all globs do match match any of the files that have changed', () => {
+    const globs = ['*.txt', '*.md'];
+
+    it('returns false', () => {
+      const result = checkAnyChangedFiles(changedFiles, globs);
+      expect(result).toBe(false);
+    });
+  });
 });
 
 describe('toChangedFilesMatchConfig', () => {
