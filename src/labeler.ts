@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
-import {Minimatch, IMinimatch} from 'minimatch';
+import {Minimatch} from 'minimatch';
 
 interface MatchConfig {
   all?: string[];
@@ -16,13 +16,13 @@ const GITHUB_MAX_LABELS = 100;
 
 export async function run() {
   try {
-    const token = core.getInput('repo-token', {required: true});
+    const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
-    const syncLabels = !!core.getInput('sync-labels', {required: false});
+    const syncLabels = core.getBooleanInput('sync-labels');
 
     const prNumber = getPrNumber();
     if (!prNumber) {
-      console.log('Could not get pull request number from context, exiting');
+      core.info('Could not get pull request number from context, exiting');
       return;
     }
 
@@ -159,7 +159,7 @@ function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
   return config;
 }
 
-function printPattern(matcher: IMinimatch): string {
+function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
@@ -177,7 +177,7 @@ export function checkGlobs(
   return false;
 }
 
-function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
+function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);

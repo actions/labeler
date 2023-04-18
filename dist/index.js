@@ -49,12 +49,12 @@ const GITHUB_MAX_LABELS = 100;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput('repo-token', { required: true });
+            const token = core.getInput('repo-token');
             const configPath = core.getInput('configuration-path', { required: true });
-            const syncLabels = !!core.getInput('sync-labels', { required: false });
+            const syncLabels = core.getBooleanInput('sync-labels');
             const prNumber = getPrNumber();
             if (!prNumber) {
-                console.log('Could not get pull request number from context, exiting');
+                core.info('Could not get pull request number from context, exiting');
                 return;
             }
             const client = github.getOctokit(token);

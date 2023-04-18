@@ -99,11 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v4
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
-
-_Note: This grants access to the `GITHUB_TOKEN` so the action can make calls to GitHub's rest API_
 
 #### Inputs
 
@@ -111,9 +107,9 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 
 | Name | Description | Default |
 | - | - | - |
-| `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | N/A |
+| `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | `github.token` |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
-| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
+| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`|
 
 # Contributions
 
