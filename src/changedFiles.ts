@@ -49,7 +49,21 @@ function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
-function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
+function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
+  core.debug(`    matching patterns against file ${changedFile}`);
+  for (const matcher of matchers) {
+    core.debug(`     - ${printPattern(matcher)}`);
+    if (matcher.match(changedFile)) {
+      core.debug(`    ${printPattern(matcher)} matched`);
+      return true;
+    }
+  }
+
+  core.debug(`    no patterns matched`);
+  return false;
+}
+
+function isAllMatch(changedFile: string, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`     - ${printPattern(matcher)}`);
@@ -69,7 +83,7 @@ export function checkAnyChangedFiles(
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));
   for (const changedFile of changedFiles) {
-    if (isMatch(changedFile, matchers)) {
+    if (isAnyMatch(changedFile, matchers)) {
       core.debug(`   "any" patterns matched against ${changedFile}`);
       return true;
     }
@@ -85,7 +99,7 @@ export function checkAllChangedFiles(
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));
   for (const changedFile of changedFiles) {
-    if (!isMatch(changedFile, matchers)) {
+    if (!isAllMatch(changedFile, matchers)) {
       core.debug(`   "all" patterns did not match against ${changedFile}`);
       return false;
     }
