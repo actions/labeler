@@ -33,8 +33,8 @@ describe('checkAllChangedFiles', () => {
 describe('checkAnyChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
-  describe('when the globs match any of the files that have changed', () => {
-    const globs = ['foo.txt'];
+  describe('when any glob matches any of the files that have changed', () => {
+    const globs = ['*.txt', '*.md'];
 
     it('returns true', () => {
       const result = checkAnyChangedFiles(changedFiles, globs);
@@ -48,15 +48,6 @@ describe('checkAnyChangedFiles', () => {
     it('returns false', () => {
       const result = checkAnyChangedFiles(changedFiles, globs);
       expect(result).toBe(false);
-    });
-  });
-
-  describe('when any glob matches any of the files that have changed', () => {
-    const globs = ['*.txt', '*.md'];
-
-    it('returns true', () => {
-      const result = checkAnyChangedFiles(changedFiles, globs);
-      expect(result).toBe(true);
     });
   });
 });
