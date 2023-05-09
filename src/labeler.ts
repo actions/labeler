@@ -234,12 +234,25 @@ async function addLabels(
   prNumber: number,
   labels: string[]
 ) {
-  await client.rest.issues.addLabels({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    issue_number: prNumber,
-    labels: labels
-  });
+  const currentLabels =
+    (
+      await client.rest.issues.listLabelsOnIssue({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber
+      })
+    )?.data.map(({name}) => name) || [];
+  const labelsToBeAdded = labels.filter(
+    label => !currentLabels.includes(label)
+  );
+  if (labelsToBeAdded.length > 0) {
+    await client.rest.issues.addLabels({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      issue_number: prNumber,
+      labels: labelsToBeAdded
+    });
+  }
 }
 
 async function removeLabels(
