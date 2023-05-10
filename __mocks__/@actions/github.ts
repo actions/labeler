@@ -1,7 +1,10 @@
 export const context = {
   payload: {
     pull_request: {
-      number: 123
+      number: 123,
+      user: {
+        login: 'monalisa'
+      }
     }
   },
   repo: {

@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
-interface MatchConfig {
+export interface MatchConfig {
   all?: string[];
   any?: string[];
   authors?: string[];
@@ -77,7 +77,6 @@ function getPrAuthor(): string | undefined {
   if (!pullRequest) {
     return undefined;
   }
-
   return pullRequest.user.login;
 }
 
