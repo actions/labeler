@@ -11,7 +11,7 @@ jest.mock('@actions/github');
 describe('checkAllChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
-  describe('when the globs match every file that has changed', () => {
+  describe('when the globs match every file that has been changed', () => {
     const globs = ['*.txt'];
 
     it('returns true', () => {

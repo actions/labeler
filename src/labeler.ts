@@ -126,7 +126,7 @@ export function getLabelConfigMapFromObject(
       !configOptions.every(opts => typeof opts === 'object')
     ) {
       throw Error(
-        `found unexpected type for label ${label} (should be array of config options)`
+        `found unexpected type for label '${label}' (should be array of config options)`
       );
     }
     const matchConfigs = configOptions.reduce<MatchConfig[]>(

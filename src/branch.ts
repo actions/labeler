@@ -69,7 +69,7 @@ export function checkAllBranch(
 ): boolean {
   const branchName = getBranchName(branchBase);
   if (!branchName) {
-    core.debug(`   no branch name`);
+    core.debug(`   cannot fetch branch name from the pull request`);
     return false;
   }
 
