@@ -84,7 +84,7 @@ exports.checkAnyBranch = checkAnyBranch;
 function checkAllBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
-        core.debug(`   no branch name`);
+        core.debug(`   cannot fetch branch name from the pull request`);
         return false;
     }
     core.debug(`   checking "branch" pattern against ${branchName}`);
@@ -282,6 +282,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const yaml = __importStar(__nccwpck_require__(1917));
 const changedFiles_1 = __nccwpck_require__(7358);
 const branch_1 = __nccwpck_require__(8045);
+const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -360,7 +361,7 @@ function getLabelConfigMapFromObject(configObject) {
         const configOptions = configObject[label];
         if (!Array.isArray(configOptions) ||
             !configOptions.every(opts => typeof opts === 'object')) {
-            throw Error(`found unexpected type for label ${label} (should be array of config options)`);
+            throw Error(`found unexpected type for label '${label}' (should be array of config options)`);
         }
         const matchConfigs = configOptions.reduce((updatedConfig, configValue) => {
             if (!configValue) {
@@ -376,9 +377,7 @@ function getLabelConfigMapFromObject(configObject) {
                         updatedConfig.push({ [key]: newConfigs });
                     }
                 }
-                else if (
-                // These are the keys that we accept and know how to process
-                ['changed-files', 'head-branch', 'base-branch'].includes(key)) {
+                else if (ALLOWED_CONFIG_KEYS.includes(key)) {
                     const newMatchConfig = toMatchConfig({ [key]: value });
                     // Find or set the `any` key so that we can add these properties to that rule,
                     // Or create a new `any` key and add that to our array of configs.
@@ -440,7 +439,7 @@ function checkMatch(changedFiles, matchConfig) {
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(matchConfigs, changedFiles) {
     core.debug(`  checking "any" patterns`);
-    if (!Object.keys(matchConfigs).length) {
+    if (!matchConfigs.length) {
         core.debug(`  no "any" patterns to check`);
         return false;
     }
@@ -468,7 +467,7 @@ exports.checkAny = checkAny;
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(matchConfigs, changedFiles) {
     core.debug(`  checking "all" patterns`);
-    if (!Object.keys(matchConfigs).length) {
+    if (!matchConfigs.length) {
         core.debug(`  no "all" patterns to check`);
         return false;
     }
@@ -479,6 +478,10 @@ function checkAll(matchConfigs, changedFiles) {
             }
         }
         if (matchConfig.changedFiles) {
+            if (!changedFiles.length) {
+                core.debug(`  no files to check "changed-files" patterns against`);
+                return false;
+            }
             if (!(0, changedFiles_1.checkAllChangedFiles)(changedFiles, matchConfig.changedFiles)) {
                 return false;
             }
