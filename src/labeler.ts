@@ -25,6 +25,8 @@ export type MatchConfig = {
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
+const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+
 export async function run() {
   try {
     const token = core.getInput('repo-token');
@@ -143,10 +145,7 @@ export function getLabelConfigMapFromObject(
               const newConfigs = value.map(toMatchConfig);
               updatedConfig.push({[key]: newConfigs});
             }
-          } else if (
-            // These are the keys that we accept and know how to process
-            ['changed-files', 'head-branch', 'base-branch'].includes(key)
-          ) {
+          } else if (ALLOWED_CONFIG_KEYS.includes(key)) {
             const newMatchConfig = toMatchConfig({[key]: value});
             // Find or set the `any` key so that we can add these properties to that rule,
             // Or create a new `any` key and add that to our array of configs.
