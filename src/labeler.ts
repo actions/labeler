@@ -273,6 +273,11 @@ export function checkAll(
     }
 
     if (matchConfig.changedFiles) {
+      if (!changedFiles.length) {
+        core.debug(`  no files to check "changed-files" patterns against`);
+        return false;
+      }
+
       if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
         return false;
       }
