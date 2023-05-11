@@ -225,7 +225,7 @@ export function checkAny(
   changedFiles: string[]
 ): boolean {
   core.debug(`  checking "any" patterns`);
-  if (!Object.keys(matchConfigs).length) {
+  if (!matchConfigs.length) {
     core.debug(`  no "any" patterns to check`);
     return false;
   }
@@ -260,7 +260,7 @@ export function checkAll(
   changedFiles: string[]
 ): boolean {
   core.debug(`  checking "all" patterns`);
-  if (!Object.keys(matchConfigs).length) {
+  if (!matchConfigs.length) {
     core.debug(`  no "all" patterns to check`);
     return false;
   }
