@@ -260,7 +260,13 @@ export function checkAll(
   changedFiles: string[]
 ): boolean {
   core.debug(`  checking "all" patterns`);
-  if (!matchConfigs.length) {
+  if (
+    !matchConfigs.length ||
+    // Make sure that all the configs have keys that we can check for
+    !matchConfigs.some(configOption =>
+      ALLOWED_CONFIG_KEYS.includes(Object.keys(configOption)[0])
+    )
+  ) {
     core.debug(`  no "all" patterns to check`);
     return false;
   }

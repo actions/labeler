@@ -1,2 +1,3 @@
 label:
-  - unknown: 'this-is-not-supported'
+  - all:
+      - unknown: 'this-is-not-supported'
