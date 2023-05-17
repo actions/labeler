@@ -168,6 +168,20 @@ describe('run', () => {
     });
   });
 
+  it('can support multiple branches by providing an array', async () => {
+    github.context.payload.pull_request!.head = {ref: 'array/123'};
+    usingLabelerConfigYaml('branches.yml');
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['array-branch']
+    });
+  });
+
   it('adds a label when matching any and all patterns are provided', async () => {
     usingLabelerConfigYaml('any_and_all.yml');
     mockGitHubResponseChangedFiles('tests/test.ts');
