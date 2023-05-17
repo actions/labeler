@@ -439,7 +439,8 @@ function checkMatch(changedFiles, matchConfig) {
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(matchConfigs, changedFiles) {
     core.debug(`  checking "any" patterns`);
-    if (!matchConfigs.length) {
+    if (!matchConfigs.length ||
+        !matchConfigs.some(configOption => Object.keys(configOption).length)) {
         core.debug(`  no "any" patterns to check`);
         return false;
     }
@@ -468,8 +469,7 @@ exports.checkAny = checkAny;
 function checkAll(matchConfigs, changedFiles) {
     core.debug(`  checking "all" patterns`);
     if (!matchConfigs.length ||
-        // Make sure that all the configs have keys that we can check for
-        !matchConfigs.some(configOption => ALLOWED_CONFIG_KEYS.includes(Object.keys(configOption)[0]))) {
+        !matchConfigs.some(configOption => Object.keys(configOption).length)) {
         core.debug(`  no "all" patterns to check`);
         return false;
     }

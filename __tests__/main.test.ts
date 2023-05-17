@@ -17,7 +17,8 @@ const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
-  'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml')
+  'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
+  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -167,9 +168,9 @@ describe('run', () => {
     });
   });
 
-  it('can support multiple branches by providing an array', async () => {
-    github.context.payload.pull_request!.head = {ref: 'array/123'};
-    usingLabelerConfigYaml('branches.yml');
+  it('adds a label when matching any and all patterns are provided', async () => {
+    usingLabelerConfigYaml('any_and_all.yml');
+    mockGitHubResponseChangedFiles('tests/test.ts');
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
@@ -177,8 +178,17 @@ describe('run', () => {
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
-      labels: ['array-branch']
+      labels: ['tests']
     });
+  });
+
+  it('does not add a label when not all any and all patterns are matched', async () => {
+    usingLabelerConfigYaml('any_and_all.yml');
+    mockGitHubResponseChangedFiles('tests/requirements.txt');
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelMock).toHaveBeenCalledTimes(0);
   });
 });
 
