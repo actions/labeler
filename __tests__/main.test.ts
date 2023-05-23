@@ -51,17 +51,12 @@ describe('run', () => {
     const mockInput = {
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': 'true'
+      'sync-labels': true
     };
 
     jest
       .spyOn(core, 'getInput')
       .mockImplementation((name: string, ...opts) => mockInput[name]);
-    jest
-      .spyOn(core, 'getBooleanInput')
-      .mockImplementation(
-        (name: string, ...opts) => mockInput[name] === 'true'
-      );
 
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
@@ -87,17 +82,12 @@ describe('run', () => {
     const mockInput = {
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': 'false'
+      'sync-labels': false
     };
 
     jest
       .spyOn(core, 'getInput')
       .mockImplementation((name: string, ...opts) => mockInput[name]);
-    jest
-      .spyOn(core, 'getBooleanInput')
-      .mockImplementation(
-        (name: string, ...opts) => mockInput[name] === 'true'
-      );
 
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
