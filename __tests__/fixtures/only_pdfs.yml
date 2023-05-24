@@ -1,2 +1,2 @@
 touched-a-pdf-file:
-  - any: ['*.pdf']
+  - changed-files: ['*.pdf']
