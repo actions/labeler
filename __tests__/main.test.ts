@@ -22,7 +22,7 @@ const configureInput = (
   mockInput: Partial<{
     'repo-token': string;
     'configuration-path': string;
-    'sync-labels': string;
+    'sync-labels': boolean;
     dot: string;
   }>
 ) => {
@@ -97,7 +97,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': 'true'
+      'sync-labels': true
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
@@ -124,7 +124,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': 'false'
+      'sync-labels': true
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
