@@ -31,7 +31,7 @@ const configureInput = (
     .mockImplementation((name: string, ...opts) => mockInput[name]);
   jest
     .spyOn(core, 'getBooleanInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name] === 'true');
+    .mockImplementation((name: string, ...opts) => mockInput[name] === true);
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -124,7 +124,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': true
+      'sync-labels': false
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
