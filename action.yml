@@ -3,7 +3,9 @@ description: 'Automatically label new pull requests based on the paths of files 
 author: 'GitHub'
 inputs:
   repo-token:
-    description: 'The GITHUB_TOKEN secret'
+    description: 'The GitHub token used to manage labels'
+    required: false
+    default: ${{ github.token }}
   configuration-path:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
