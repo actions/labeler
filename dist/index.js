@@ -50,7 +50,7 @@ function run() {
             const token = core.getInput('repo-token');
             const configPath = core.getInput('configuration-path', { required: true });
             const syncLabels = !!core.getInput('sync-labels');
-            const dot = !!core.getInput('dot');
+            const dot = core.getBooleanInput('dot');
             const prNumber = getPrNumber();
             if (!prNumber) {
                 core.info('Could not get pull request number from context, exiting');
