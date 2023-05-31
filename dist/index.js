@@ -197,7 +197,7 @@ function checkAny(changedFiles, globs, dot) {
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(changedFiles, globs, dot) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g), { dot });
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     core.debug(` checking "all" patterns`);
     for (const changedFile of changedFiles) {
         if (!isMatch(changedFile, matchers)) {
