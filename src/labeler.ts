@@ -210,7 +210,7 @@ function checkAll(
   globs: string[],
   dot: boolean
 ): boolean {
-  const matchers = globs.map(g => new Minimatch(g), {dot});
+  const matchers = globs.map(g => new Minimatch(g, {dot}));
   core.debug(` checking "all" patterns`);
   for (const changedFile of changedFiles) {
     if (!isMatch(changedFile, matchers)) {
