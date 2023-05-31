@@ -29,6 +29,9 @@ const configureInput = (
   jest
     .spyOn(core, 'getInput')
     .mockImplementation((name: string, ...opts) => mockInput[name]);
+  jest
+    .spyOn(core, 'getBooleanInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name]);
 };
 
 afterAll(() => jest.restoreAllMocks());
