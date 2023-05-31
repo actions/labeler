@@ -23,7 +23,7 @@ const configureInput = (
     'repo-token': string;
     'configuration-path': string;
     'sync-labels': boolean;
-    dot: string;
+    dot: boolean;
   }>
 ) => {
   jest
@@ -55,7 +55,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) adds labels to PRs that match our glob patterns', async () => {
-    configureInput({dot: 'true'});
+    configureInput({dot: true});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('.foo.pdf');
 
@@ -83,7 +83,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
-    configureInput({dot: 'true'});
+    configureInput({dot: true});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
 
