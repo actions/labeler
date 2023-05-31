@@ -49,7 +49,7 @@ function run() {
         try {
             const token = core.getInput('repo-token');
             const configPath = core.getInput('configuration-path', { required: true });
-            const syncLabels = core.getBooleanInput('sync-labels', { required: false });
+            const syncLabels = !!core.getBooleanInput('sync-labels', { required: false });
             const dot = !!core.getBooleanInput('dot', { required: false });
             const prNumber = getPrNumber();
             if (!prNumber) {
