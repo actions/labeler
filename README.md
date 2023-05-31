@@ -64,7 +64,7 @@ repo:
 - '*'
 
 # Add '@domain/core' label to any change within the 'core' package
-@domain/core:
+'@domain/core':
 - package/core/**
 
 # Add 'test' label to any change to *.spec.js files within the source dir
