@@ -3,9 +3,10 @@ import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
-interface MatchConfig {
+export interface MatchConfig {
   all?: string[];
   any?: string[];
+  authors?: string[];
 }
 
 type StringOrMatchConfig = string | MatchConfig;
@@ -69,6 +70,14 @@ function getPrNumber(): number | undefined {
   }
 
   return pullRequest.number;
+}
+
+function getPrAuthor(): string | undefined {
+  const pullRequest = github.context.payload.pull_request;
+  if (!pullRequest) {
+    return undefined;
+  }
+  return pullRequest.user.login;
 }
 
 async function getChangedFiles(
@@ -213,6 +222,22 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
+function checkAuthors(authors: string[]): boolean {
+  const prAuthor = getPrAuthor();
+  if (!prAuthor) {
+    core.info('Could not get pull request author from context, exiting');
+    return false;
+  }
+
+  if (authors.includes(prAuthor)) {
+    core.debug(`  author ${prAuthor} is on the list`);
+    return true;
+  }
+
+  core.debug(`  author ${prAuthor} is not on the list`);
+  return false;
+}
+
 function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all)) {
@@ -222,6 +247,12 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 
   if (matchConfig.any !== undefined) {
     if (!checkAny(changedFiles, matchConfig.any)) {
+      return false;
+    }
+  }
+
+  if (matchConfig.authors !== undefined) {
+    if (!checkAuthors(matchConfig.authors)) {
       return false;
     }
   }

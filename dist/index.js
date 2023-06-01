@@ -96,6 +96,13 @@ function getPrNumber() {
     }
     return pullRequest.number;
 }
+function getPrAuthor() {
+    const pullRequest = github.context.payload.pull_request;
+    if (!pullRequest) {
+        return undefined;
+    }
+    return pullRequest.user.login;
+}
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
@@ -207,6 +214,19 @@ function checkAll(changedFiles, globs) {
     core.debug(`  "all" patterns matched all files`);
     return true;
 }
+function checkAuthors(authors) {
+    const prAuthor = getPrAuthor();
+    if (!prAuthor) {
+        core.info('Could not get pull request author from context, exiting');
+        return false;
+    }
+    if (authors.includes(prAuthor)) {
+        core.debug(`  author ${prAuthor} is on the list`);
+        return true;
+    }
+    core.debug(`  author ${prAuthor} is not on the list`);
+    return false;
+}
 function checkMatch(changedFiles, matchConfig) {
     if (matchConfig.all !== undefined) {
         if (!checkAll(changedFiles, matchConfig.all)) {
@@ -215,6 +235,11 @@ function checkMatch(changedFiles, matchConfig) {
     }
     if (matchConfig.any !== undefined) {
         if (!checkAny(changedFiles, matchConfig.any)) {
+            return false;
+        }
+    }
+    if (matchConfig.authors !== undefined) {
+        if (!checkAuthors(matchConfig.authors)) {
             return false;
         }
     }
