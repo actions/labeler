@@ -40,7 +40,7 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
-> ⚠️ This action uses [micromatch](https://www.npmjs.com/package/micromatch) to apply glob patterns.
+> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns.
 > For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
 > You need to set `dot: true` to change this behavior.
 > See [Inputs](#inputs) table below for details.
