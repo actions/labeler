@@ -40,6 +40,11 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
+> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns.
+> For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
+> You need to set `dot: true` to change this behavior.
+> See [Inputs](#inputs) table below for details.
+
 #### Basic Examples
 
 ```yml
@@ -108,8 +113,24 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | - | - | - |
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | `github.token` |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
-| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`|
+| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false` |
+| `dot` | Whether or not to auto-include paths starting with dot (e.g. `.github`) | `false` |
 
-# Contributions
+When `dot` is disabled and you want to include _all_ files in a folder:
+
+```yml
+label1:
+- path/to/folder/**/*
+- path/to/folder/**/.*
+```
+
+If `dot` is enabled:
+
+```yml
+label1:
+- path/to/folder/**
+```
+
+## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).

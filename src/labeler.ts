@@ -15,7 +15,8 @@ export async function run() {
   try {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
-    const syncLabels = !!core.getInput('sync-labels', {required: false});
+    const syncLabels = !!core.getInput('sync-labels');
+    const dot = core.getBooleanInput('dot');
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -42,7 +43,7 @@ export async function run() {
     const labelsToRemove: string[] = [];
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs)) {
+      if (checkGlobs(changedFiles, globs, dot)) {
         labels.push(label);
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
@@ -157,12 +158,13 @@ function printPattern(matcher: Minimatch): string {
 
 export function checkGlobs(
   changedFiles: string[],
-  globs: StringOrMatchConfig[]
+  globs: StringOrMatchConfig[],
+  dot: boolean
 ): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
     const matchConfig = toMatchConfig(glob);
-    if (checkMatch(changedFiles, matchConfig)) {
+    if (checkMatch(changedFiles, matchConfig, dot)) {
       return true;
     }
   }
@@ -184,8 +186,12 @@ function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
 }
 
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles: string[], globs: string[]): boolean {
-  const matchers = globs.map(g => new Minimatch(g));
+function checkAny(
+  changedFiles: string[],
+  globs: string[],
+  dot: boolean
+): boolean {
+  const matchers = globs.map(g => new Minimatch(g, {dot}));
   core.debug(`  checking "any" patterns`);
   for (const changedFile of changedFiles) {
     if (isMatch(changedFile, matchers)) {
@@ -199,8 +205,12 @@ function checkAny(changedFiles: string[], globs: string[]): boolean {
 }
 
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles: string[], globs: string[]): boolean {
-  const matchers = globs.map(g => new Minimatch(g));
+function checkAll(
+  changedFiles: string[],
+  globs: string[],
+  dot: boolean
+): boolean {
+  const matchers = globs.map(g => new Minimatch(g, {dot}));
   core.debug(` checking "all" patterns`);
   for (const changedFile of changedFiles) {
     if (!isMatch(changedFile, matchers)) {
@@ -213,15 +223,19 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(
+  changedFiles: string[],
+  matchConfig: MatchConfig,
+  dot: boolean
+): boolean {
   if (matchConfig.all !== undefined) {
-    if (!checkAll(changedFiles, matchConfig.all)) {
+    if (!checkAll(changedFiles, matchConfig.all, dot)) {
       return false;
     }
   }
 
   if (matchConfig.any !== undefined) {
-    if (!checkAny(changedFiles, matchConfig.any)) {
+    if (!checkAny(changedFiles, matchConfig.any, dot)) {
       return false;
     }
   }

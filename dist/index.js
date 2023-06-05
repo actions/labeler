@@ -49,7 +49,8 @@ function run() {
         try {
             const token = core.getInput('repo-token');
             const configPath = core.getInput('configuration-path', { required: true });
-            const syncLabels = !!core.getInput('sync-labels', { required: false });
+            const syncLabels = !!core.getInput('sync-labels');
+            const dot = core.getBooleanInput('dot');
             const prNumber = getPrNumber();
             if (!prNumber) {
                 core.info('Could not get pull request number from context, exiting');
@@ -68,7 +69,7 @@ function run() {
             const labelsToRemove = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs)) {
+                if (checkGlobs(changedFiles, globs, dot)) {
                     labels.push(label);
                 }
                 else if (pullRequest.labels.find(l => l.name === label)) {
@@ -158,11 +159,11 @@ function toMatchConfig(config) {
 function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
-function checkGlobs(changedFiles, globs) {
+function checkGlobs(changedFiles, globs, dot) {
     for (const glob of globs) {
         core.debug(` checking pattern ${JSON.stringify(glob)}`);
         const matchConfig = toMatchConfig(glob);
-        if (checkMatch(changedFiles, matchConfig)) {
+        if (checkMatch(changedFiles, matchConfig, dot)) {
             return true;
         }
     }
@@ -182,8 +183,8 @@ function isMatch(changedFile, matchers) {
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+function checkAny(changedFiles, globs, dot) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     core.debug(`  checking "any" patterns`);
     for (const changedFile of changedFiles) {
         if (isMatch(changedFile, matchers)) {
@@ -195,8 +196,8 @@ function checkAny(changedFiles, globs) {
     return false;
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+function checkAll(changedFiles, globs, dot) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     core.debug(` checking "all" patterns`);
     for (const changedFile of changedFiles) {
         if (!isMatch(changedFile, matchers)) {
@@ -207,14 +208,14 @@ function checkAll(changedFiles, globs) {
     core.debug(`  "all" patterns matched all files`);
     return true;
 }
-function checkMatch(changedFiles, matchConfig) {
+function checkMatch(changedFiles, matchConfig, dot) {
     if (matchConfig.all !== undefined) {
-        if (!checkAll(changedFiles, matchConfig.all)) {
+        if (!checkAll(changedFiles, matchConfig.all, dot)) {
             return false;
         }
     }
     if (matchConfig.any !== undefined) {
-        if (!checkAny(changedFiles, matchConfig.any)) {
+        if (!checkAny(changedFiles, matchConfig.any, dot)) {
             return false;
         }
     }
