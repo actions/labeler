@@ -112,7 +112,7 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | Name | Description | Default |
 | - | - | - |
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | `github.token` |
-| `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
+| `configuration-path` | The path to the label configuration file. If not found in the current working directory, will read from the source repository via the Github API. | `.github/labeler.yml` |
 | `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false` |
 | `dot` | Whether or not to auto-include paths starting with dot (e.g. `.github`) | `false` |
 

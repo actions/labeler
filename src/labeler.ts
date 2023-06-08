@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
+import {readFile} from 'fs/promises';
 
 interface MatchConfig {
   all?: string[];
@@ -10,6 +11,8 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
+
+const warningPrefix = '[warning]';
 
 export async function run() {
   try {
@@ -97,10 +100,21 @@ async function getLabelGlobs(
   client: ClientType,
   configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
-    client,
-    configurationPath
-  );
+  let configurationContent: string;
+
+  try {
+    configurationContent = (
+      await readFile(configurationPath, {
+        encoding: 'utf8'
+      })
+    ).toString();
+  } catch (error) {
+    core.info(
+      `${warningPrefix} configuration file (path: ${configurationPath}) not found locally (${error}), fetching via the api`
+    );
+
+    configurationContent = await fetchContent(client, configurationPath);
+  }
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);

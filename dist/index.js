@@ -44,6 +44,8 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const yaml = __importStar(__nccwpck_require__(1917));
 const minimatch_1 = __nccwpck_require__(2002);
+const promises_1 = __nccwpck_require__(3292);
+const warningPrefix = '[warning]';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -115,7 +117,16 @@ function getChangedFiles(client, prNumber) {
 }
 function getLabelGlobs(client, configurationPath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const configurationContent = yield fetchContent(client, configurationPath);
+        let configurationContent;
+        try {
+            configurationContent = (yield (0, promises_1.readFile)(configurationPath, {
+                encoding: 'utf8'
+            })).toString();
+        }
+        catch (error) {
+            core.info(`${warningPrefix} configuration file (path: ${configurationPath}) not found locally (${error}), fetching via the api`);
+            configurationContent = yield fetchContent(client, configurationPath);
+        }
         // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
         const configObject = yaml.load(configurationContent);
         // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
@@ -14176,6 +14187,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
