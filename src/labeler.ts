@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
@@ -11,11 +12,14 @@ interface MatchConfig {
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
 
+// Github Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
+
 export async function run() {
   try {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
-    const syncLabels = !!core.getInput('sync-labels');
+    const syncLabels = core.getBooleanInput('sync-labels');
     const dot = core.getBooleanInput('dot');
 
     const prNumber = getPrNumber();
@@ -24,7 +28,7 @@ export async function run() {
       return;
     }
 
-    const client: ClientType = github.getOctokit(token);
+    const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
     const {data: pullRequest} = await client.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -39,23 +43,25 @@ export async function run() {
         configPath
     );
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
+    const pullRequestLabels = pullRequest.labels.map(label => label.name);
+    const labels: string[] = syncLabels ? [] : pullRequestLabels;
+
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs, dot)) {
+      if (checkGlobs(changedFiles, globs, dot) && !labels.includes(label)) {
         labels.push(label);
-      } else if (pullRequest.labels.find(l => l.name === label)) {
-        labelsToRemove.push(label);
       }
     }
 
-    if (labels.length > 0) {
-      await addLabels(client, prNumber, labels);
-    }
+    // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
+    // and extract the excess into `excessLabels`
+    const excessLabels = labels.splice(GITHUB_MAX_LABELS);
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
+    // set labels regardless if array has a length or not
+    await setLabels(client, prNumber, labels);
+
+    if (excessLabels.length) {
+      core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
     }
   } catch (error: any) {
     core.error(error);
@@ -243,32 +249,15 @@ function checkMatch(
   return true;
 }
 
-async function addLabels(
+async function setLabels(
     client: ClientType,
     prNumber: number,
     labels: string[]
 ) {
-  await client.rest.issues.addLabels({
+  await client.rest.issues.setLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
     labels: labels
   });
-}
-
-async function removeLabels(
-    client: ClientType,
-    prNumber: number,
-    labels: string[]
-) {
-  await Promise.all(
-      labels.map(label =>
-          client.rest.issues.removeLabel({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            name: label
-          })
-      )
-  );
 }
