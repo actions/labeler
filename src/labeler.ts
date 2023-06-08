@@ -39,8 +39,8 @@ export async function run() {
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
-        client,
-        configPath
+      client,
+      configPath
     );
 
     const pullRequestLabels = pullRequest.labels.map(label => label.name);
@@ -79,8 +79,8 @@ function getPrNumber(): number | undefined {
 }
 
 async function getChangedFiles(
-    client: ClientType,
-    prNumber: number
+  client: ClientType,
+  prNumber: number
 ): Promise<string[]> {
   const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
     owner: github.context.repo.owner,
@@ -100,12 +100,12 @@ async function getChangedFiles(
 }
 
 async function getLabelGlobs(
-    client: ClientType,
-    configurationPath: string
+  client: ClientType,
+  configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
   const configurationContent: string = await fetchContent(
-      client,
-      configurationPath
+    client,
+    configurationPath
   );
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
@@ -116,8 +116,8 @@ async function getLabelGlobs(
 }
 
 async function fetchContent(
-    client: ClientType,
-    repoPath: string
+  client: ClientType,
+  repoPath: string
 ): Promise<string> {
   const response: any = await client.rest.repos.getContent({
     owner: github.context.repo.owner,
@@ -130,7 +130,7 @@ async function fetchContent(
 }
 
 function getLabelGlobMapFromObject(
-    configObject: any
+  configObject: any
 ): Map<string, StringOrMatchConfig[]> {
   const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
   for (const label in configObject) {
@@ -140,7 +140,7 @@ function getLabelGlobMapFromObject(
       labelGlobs.set(label, configObject[label]);
     } else {
       throw Error(
-          `found unexpected type for label ${label} (should be string or array of globs)`
+        `found unexpected type for label ${label} (should be string or array of globs)`
       );
     }
   }
@@ -163,9 +163,9 @@ function printPattern(matcher: Minimatch): string {
 }
 
 export function checkGlobs(
-    changedFiles: string[],
-    globs: StringOrMatchConfig[],
-    dot: boolean
+  changedFiles: string[],
+  globs: StringOrMatchConfig[],
+  dot: boolean
 ): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -193,9 +193,9 @@ function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
 
 // equivalent to "Array.some()" but expanded for debugging and clarity
 function checkAny(
-    changedFiles: string[],
-    globs: string[],
-    dot: boolean
+  changedFiles: string[],
+  globs: string[],
+  dot: boolean
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g, {dot}));
   core.debug(`  checking "any" patterns`);
@@ -212,9 +212,9 @@ function checkAny(
 
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(
-    changedFiles: string[],
-    globs: string[],
-    dot: boolean
+  changedFiles: string[],
+  globs: string[],
+  dot: boolean
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g, {dot}));
   core.debug(` checking "all" patterns`);
@@ -230,9 +230,9 @@ function checkAll(
 }
 
 function checkMatch(
-    changedFiles: string[],
-    matchConfig: MatchConfig,
-    dot: boolean
+  changedFiles: string[],
+  matchConfig: MatchConfig,
+  dot: boolean
 ): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all, dot)) {
@@ -250,9 +250,9 @@ function checkMatch(
 }
 
 async function setLabels(
-    client: ClientType,
-    prNumber: number,
-    labels: string[]
+  client: ClientType,
+  prNumber: number,
+  labels: string[]
 ) {
   await client.rest.issues.setLabels({
     owner: github.context.repo.owner,
