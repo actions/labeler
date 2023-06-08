@@ -8,8 +8,7 @@ jest.mock('@actions/core');
 jest.mock('@actions/github');
 
 const gh = github.getOctokit('_');
-const addLabelsMock = jest.spyOn(gh.rest.issues, 'addLabels');
-const removeLabelMock = jest.spyOn(gh.rest.issues, 'removeLabel');
+const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
 const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
@@ -41,12 +40,16 @@ describe('run', () => {
     configureInput({});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.pdf');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
 
     await run();
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
-    expect(addLabelsMock).toHaveBeenCalledTimes(1);
-    expect(addLabelsMock).toHaveBeenCalledWith({
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -58,12 +61,16 @@ describe('run', () => {
     configureInput({dot: true});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('.foo.pdf');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
 
     await run();
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
-    expect(addLabelsMock).toHaveBeenCalledTimes(1);
-    expect(addLabelsMock).toHaveBeenCalledWith({
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -75,11 +82,21 @@ describe('run', () => {
     configureInput({});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('.foo.pdf');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
 
     await run();
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
-    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: []
+    });
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
@@ -89,8 +106,13 @@ describe('run', () => {
 
     await run();
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
-    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: []
+    });
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
@@ -110,13 +132,12 @@ describe('run', () => {
 
     await run();
 
-    expect(addLabelsMock).toHaveBeenCalledTimes(0);
-    expect(removeLabelMock).toHaveBeenCalledTimes(1);
-    expect(removeLabelMock).toHaveBeenCalledWith({
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
-      name: 'touched-a-pdf-file'
+      labels: []
     });
   });
 
@@ -137,8 +158,13 @@ describe('run', () => {
 
     await run();
 
-    expect(addLabelsMock).toHaveBeenCalledTimes(0);
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['touched-a-pdf-file']
+    });
   });
 });
 
