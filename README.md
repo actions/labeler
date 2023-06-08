@@ -10,7 +10,7 @@ Automatically label new pull requests based on the paths of files being changed.
 
 Create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
 
-The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
+The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**`, `tests/*.spec.js`) or a match object.
 
 #### Match Object
 
@@ -40,12 +40,17 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
+> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns.
+> For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
+> You need to set `dot: true` to change this behavior.
+> See [Inputs](#inputs) table below for details.
+
 #### Basic Examples
 
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
 label1:
-- example/**/*
+- example/**
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
@@ -65,8 +70,7 @@ repo:
 
 # Add '@domain/core' label to any change within the 'core' package
 '@domain/core':
-- package/core/*
-- package/core/**/*
+- package/core/**
 
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
@@ -74,7 +78,7 @@ test:
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
-- any: ['src/**/*', '!src/docs/*']
+- any: ['src/**', '!src/docs/*']
 
 # Add 'frontend` label to any change to *.js files as long as the `main.js` hasn't changed
 frontend:
@@ -109,8 +113,24 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | - | - | - |
 | `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | `github.token` |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
-| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`|
+| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false` |
+| `dot` | Whether or not to auto-include paths starting with dot (e.g. `.github`) | `false` |
 
-# Contributions
+When `dot` is disabled and you want to include _all_ files in a folder:
+
+```yml
+label1:
+- path/to/folder/**/*
+- path/to/folder/**/.*
+```
+
+If `dot` is enabled:
+
+```yml
+label1:
+- path/to/folder/**
+```
+
+## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
