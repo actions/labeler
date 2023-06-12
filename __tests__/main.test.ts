@@ -178,7 +178,9 @@ describe('run', () => {
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.pdf');
 
-    const existingLabels = Array.from({ length: 100 }).map((_, idx) => ({name: `existing-label-${idx}`}));
+    const existingLabels = Array.from({length: 100}).map((_, idx) => ({
+      name: `existing-label-${idx}`
+    }));
     getPullMock.mockResolvedValue(<any>{
       data: {
         labels: existingLabels
@@ -192,11 +194,13 @@ describe('run', () => {
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
-      labels: existingLabels.map((label) => label.name)
+      labels: existingLabels.map(label => label.name)
     });
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
-    expect(coreWarningMock).toHaveBeenCalledWith('failed to add excess labels touched-a-pdf-file');
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      'failed to add excess labels touched-a-pdf-file'
+    );
   });
 });
 
