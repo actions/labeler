@@ -127,7 +127,7 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.txt');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'touched-a-pdf-file'}]
+        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}]
       }
     });
 
@@ -138,7 +138,7 @@ describe('run', () => {
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
-      labels: []
+      labels: ['manually-added']
     });
   });
 
@@ -153,7 +153,7 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.txt');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'touched-a-pdf-file'}]
+        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}]
       }
     });
 
@@ -164,7 +164,7 @@ describe('run', () => {
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
-      labels: ['touched-a-pdf-file']
+      labels: ['touched-a-pdf-file', 'manually-added']
     });
   });
 

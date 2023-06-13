@@ -43,13 +43,14 @@ export async function run() {
       configPath
     );
 
-    const pullRequestLabels = pullRequest.labels.map(label => label.name);
-    const labels: string[] = syncLabels ? [] : pullRequestLabels;
+    const labels: string[] = pullRequest.labels.map(label => label.name);
 
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs, dot) && !labels.includes(label)) {
         labels.push(label);
+      } else if (syncLabels) {
+        removeLabel(labels, label);
       }
     }
 
@@ -252,6 +253,13 @@ function checkMatch(
   }
 
   return true;
+}
+
+function removeLabel(labels: string[], label: string): void {
+  const labelIndex = labels.indexOf(label);
+  if (labelIndex > -1) {
+    labels.splice(labelIndex, 1);
+  }
 }
 
 async function setLabels(

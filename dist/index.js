@@ -68,12 +68,14 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const pullRequestLabels = pullRequest.labels.map(label => label.name);
-            const labels = syncLabels ? [] : pullRequestLabels;
+            const labels = pullRequest.labels.map(label => label.name);
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs, dot) && !labels.includes(label)) {
                     labels.push(label);
+                }
+                else if (syncLabels) {
+                    removeLabel(labels, label);
                 }
             }
             // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
@@ -82,7 +84,7 @@ function run() {
             // set labels regardless if array has a length or not
             yield setLabels(client, prNumber, labels);
             if (excessLabels.length) {
-                core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
+                core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
             }
         }
         catch (error) {
@@ -222,6 +224,12 @@ function checkMatch(changedFiles, matchConfig, dot) {
         }
     }
     return true;
+}
+function removeLabel(labels, label) {
+    const labelIndex = labels.indexOf(label);
+    if (labelIndex > -1) {
+        labels.splice(labelIndex, 1);
+    }
 }
 function setLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
