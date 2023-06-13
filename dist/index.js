@@ -78,9 +78,11 @@ function run() {
             }
             if (labels.length > 0) {
                 yield addLabels(client, prNumber, labels);
+                core.setOutput('labels', labels.join(' '));
             }
             if (syncLabels && labelsToRemove.length) {
                 yield removeLabels(client, prNumber, labelsToRemove);
+                core.setOutput('removed-labels', labelsToRemove.join(' '));
             }
         }
         catch (error) {

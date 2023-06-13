@@ -18,7 +18,11 @@ inputs:
     description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
     default: false
     required: false
-
+outputs:
+  labels:
+    description: 'A string containing the labels added, separated by white spaces. If no labels where added, it returns an empty string (`""`)'
+  removed-labels:
+    description: 'A string containing the labels removed, separated by white spaces. If no labels where removed, it returns an empty string (`""`)'
 runs:
   using: 'node16'
   main: 'dist/index.js'

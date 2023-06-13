@@ -52,10 +52,12 @@ export async function run() {
 
     if (labels.length > 0) {
       await addLabels(client, prNumber, labels);
+      core.setOutput('labels', labels.join(' '));
     }
 
     if (syncLabels && labelsToRemove.length) {
       await removeLabels(client, prNumber, labelsToRemove);
+      core.setOutput('removed-labels', labelsToRemove.join(' '));
     }
   } catch (error: any) {
     core.error(error);

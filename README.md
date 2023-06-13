@@ -131,6 +131,13 @@ label1:
 - path/to/folder/**
 ```
 
+#### Outputs
+
+| Name     | Description | Default |
+| -        | -           | - |
+| `labels` | A string containing the labels added, separated by white spaces. If no labels where added, it returns an empty string (`""`) | N/A |
+| `removed-labels` | A string containing the labels removed, separated by white spaces. If no labels where removed, it returns an empty string (`""`) | N/A |
+
 ## Permissions
 
 In order to add labels to pull requests, the GitHub labeler action requires
