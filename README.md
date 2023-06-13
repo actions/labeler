@@ -10,7 +10,7 @@ Automatically label new pull requests based on the paths of files being changed.
 
 Create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
 
-The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**`, `tests/*.spec.js`) or a match object.
+The key is the name of the label in your repository that you want to add (e.g. "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (e.g. `src/**`, `tests/*.spec.js`) or a match object.
 
 #### Match Object
 
@@ -88,7 +88,7 @@ frontend:
 
 ### Create Workflow
 
-Create a workflow (eg: `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
+Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
 
 ```yml
 name: "Pull Request Labeler"
