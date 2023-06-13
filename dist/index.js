@@ -71,8 +71,10 @@ function run() {
             const labels = pullRequest.labels.map(label => label.name);
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs, dot) && !labels.includes(label)) {
-                    labels.push(label);
+                if (checkGlobs(changedFiles, globs, dot)) {
+                    if (!labels.includes(label)) {
+                        labels.push(label);
+                    }
                 }
                 else if (syncLabels) {
                     removeLabel(labels, label);
