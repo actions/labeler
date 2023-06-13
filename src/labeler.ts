@@ -61,7 +61,12 @@ export async function run() {
     await setLabels(client, prNumber, labels);
 
     if (excessLabels.length) {
-      core.warning(`failed to add excess labels ${excessLabels.join(', ')}`);
+      core.warning(
+        `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+          ', '
+        )}`,
+        {title: 'Label limit for a PR exceeded'}
+      );
     }
   } catch (error: any) {
     core.error(error);

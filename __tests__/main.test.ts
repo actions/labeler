@@ -199,7 +199,8 @@ describe('run', () => {
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
     expect(coreWarningMock).toHaveBeenCalledWith(
-      'failed to add excess labels touched-a-pdf-file'
+      'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
+      {title: 'Label limit for a PR exceeded'}
     );
   });
 });
