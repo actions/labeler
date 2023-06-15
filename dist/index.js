@@ -77,7 +77,7 @@ function run() {
                     }
                 }
                 else if (syncLabels) {
-                    removeLabel(labels, label);
+                    removeLabelFromList(labels, label);
                 }
             }
             // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
@@ -227,7 +227,7 @@ function checkMatch(changedFiles, matchConfig, dot) {
     }
     return true;
 }
-function removeLabel(labels, label) {
+function removeLabelFromList(labels, label) {
     const labelIndex = labels.indexOf(label);
     if (labelIndex > -1) {
         labels.splice(labelIndex, 1);

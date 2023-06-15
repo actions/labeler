@@ -52,7 +52,7 @@ export async function run() {
           labels.push(label);
         }
       } else if (syncLabels) {
-        removeLabel(labels, label);
+        removeLabelFromList(labels, label);
       }
     }
 
@@ -257,7 +257,7 @@ function checkMatch(
   return true;
 }
 
-function removeLabel(labels: string[], label: string): void {
+function removeLabelFromList(labels: string[], label: string): void {
   const labelIndex = labels.indexOf(label);
   if (labelIndex > -1) {
     labels.splice(labelIndex, 1);
