@@ -12,7 +12,7 @@ interface MatchConfig {
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
 
-// Github Issues cannot have more than 100 labels
+// GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
 
 export async function run() {
@@ -60,16 +60,33 @@ export async function run() {
     // and extract the excess into `excessLabels`
     const excessLabels = labels.splice(GITHUB_MAX_LABELS);
 
-    // set labels regardless if array has a length or not
-    await setLabels(client, prNumber, labels);
+    try {
+      // set labels regardless if array has a length or not
+      await setLabels(client, prNumber, labels);
 
-    if (excessLabels.length) {
-      core.warning(
-        `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
-          ', '
-        )}`,
-        {title: 'Label limit for a PR exceeded'}
-      );
+      if (excessLabels.length) {
+        core.warning(
+          `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+            ', '
+          )}`,
+          {title: 'Label limit for a PR exceeded'}
+        );
+      }
+    } catch (error: any) {
+      if (
+        error.name === 'HttpError' &&
+        error.message === 'Resource not accessible by integration'
+      ) {
+        core.warning(
+          `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+          {
+            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+          }
+        );
+        core.setFailed(error.message);
+      } else {
+        throw error;
+      }
     }
   } catch (error: any) {
     core.error(error);

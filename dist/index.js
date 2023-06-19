@@ -45,7 +45,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const pluginRetry = __importStar(__nccwpck_require__(6298));
 const yaml = __importStar(__nccwpck_require__(1917));
 const minimatch_1 = __nccwpck_require__(2002);
-// Github Issues cannot have more than 100 labels
+// GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -83,10 +83,24 @@ function run() {
             // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
             // and extract the excess into `excessLabels`
             const excessLabels = labels.splice(GITHUB_MAX_LABELS);
-            // set labels regardless if array has a length or not
-            yield setLabels(client, prNumber, labels);
-            if (excessLabels.length) {
-                core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
+            try {
+                // set labels regardless if array has a length or not
+                yield setLabels(client, prNumber, labels);
+                if (excessLabels.length) {
+                    core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
+                }
+            }
+            catch (error) {
+                if (error.name === 'HttpError' &&
+                    error.message === 'Resource not accessible by integration') {
+                    core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
+                        title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+                    });
+                    core.setFailed(error.message);
+                }
+                else {
+                    throw error;
+                }
             }
         }
         catch (error) {

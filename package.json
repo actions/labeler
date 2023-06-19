@@ -1,6 +1,6 @@
 {
   "name": "labeler",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
@@ -35,10 +35,10 @@
     "@types/js-yaml": "^4.0.5",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^16.11.7",
-    "@typescript-eslint/eslint-plugin": "^5.59.8",
-    "@typescript-eslint/parser": "^5.59.8",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
     "@vercel/ncc": "^0.36.1",
-    "eslint": "^8.41.0",
+    "eslint": "^8.42.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-jest": "^27.2.1",
     "eslint-plugin-node": "^11.1.0",
