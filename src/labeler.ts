@@ -49,9 +49,7 @@ export async function run() {
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs, dot)) {
-        if (!allLabels.has(label)) {
-          allLabels.add(label);
-        }
+        allLabels.add(label);
       } else if (syncLabels) {
         allLabels.delete(label);
       }
