@@ -43,26 +43,27 @@ export async function run() {
       configPath
     );
 
-    const labels: string[] = pullRequest.labels.map(label => label.name);
+    const prLabels: string[] = pullRequest.labels.map(label => label.name);
+    const allLabels: Set<string> = new Set(prLabels);
 
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs, dot)) {
-        if (!labels.includes(label)) {
-          labels.push(label);
+        if (!allLabels.has(label)) {
+          allLabels.add(label);
         }
       } else if (syncLabels) {
-        removeLabelFromList(labels, label);
+        allLabels.delete(label);
       }
     }
 
-    // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
-    // and extract the excess into `excessLabels`
-    const excessLabels = labels.splice(GITHUB_MAX_LABELS);
+    const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
     try {
-      // set labels regardless if array has a length or not
-      await setLabels(client, prNumber, labels);
+      if (!isListEqual(prLabels, labels)) {
+        await setLabels(client, prNumber, labels);
+      }
 
       if (excessLabels.length) {
         core.warning(
@@ -274,11 +275,8 @@ function checkMatch(
   return true;
 }
 
-function removeLabelFromList(labels: string[], label: string): void {
-  const labelIndex = labels.indexOf(label);
-  if (labelIndex > -1) {
-    labels.splice(labelIndex, 1);
-  }
+function isListEqual(listA: string[], listB: string[]): boolean {
+  return listA.length === listB.length && listA.every(el => listB.includes(el));
 }
 
 async function setLabels(

@@ -91,13 +91,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
-      owner: 'monalisa',
-      repo: 'helloworld',
-      issue_number: 123,
-      labels: []
-    });
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
@@ -107,13 +101,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
-      owner: 'monalisa',
-      repo: 'helloworld',
-      issue_number: 123,
-      labels: []
-    });
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
@@ -159,16 +147,10 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
-      owner: 'monalisa',
-      repo: 'helloworld',
-      issue_number: 123,
-      labels: ['touched-a-pdf-file', 'manually-added']
-    });
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
   });
 
-  it('(with sync-labels: false) it sets only 100 labels and logs the rest', async () => {
+  it('(with sync-labels: false) it only logs the excess labels', async () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
@@ -189,13 +171,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
-      owner: 'monalisa',
-      repo: 'helloworld',
-      issue_number: 123,
-      labels: existingLabels.map(label => label.name)
-    });
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
     expect(coreWarningMock).toHaveBeenCalledWith(

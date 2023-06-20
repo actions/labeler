@@ -68,24 +68,25 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const labels = pullRequest.labels.map(label => label.name);
+            const prLabels = pullRequest.labels.map(label => label.name);
+            const allLabels = new Set(prLabels);
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs, dot)) {
-                    if (!labels.includes(label)) {
-                        labels.push(label);
+                    if (!allLabels.has(label)) {
+                        allLabels.add(label);
                     }
                 }
                 else if (syncLabels) {
-                    removeLabelFromList(labels, label);
+                    allLabels.delete(label);
                 }
             }
-            // this will mutate the `labels` array at a length of GITHUB_MAX_LABELS,
-            // and extract the excess into `excessLabels`
-            const excessLabels = labels.splice(GITHUB_MAX_LABELS);
+            const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+            const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
             try {
-                // set labels regardless if array has a length or not
-                yield setLabels(client, prNumber, labels);
+                if (!isListEqual(prLabels, labels)) {
+                    yield setLabels(client, prNumber, labels);
+                }
                 if (excessLabels.length) {
                     core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
                 }
@@ -241,11 +242,8 @@ function checkMatch(changedFiles, matchConfig, dot) {
     }
     return true;
 }
-function removeLabelFromList(labels, label) {
-    const labelIndex = labels.indexOf(label);
-    if (labelIndex > -1) {
-        labels.splice(labelIndex, 1);
-    }
+function isListEqual(listA, listB) {
+    return listA.length === listB.length && listA.every(el => listB.includes(el));
 }
 function setLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
