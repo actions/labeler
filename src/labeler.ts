@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 
@@ -10,6 +11,9 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
+
+// GitHub Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
 
 export async function run() {
   try {
@@ -24,7 +28,7 @@ export async function run() {
       return;
     }
 
-    const client: ClientType = github.getOctokit(token);
+    const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
     const {data: pullRequest} = await client.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -39,24 +43,33 @@ export async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
+    const prLabels: string[] = pullRequest.labels.map(label => label.name);
+    const allLabels: Set<string> = new Set(prLabels);
+
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs, dot)) {
-        labels.push(label);
-      } else if (pullRequest.labels.find(l => l.name === label)) {
-        labelsToRemove.push(label);
+        allLabels.add(label);
+      } else if (syncLabels) {
+        allLabels.delete(label);
       }
     }
 
+    const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+
     try {
-      if (labels.length > 0) {
-        await addLabels(client, prNumber, labels);
+      if (!isListEqual(prLabels, labels)) {
+        await setLabels(client, prNumber, labels);
       }
 
-      if (syncLabels && labelsToRemove.length) {
-        await removeLabels(client, prNumber, labelsToRemove);
+      if (excessLabels.length) {
+        core.warning(
+          `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+            ', '
+          )}`,
+          {title: 'Label limit for a PR exceeded'}
+        );
       }
     } catch (error: any) {
       if (
@@ -260,32 +273,19 @@ function checkMatch(
   return true;
 }
 
-async function addLabels(
+function isListEqual(listA: string[], listB: string[]): boolean {
+  return listA.length === listB.length && listA.every(el => listB.includes(el));
+}
+
+async function setLabels(
   client: ClientType,
   prNumber: number,
   labels: string[]
 ) {
-  await client.rest.issues.addLabels({
+  await client.rest.issues.setLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
     labels: labels
   });
-}
-
-async function removeLabels(
-  client: ClientType,
-  prNumber: number,
-  labels: string[]
-) {
-  await Promise.all(
-    labels.map(label =>
-      client.rest.issues.removeLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        issue_number: prNumber,
-        name: label
-      })
-    )
-  );
 }
