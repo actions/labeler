@@ -3,6 +3,7 @@ import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
+import {getMultilineInput} from '@actions/core';
 
 interface MatchConfig {
   all?: string[];
@@ -22,75 +23,75 @@ export async function run() {
     const syncLabels = !!core.getInput('sync-labels');
     const dot = core.getBooleanInput('dot');
 
-    const prNumber = getPrNumber();
-    if (!prNumber) {
+    const prNumbers = getPrNumbers();
+    if (!prNumbers) {
       core.info('Could not get pull request number from context, exiting');
       return;
     }
 
     const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
-    const {data: pullRequest} = await client.rest.pulls.get({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      pull_number: prNumber
-    });
+    for (const prNumber of prNumbers) {
+      const {data: pullRequest} = await client.rest.pulls.get({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        pull_number: prNumber
+      });
 
-    core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
-      client,
-      configPath
-    );
+      core.debug(`fetching changed files for pr #${prNumbers}`);
+      const changedFiles: string[] = await getChangedFiles(client, prNumber);
+      const labelGlobs: Map<string, StringOrMatchConfig[]> =
+        await getLabelGlobs(client, configPath);
 
-    const preexistingLabels = pullRequest.labels.map(l => l.name);
-    const allLabels: Set<string> = new Set<string>(preexistingLabels);
+      const preexistingLabels = pullRequest.labels.map(l => l.name);
+      const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
-    for (const [label, globs] of labelGlobs.entries()) {
-      core.debug(`processing ${label}`);
-      if (checkGlobs(changedFiles, globs, dot)) {
-        allLabels.add(label);
-      } else if (syncLabels) {
-        allLabels.delete(label);
+      for (const [label, globs] of labelGlobs.entries()) {
+        core.debug(`processing ${label}`);
+        if (checkGlobs(changedFiles, globs, dot)) {
+          allLabels.add(label);
+        } else if (syncLabels) {
+          allLabels.delete(label);
+        }
       }
-    }
 
-    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
-    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+      const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+      const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
-    try {
-      let newLabels: string[] = [];
+      try {
+        let newLabels: string[] = [];
 
       if (!isListEqual(labelsToAdd, preexistingLabels)) {
-        await setLabels(client, prNumber, labelsToAdd);
+          await setLabels(client, prNumber, labelsToAdd);
         newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
       }
 
       core.setOutput('new-labels', newLabels.join(','));
-      core.setOutput('all-labels', labelsToAdd.join(','));
+        core.setOutput('all-labels', labelsToAdd.join(','));
 
-      if (excessLabels.length) {
-        core.warning(
-          `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
-            ', '
-          )}`,
-          {title: 'Label limit for a PR exceeded'}
-        );
-      }
-    } catch (error: any) {
-      if (
-        error.name === 'HttpError' &&
-        error.message === 'Resource not accessible by integration'
-      ) {
-        core.warning(
-          `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
-          {
-            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
-          }
-        );
-        core.setFailed(error.message);
-      } else {
-        throw error;
+        if (excessLabels.length) {
+          core.warning(
+            `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+              ', '
+            )}`,
+            {title: 'Label limit for a PR exceeded'}
+          );
+        }
+      } catch (error: any) {
+        if (
+          error.name === 'HttpError' &&
+          error.message === 'Resource not accessible by integration'
+        ) {
+          core.warning(
+            `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+            {
+              title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+            }
+          );
+          core.setFailed(error.message);
+        } else {
+          throw error;
+        }
       }
     }
   } catch (error: any) {
@@ -99,10 +100,23 @@ export async function run() {
   }
 }
 
-function getPrNumber(): number | undefined {
-  const pullRequestNumber = core.getInput('pr-number', {required: false});
-  if (pullRequestNumber) {
-    return parseInt(pullRequestNumber, 10);
+function getPrNumbers(): number[] | undefined {
+  const pullRequestNumbers = core.getMultilineInput('pr-number', {
+    required: false
+  });
+  if (pullRequestNumbers) {
+    const prNumbers: number[] = [];
+
+    for (const prNumber of pullRequestNumbers) {
+      const prNumberInt = parseInt(prNumber, 10);
+      if (isNaN(prNumberInt) || prNumberInt <= 0) {
+        core.warning(`'${prNumber}' is not a valid pull request number`);
+      } else {
+        prNumbers.push(prNumberInt);
+      }
+    }
+
+    return prNumbers;
   }
 
   const pullRequest = github.context.payload.pull_request;
@@ -110,7 +124,7 @@ function getPrNumber(): number | undefined {
     return undefined;
   }
 
-  return pullRequest.number;
+  return [pullRequest.number];
 }
 
 async function getChangedFiles(
