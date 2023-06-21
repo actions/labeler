@@ -114,6 +114,10 @@ function run() {
 }
 exports.run = run;
 function getPrNumber() {
+    const pullRequestNumber = core.getInput('pr-number', { required: false });
+    if (pullRequestNumber) {
+        return parseInt(pullRequestNumber, 10);
+    }
     const pullRequest = github.context.payload.pull_request;
     if (!pullRequest) {
         return undefined;

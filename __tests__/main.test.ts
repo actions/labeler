@@ -210,29 +210,29 @@ describe('run', () => {
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', allLabels);
   });
 
-  it("uses the PR number specified in the parameters", async () => {
+  it('uses the PR number specified in the parameters', async () => {
     let mockInput = {
-      "repo-token": "foo",
-      "configuration-path": "bar",
-      "pr-number": 104,
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': 104
     };
 
     jest
-      .spyOn(core, "getInput")
+      .spyOn(core, 'getInput')
       .mockImplementation((name: string, ...opts) => mockInput[name]);
 
-    usingLabelerConfigYaml("only_pdfs.yml");
-    mockGitHubResponseChangedFiles("foo.pdf");
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
 
     await run();
 
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
-      owner: "monalisa",
-      repo: "helloworld",
+      owner: 'monalisa',
+      repo: 'helloworld',
       issue_number: 104,
-      labels: ["touched-a-pdf-file"],
+      labels: ['touched-a-pdf-file']
     });
   });
 });
