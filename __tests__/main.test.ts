@@ -207,8 +207,6 @@ describe('run', () => {
 
     await run();
 
-    expect(addLabelsMock).toHaveBeenCalledTimes(0);
-    expect(removeLabelMock).toHaveBeenCalledTimes(1);
     expect(setOutputMock).toHaveBeenCalledTimes(2);
     expect(setOutputMock).toHaveBeenNthCalledWith(1, "new-labels", "");
     expect(setOutputMock).toHaveBeenNthCalledWith(
@@ -253,11 +251,4 @@ function mockGitHubResponseAddLabels(...labelStrings: string[]): void {
     });
     i++;
   }
-
-  addLabelsMock.mockResolvedValue({
-    status: 200,
-    headers: {},
-    url: "https://github.com/foo",
-    data,
-  });
 }

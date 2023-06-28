@@ -68,27 +68,26 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const labelsToAdd = new Set();
             const preexistingLabels = pullRequest.labels
-                .map(l => l.name)
-                .filter((l) => !!l); // just to get the type to be string[] instead of (string|undefined)[]
+                .map(l => l.name);
+            const allLabels = new Set(preexistingLabels);
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs, dot)) {
-                    labelsToAdd.add(label);
+                    allLabels.add(label);
                 }
                 else if (syncLabels) {
-                    labelsToAdd.delete(label);
+                    allLabels.delete(label);
                 }
             }
-            const labels = [...labelsToAdd].slice(0, GITHUB_MAX_LABELS);
-            const excessLabels = [...labelsToAdd].slice(GITHUB_MAX_LABELS);
+            const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+            const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
             try {
-                if (!isListEqual(labels, preexistingLabels)) {
-                    yield setLabels(client, prNumber, labels);
-                    const newLabels = labels.filter((l) => !preexistingLabels.includes(l));
+                if (!isListEqual(labelsToAdd, preexistingLabels)) {
+                    yield setLabels(client, prNumber, labelsToAdd);
+                    const newLabels = labelsToAdd.filter((l) => !preexistingLabels.includes(l));
                     core.setOutput("new-labels", newLabels.join(","));
-                    core.setOutput("all-labels", labels.join(","));
+                    core.setOutput("all-labels", labelsToAdd.join(","));
                 }
                 if (excessLabels.length) {
                     core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
@@ -250,13 +249,12 @@ function isListEqual(listA, listB) {
 }
 function setLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
-        const addLabelResult = yield client.rest.issues.setLabels({
+        yield client.rest.issues.setLabels({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
             labels: labels
         });
-        return addLabelResult.data.map((datum) => datum.name);
     });
 }
 
