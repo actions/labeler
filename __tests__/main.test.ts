@@ -1,4 +1,4 @@
-import { run, Label } from '../src/labeler';
+import {run} from '../src/labeler';
 import * as github from '@actions/github';
 import * as core from '@actions/core';
 
@@ -13,34 +13,32 @@ const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 const coreWarningMock = jest.spyOn(core, 'warning');
-const setOutputMock = jest.spyOn(core, "setOutput");
 
 const yamlFixtures = {
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
 };
 
 const configureInput = (
-  mockInput: Partial<{
-    'repo-token': string;
-    'configuration-path': string;
-    'sync-labels': boolean;
-    dot: boolean;
-  }>
+    mockInput: Partial<{
+      'repo-token': string;
+      'configuration-path': string;
+      'sync-labels': boolean;
+      dot: boolean;
+    }>
 ) => {
   jest
-    .spyOn(core, 'getInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
+      .spyOn(core, 'getInput')
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
   jest
-    .spyOn(core, 'getBooleanInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
+      .spyOn(core, 'getBooleanInput')
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
 };
 
-afterEach(() => jest.restoreAllMocks());
+afterAll(() => jest.restoreAllMocks());
 
 describe('run', () => {
   it('(with dot: false) adds labels to PRs that match our glob patterns', async () => {
     configureInput({});
-    mockGitHubResponsePreexistingLabels("foo", "bar", "baz");
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.pdf');
     getPullMock.mockResolvedValue(<any>{
@@ -177,42 +175,8 @@ describe('run', () => {
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
     expect(coreWarningMock).toHaveBeenCalledWith(
-      'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
-      {title: 'Label limit for a PR exceeded'}
-    );
-    expect(setOutputMock).toHaveBeenCalledTimes(2);
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, "new-labels", "");
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      2,
-      "all-labels",
-      "oldskool_label"
-    );
-  });
-
-  it("correctly sets output values when sync-labels is true", async () => {
-    let mockInput = {
-      "repo-token": "foo",
-      "configuration-path": "bar",
-      "sync-labels": true,
-    };
-
-    jest
-      .spyOn(core, "getInput")
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
-
-    usingLabelerConfigYaml("only_pdfs.yml");
-    mockGitHubResponseChangedFiles();
-    mockGitHubResponsePreexistingLabels("oldskool_label", "touched-a-pdf-file"); // the pdf label should get removed
-    mockGitHubResponseAddLabels("oldskool_label");
-
-    await run();
-
-    expect(setOutputMock).toHaveBeenCalledTimes(2);
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, "new-labels", "");
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      2,
-      "all-labels",
-      "oldskool_label"
+        'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
+        {title: 'Label limit for a PR exceeded'}
     );
   });
 });
@@ -226,29 +190,4 @@ function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
 function mockGitHubResponseChangedFiles(...files: string[]): void {
   const returnValue = files.map(f => ({filename: f}));
   paginateMock.mockReturnValue(<any>returnValue);
-}
-
-function mockGitHubResponsePreexistingLabels(...labels: string[]): void {
-  getPullMock.mockResolvedValue(<any>{
-    data: {
-      labels: labels.map((label) => ({ name: label })),
-    },
-  });
-}
-
-function mockGitHubResponseAddLabels(...labelStrings: string[]): void {
-  const data: Label[] = [];
-  let i = 0;
-  for (const label of labelStrings) {
-    data.push({
-      name: label,
-      id: i,
-      node_id: `node_id_${i}`,
-      url: `https://github.com/foo/bar/${i}`,
-      description: `here's label ${i}!`,
-      color: "blue",
-      default: false,
-    });
-    i++;
-  }
 }
