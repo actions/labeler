@@ -108,11 +108,46 @@ _Note: This grants access to the `GITHUB_TOKEN` so the action can make calls to 
 
 Various inputs are defined in [`action.yml`](action.yml) to let you configure the labeler:
 
-| Name | Description | Default |
-| - | - | - |
-| `repo-token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret | N/A |
-| `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
-| `sync-labels` | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`
+| Name                 | Description                                                                                     | Default               |
+|----------------------|-------------------------------------------------------------------------------------------------|-----------------------|
+| `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                      | N/A                   |
+| `configuration-path` | The path to the label configuration file                                                        | `.github/labeler.yml` |
+| `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`               |
+
+#### Outputs 
+
+Labeler provides the following outputs:  
+
+| Name         | Description                                               |
+|--------------|-----------------------------------------------------------|
+| `new-labels` | A comma-separated list of all new labels                  |
+| `all-labels` | A comma-separated list of all labels that the PR contains |
+
+Example:
+```
+name: "My workflow"
+on:
+- pull_request_target
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - id: label-the-PR
+      uses: actions/labeler@v3
+      
+    - id: run-frontend-tests
+      if: contains(fromJson(steps.label-the-PR.outputs.all-labels), 'frontend')
+      run: |
+        echo "Running frontend tests..."
+        # Put your commands for running frontend tests here
+  
+    - id: run-backend-tests
+      if: contains(fromJson(steps.label-the-PR.outputs.all-labels), 'backend')
+      run: |
+        echo "Running backend tests..."
+        # Put your commands for running backend tests here
+```
 
 # Contributions
 

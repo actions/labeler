@@ -15,9 +15,9 @@ inputs:
 
 outputs:
   new-labels:
-    description: 'List of all new labels'
+    description: 'A comma-separated list of all new labels'
   all-labels:
-    description: 'List of all labels'
+    description: 'A comma-separated list of all labels that the PR contains'
 runs:
   using: 'node12'
   main: 'dist/index.js'

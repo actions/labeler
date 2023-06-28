@@ -50,7 +50,7 @@ export async function run() {
     const labelsToAdd: string[] = [];
     const labelsToRemove: string[] = [];
     const preexistingLabels = pullRequest.labels
-      .map((l) => l.name)
+      .map(l => l.name)
       .filter((l): l is string => !!l); // just to get the type to be string[] instead of (string|undefined)[]
 
     for (const [label, globs] of labelGlobs.entries()) {
