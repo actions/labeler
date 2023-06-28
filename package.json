@@ -26,7 +26,7 @@
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@actions/github": "^5.1.1",
-    "@octokit/plugin-retry": "^5.0.2",
+    "@octokit/plugin-retry": "^5.0.4",
     "js-yaml": "^4.1.0",
     "minimatch": "^7.4.3"
   },
