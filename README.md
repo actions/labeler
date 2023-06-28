@@ -1,13 +1,6 @@
 # Pull Request Labeler
 
-<p align="left">
-  <a href="https://github.com/actions/labeler/actions?query=workflow%3A%22Build+%26+Test%22++">
-    <img alt="build and test status" src="https://github.com/actions/labeler/actions/workflows/build_test.yml/badge.svg">
-  </a>
-  <a href="https://david-dm.org/actions/labeler">
-    <img alt="dependencies" src="https://status.david-dm.org/gh/actions/labeler.svg">
-  </a>
-</p>
+[![Basic validation](https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg?branch=main)](https://github.com/actions/labeler/actions/workflows/basic-validation.yml)
 
 Automatically label new pull requests based on the paths of files being changed.
 
@@ -17,7 +10,7 @@ Automatically label new pull requests based on the paths of files being changed.
 
 Create a `.github/labeler.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
 
-The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
+The key is the name of the label in your repository that you want to add (e.g. `merge conflict`, `needs-updating`) and the value is the path (glob) of the changed files (e.g. `src/**`, `tests/*.spec.js`) or a match object.
 
 #### Match Object
 
@@ -47,15 +40,25 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
+> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns.
+> For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
+> You need to set `dot: true` to change this behavior.
+> See [Inputs](#inputs) table below for details.
+
 #### Basic Examples
 
 ```yml
 # Add 'label1' to any changes within 'example' folder or any subfolders
 label1:
-- example/**/*
+- example/**
 
 # Add 'label2' to any file changes within 'example2' folder
 label2: example2/*
+
+# Add label3 to any change to .txt files within the entire repository. Quotation marks are required for the leading asterisk
+label3:
+- '**/*.txt'
+
 ```
 
 #### Common Examples
@@ -66,9 +69,8 @@ repo:
 - '*'
 
 # Add '@domain/core' label to any change within the 'core' package
-@domain/core:
-- package/core/*
-- package/core/**/*
+'@domain/core':
+- package/core/**
 
 # Add 'test' label to any change to *.spec.js files within the source dir
 test:
@@ -76,7 +78,7 @@ test:
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
-- any: ['src/**/*', '!src/docs/*']
+- any: ['src/**', '!src/docs/*']
 
 # Add 'frontend` label to any change to *.js files as long as the `main.js` hasn't changed
 frontend:
@@ -86,23 +88,22 @@ frontend:
 
 ### Create Workflow
 
-Create a workflow (eg: `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
+Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
 
-```
+```yml
 name: "Pull Request Labeler"
 on:
 - pull_request_target
 
 jobs:
   triage:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v3
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+    - uses: actions/labeler@v4
 ```
-
-_Note: This grants access to the `GITHUB_TOKEN` so the action can make calls to GitHub's rest API_
 
 #### Inputs
 
@@ -113,6 +114,22 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                      | N/A                   |
 | `configuration-path` | The path to the label configuration file                                                        | `.github/labeler.yml` |
 | `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`               |
+| `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                         | `false`               |
+
+When `dot` is disabled and you want to include _all_ files in a folder:
+
+```yml
+label1:
+- path/to/folder/**/*
+- path/to/folder/**/.*
+```
+
+If `dot` is enabled:
+
+```yml
+label1:
+- path/to/folder/**
+```
 
 #### Outputs 
 
@@ -149,6 +166,24 @@ jobs:
         # Put your commands for running backend tests here
 ```
 
-# Contributions
+## Permissions
+
+In order to add labels to pull requests, the GitHub labeler action requires
+write permissions on the pull-request. However, when the action runs on a pull
+request from a forked repository, GitHub only grants read access tokens for
+`pull_request` events, at most. If you encounter an `Error: HttpError: Resource
+not accessible by integration`, it's likely due to these permission constraints.
+To resolve this issue, you can modify the `on:` section of your workflow to use
+[`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target)
+instead of `pull_request` (see example [above](#create-workflow)). This change
+allows the action to have write access, because `pull_request_target` alters the
+[context of the
+action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target)
+and safely grants additional permissions. Refer to the [GitHub token
+permissions
+documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
+for more details about access levels and event contexts.
+
+## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).

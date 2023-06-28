@@ -3,13 +3,19 @@ description: 'Automatically label new pull requests based on the paths of files 
 author: 'GitHub'
 inputs:
   repo-token:
-    description: 'The GITHUB_TOKEN secret'
+    description: 'The GitHub token used to manage labels'
+    required: false
+    default: ${{ github.token }}
   configuration-path:
     description: 'The path for the label configurations'
     default: '.github/labeler.yml'
     required: false
   sync-labels:
     description: 'Whether or not to remove labels when matching files are reverted'
+    default: false
+    required: false
+  dot:
+    description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
     default: false
     required: false
 
@@ -19,5 +25,5 @@ outputs:
   all-labels:
     description: 'A comma-separated list of all labels that the PR contains'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
