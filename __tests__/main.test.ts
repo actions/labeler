@@ -19,19 +19,19 @@ const yamlFixtures = {
 };
 
 const configureInput = (
-    mockInput: Partial<{
-      'repo-token': string;
-      'configuration-path': string;
-      'sync-labels': boolean;
-      dot: boolean;
-    }>
+  mockInput: Partial<{
+    'repo-token': string;
+    'configuration-path': string;
+    'sync-labels': boolean;
+    dot: boolean;
+  }>
 ) => {
   jest
-      .spyOn(core, 'getInput')
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
+    .spyOn(core, 'getInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name]);
   jest
-      .spyOn(core, 'getBooleanInput')
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
+    .spyOn(core, 'getBooleanInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name]);
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -175,8 +175,8 @@ describe('run', () => {
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
     expect(coreWarningMock).toHaveBeenCalledWith(
-        'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
-        {title: 'Label limit for a PR exceeded'}
+      'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
+      {title: 'Label limit for a PR exceeded'}
     );
   });
 });

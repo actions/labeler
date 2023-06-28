@@ -48,12 +48,11 @@ export async function run() {
     core.debug(`fetching changed files for pr #${prNumber}`);
     const changedFiles: string[] = await getChangedFiles(client, prNumber);
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
-        client,
-        configPath
+      client,
+      configPath
     );
 
-    const preexistingLabels = pullRequest.labels
-        .map(l => l.name)
+    const preexistingLabels = pullRequest.labels.map(l => l.name);
     const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
     for (const [label, globs] of labelGlobs.entries()) {
@@ -71,29 +70,31 @@ export async function run() {
     try {
       if (!isListEqual(labelsToAdd, preexistingLabels)) {
         await setLabels(client, prNumber, labelsToAdd);
-        const newLabels = labelsToAdd.filter((l) => !preexistingLabels.includes(l));
-        core.setOutput("new-labels", newLabels.join(","));
-        core.setOutput("all-labels", labelsToAdd.join(","));
+        const newLabels = labelsToAdd.filter(
+          l => !preexistingLabels.includes(l)
+        );
+        core.setOutput('new-labels', newLabels.join(','));
+        core.setOutput('all-labels', labelsToAdd.join(','));
       }
 
       if (excessLabels.length) {
         core.warning(
-            `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
-                ', '
-            )}`,
-            {title: 'Label limit for a PR exceeded'}
+          `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+            ', '
+          )}`,
+          {title: 'Label limit for a PR exceeded'}
         );
       }
     } catch (error: any) {
       if (
-          error.name === 'HttpError' &&
-          error.message === 'Resource not accessible by integration'
+        error.name === 'HttpError' &&
+        error.message === 'Resource not accessible by integration'
       ) {
         core.warning(
-            `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
-            {
-              title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
-            }
+          `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+          {
+            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+          }
         );
         core.setFailed(error.message);
       } else {
