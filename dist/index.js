@@ -68,22 +68,27 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const prLabels = pullRequest.labels.map(label => label.name);
-            const allLabels = new Set(prLabels);
+            const labelsToAdd = new Set();
+            const preexistingLabels = pullRequest.labels
+                .map(l => l.name)
+                .filter((l) => !!l); // just to get the type to be string[] instead of (string|undefined)[]
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs, dot)) {
-                    allLabels.add(label);
+                    labelsToAdd.add(label);
                 }
                 else if (syncLabels) {
-                    allLabels.delete(label);
+                    labelsToAdd.delete(label);
                 }
             }
-            const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
-            const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+            const labels = [...labelsToAdd].slice(0, GITHUB_MAX_LABELS);
+            const excessLabels = [...labelsToAdd].slice(GITHUB_MAX_LABELS);
             try {
-                if (!isListEqual(prLabels, labels)) {
+                if (!isListEqual(labels, preexistingLabels)) {
                     yield setLabels(client, prNumber, labels);
+                    const newLabels = labels.filter((l) => !preexistingLabels.includes(l));
+                    core.setOutput("new-labels", newLabels.join(","));
+                    core.setOutput("all-labels", labels.join(","));
                 }
                 if (excessLabels.length) {
                     core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
@@ -245,12 +250,13 @@ function isListEqual(listA, listB) {
 }
 function setLabels(client, prNumber, labels) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.rest.issues.setLabels({
+        const addLabelResult = yield client.rest.issues.setLabels({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
             labels: labels
         });
+        return addLabelResult.data.map((datum) => datum.name);
     });
 }
 

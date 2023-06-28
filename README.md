@@ -140,8 +140,8 @@ Labeler provides the following outputs:
 | `new-labels` | A comma-separated list of all new labels                  |
 | `all-labels` | A comma-separated list of all labels that the PR contains |
 
-Example:
-```
+The following example performs steps based on the output of labeler:
+```yml
 name: "My workflow"
 on:
 - pull_request_target
@@ -149,6 +149,9 @@ on:
 jobs:
   triage:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
     - id: label-the-PR
       uses: actions/labeler@v3
