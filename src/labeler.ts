@@ -11,15 +11,6 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
-export type Label = {
-  id: number;
-  node_id: string;
-  url: string;
-  name: string;
-  description: string | null;
-  color: string;
-  default: boolean;
-};
 
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
