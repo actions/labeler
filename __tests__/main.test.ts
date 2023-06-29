@@ -13,6 +13,7 @@ const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 const coreWarningMock = jest.spyOn(core, 'warning');
+const setOutputSpy = jest.spyOn(core, 'setOutput');
 
 const yamlFixtures = {
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
@@ -50,12 +51,21 @@ describe('run', () => {
     await run();
 
     expect(setLabelsMock).toHaveBeenCalledTimes(1);
+
     expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
       labels: ['touched-a-pdf-file']
     });
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'touched-a-pdf-file'
+    );
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'touched-a-pdf-file'
+    );
   });
 
   it('(with dot: true) adds labels to PRs that match our glob patterns', async () => {
@@ -77,6 +87,14 @@ describe('run', () => {
       issue_number: 123,
       labels: ['touched-a-pdf-file']
     });
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'touched-a-pdf-file'
+    );
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'touched-a-pdf-file'
+    );
   });
 
   it('(with dot: false) does not add labels to PRs that do not match our glob patterns', async () => {
@@ -92,6 +110,8 @@ describe('run', () => {
     await run();
 
     expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', '');
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
@@ -128,6 +148,8 @@ describe('run', () => {
       issue_number: 123,
       labels: ['manually-added']
     });
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'manually-added');
   });
 
   it('(with sync-labels: false) it issues no delete calls even when there are preexisting PR labels that no longer match the glob pattern', async () => {
@@ -148,6 +170,11 @@ describe('run', () => {
     await run();
 
     expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'touched-a-pdf-file,manually-added'
+    );
   });
 
   it('(with sync-labels: false) it only logs the excess labels', async () => {
@@ -178,6 +205,9 @@ describe('run', () => {
       'Maximum of 100 labels allowed. Excess labels: touched-a-pdf-file',
       {title: 'Label limit for a PR exceeded'}
     );
+    const allLabels: string = existingLabels.map(i => i.name).join(',');
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', allLabels);
   });
 });
 
