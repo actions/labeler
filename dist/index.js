@@ -68,8 +68,8 @@ function run() {
             core.debug(`fetching changed files for pr #${prNumber}`);
             const changedFiles = yield getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
-            const prLabels = pullRequest.labels.map(label => label.name);
-            const allLabels = new Set(prLabels);
+            const preexistingLabels = pullRequest.labels.map(l => l.name);
+            const allLabels = new Set(preexistingLabels);
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs, dot)) {
@@ -79,12 +79,16 @@ function run() {
                     allLabels.delete(label);
                 }
             }
-            const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+            const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
             const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
             try {
-                if (!isListEqual(prLabels, labels)) {
-                    yield setLabels(client, prNumber, labels);
+                let newLabels = [];
+                if (!isListEqual(labelsToAdd, preexistingLabels)) {
+                    yield setLabels(client, prNumber, labelsToAdd);
+                    newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
                 }
+                core.setOutput('new-labels', newLabels.join(','));
+                core.setOutput('all-labels', labelsToAdd.join(','));
                 if (excessLabels.length) {
                     core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
                 }

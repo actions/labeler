@@ -43,8 +43,8 @@ export async function run() {
       configPath
     );
 
-    const prLabels: string[] = pullRequest.labels.map(label => label.name);
-    const allLabels: Set<string> = new Set(prLabels);
+    const preexistingLabels = pullRequest.labels.map(l => l.name);
+    const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
@@ -55,13 +55,19 @@ export async function run() {
       }
     }
 
-    const labels = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
     const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
     try {
-      if (!isListEqual(prLabels, labels)) {
-        await setLabels(client, prNumber, labels);
+      let newLabels: string[] = [];
+
+      if (!isListEqual(labelsToAdd, preexistingLabels)) {
+        await setLabels(client, prNumber, labelsToAdd);
+        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
       }
+
+      core.setOutput('new-labels', newLabels.join(','));
+      core.setOutput('all-labels', labelsToAdd.join(','));
 
       if (excessLabels.length) {
         core.warning(
