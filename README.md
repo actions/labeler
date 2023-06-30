@@ -84,6 +84,17 @@ source:
 frontend:
 - any: ['src/**/*.js']
   all: ['!src/main.js']
+
+# Add the 'AnyChange' label to any changes within the entire repository if the 'dot' option is set to 'false'
+AnyChange:
+- '**'
+- '**/.*'
+- '**/.*/**'
+- '**/.*/**/.*'
+
+# Add the 'AnyChange' label to any changes within the entire repository if the 'dot' option is set to 'true'
+AnyChange:
+- '**'
 ```
 
 ### Create Workflow
