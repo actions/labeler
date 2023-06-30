@@ -138,7 +138,16 @@ function getChangedFiles(client, prNumber) {
 }
 function getLabelGlobs(client, configurationPath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const configurationContent = yield fetchContent(client, configurationPath);
+        let configurationContent;
+        try {
+            configurationContent = yield fetchContent(client, configurationPath);
+        }
+        catch (e) {
+            if (e.name == 'HttpError' || e.name == 'NotFound') {
+                core.warning(`The config file was not found at ${configurationPath}. Make sure it exists and that this action has the correct access rights.`);
+            }
+            throw e;
+        }
         // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
         const configObject = yaml.load(configurationContent);
         // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:

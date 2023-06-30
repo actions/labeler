@@ -133,10 +133,17 @@ async function getLabelGlobs(
   client: ClientType,
   configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
-    client,
-    configurationPath
-  );
+  let configurationContent: string;
+  try {
+    configurationContent = await fetchContent(client, configurationPath);
+  } catch (e: any) {
+    if (e.name == 'HttpError' || e.name == 'NotFound') {
+      core.warning(
+        `The config file was not found at ${configurationPath}. Make sure it exists and that this action has the correct access rights.`
+      );
+    }
+    throw e;
+  }
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
