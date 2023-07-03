@@ -128,7 +128,7 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                         | `false`               |
 | `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context | N/A |
 
-When `dot` is disabled and you want to include _all_ files in a folder:
+When `dot` is disabled, and you want to include _all_ files in a folder:
 
 ```yml
 label1:
