@@ -248,6 +248,53 @@ describe('run', () => {
       'manually-added,touched-a-pdf-file'
     );
   });
+
+  it('(with pr-number: array of two items, uses the PR number specified in the parameters', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['104', '150']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    getPullMock.mockResolvedValueOnce(<any>{
+      data: {
+        labels: [{name: 'manually-added'}]
+      }
+    });
+
+    getPullMock.mockResolvedValueOnce(<any>{
+      data: {
+        labels: []
+      }
+    });
+
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(2);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 104,
+      labels: ['manually-added', 'touched-a-pdf-file']
+    });
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 150,
+      labels: ['touched-a-pdf-file']
+    });
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'touched-a-pdf-file'
+    );
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'manually-added,touched-a-pdf-file'
+    );
+  });
 });
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
