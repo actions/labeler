@@ -56,7 +56,7 @@ function run() {
             const dot = core.getBooleanInput('dot');
             const prNumbers = getPrNumbers();
             if (!prNumbers) {
-                core.info('Could not get pull request number from context, exiting');
+                core.info('Could not get pull request number, exiting');
                 return;
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);

@@ -24,7 +24,7 @@ export async function run() {
 
     const prNumbers = getPrNumbers();
     if (!prNumbers) {
-      core.info('Could not get pull request number from context, exiting');
+      core.info('Could not get pull request number, exiting');
       return;
     }
 
