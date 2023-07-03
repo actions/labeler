@@ -214,7 +214,7 @@ describe('run', () => {
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', allLabels);
   });
 
-  it('uses the PR number specified in the parameters', async () => {
+  it('(with pr-number: array of one item, uses the PR number specified in the parameters', async () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
@@ -224,6 +224,12 @@ describe('run', () => {
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.pdf');
 
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{name: 'manually-added'}]
+      }
+    });
+
     await run();
 
     expect(setLabelsMock).toHaveBeenCalledTimes(1);
@@ -231,12 +237,15 @@ describe('run', () => {
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 104,
-      labels: ['touched-a-pdf-file']
+      labels: ['manually-added', 'touched-a-pdf-file']
     });
-    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'touched-a-pdf-file'
+    );
     expect(setOutputSpy).toHaveBeenCalledWith(
       'all-labels',
-      'touched-a-pdf-file'
+      'manually-added,touched-a-pdf-file'
     );
   });
 });

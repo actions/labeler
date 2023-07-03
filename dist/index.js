@@ -61,11 +61,12 @@ function run() {
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);
             for (const prNumber of prNumbers) {
-                const { data: pullRequest } = yield client.rest.pulls.get({
+                const result = yield client.rest.pulls.get({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
                     pull_number: prNumber
                 });
+                const { data: pullRequest } = result;
                 if (!pullRequest) {
                     core.warning(`Could not find pull request #${prNumber}, skipping`);
                     continue;
