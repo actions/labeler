@@ -25,10 +25,14 @@ const configureInput = (
     'configuration-path': string;
     'sync-labels': boolean;
     dot: boolean;
+    'pr-number': string | string[];
   }>
 ) => {
   jest
     .spyOn(core, 'getInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name]);
+  jest
+    .spyOn(core, 'getMultilineInput')
     .mockImplementation((name: string, ...opts) => mockInput[name]);
   jest
     .spyOn(core, 'getBooleanInput')
@@ -211,29 +215,29 @@ describe('run', () => {
   });
 
   it('uses the PR number specified in the parameters', async () => {
-    let mockInput = {
+    configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'pr-number': 104
-    };
-
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation((name: string, ...opts) => mockInput[name]);
+      'pr-number': ['104']
+    });
 
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.pdf');
 
     await run();
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
-    expect(addLabelsMock).toHaveBeenCalledTimes(1);
-    expect(addLabelsMock).toHaveBeenCalledWith({
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 104,
       labels: ['touched-a-pdf-file']
     });
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'touched-a-pdf-file'
+    );
   });
 });
 
