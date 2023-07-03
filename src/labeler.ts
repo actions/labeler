@@ -37,7 +37,7 @@ export async function run() {
         pull_number: prNumber
       });
 
-      if(!pullRequest) {
+      if (!pullRequest) {
         core.warning(`Could not find pull request #${prNumber}, skipping`);
         continue;
       }
@@ -65,12 +65,12 @@ export async function run() {
       try {
         let newLabels: string[] = [];
 
-      if (!isListEqual(labelsToAdd, preexistingLabels)) {
+        if (!isListEqual(labelsToAdd, preexistingLabels)) {
           await setLabels(client, prNumber, labelsToAdd);
-        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
-      }
+          newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+        }
 
-      core.setOutput('new-labels', newLabels.join(','));
+        core.setOutput('new-labels', newLabels.join(','));
         core.setOutput('all-labels', labelsToAdd.join(','));
 
         if (excessLabels.length) {

@@ -54,55 +54,61 @@ function run() {
             const configPath = core.getInput('configuration-path', { required: true });
             const syncLabels = !!core.getInput('sync-labels');
             const dot = core.getBooleanInput('dot');
-            const prNumber = getPrNumber();
-            if (!prNumber) {
+            const prNumbers = getPrNumbers();
+            if (!prNumbers) {
                 core.info('Could not get pull request number from context, exiting');
                 return;
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);
-            const { data: pullRequest } = yield client.rest.pulls.get({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
-                pull_number: prNumber
-            });
-            core.debug(`fetching changed files for pr #${prNumber}`);
-            const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
-            const preexistingLabels = pullRequest.labels.map(l => l.name);
-            const allLabels = new Set(preexistingLabels);
-            for (const [label, globs] of labelGlobs.entries()) {
-                core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs, dot)) {
-                    allLabels.add(label);
+            for (const prNumber of prNumbers) {
+                const { data: pullRequest } = yield client.rest.pulls.get({
+                    owner: github.context.repo.owner,
+                    repo: github.context.repo.repo,
+                    pull_number: prNumber
+                });
+                if (!pullRequest) {
+                    core.warning(`Could not find pull request #${prNumber}, skipping`);
+                    continue;
                 }
-                else if (syncLabels) {
-                    allLabels.delete(label);
+                core.debug(`fetching changed files for pr #${prNumber}`);
+                const changedFiles = yield getChangedFiles(client, prNumber);
+                const labelGlobs = yield getLabelGlobs(client, configPath);
+                const preexistingLabels = pullRequest.labels.map(l => l.name);
+                const allLabels = new Set(preexistingLabels);
+                for (const [label, globs] of labelGlobs.entries()) {
+                    core.debug(`processing ${label}`);
+                    if (checkGlobs(changedFiles, globs, dot)) {
+                        allLabels.add(label);
+                    }
+                    else if (syncLabels) {
+                        allLabels.delete(label);
+                    }
                 }
-            }
-            const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
-            const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
-            try {
-                let newLabels = [];
-                if (!isListEqual(labelsToAdd, preexistingLabels)) {
-                    yield setLabels(client, prNumber, labelsToAdd);
-                    newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+                const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+                const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+                try {
+                    let newLabels = [];
+                    if (!isListEqual(labelsToAdd, preexistingLabels)) {
+                        yield setLabels(client, prNumber, labelsToAdd);
+                        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+                    }
+                    core.setOutput('new-labels', newLabels.join(','));
+                    core.setOutput('all-labels', labelsToAdd.join(','));
+                    if (excessLabels.length) {
+                        core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
+                    }
                 }
-                core.setOutput('new-labels', newLabels.join(','));
-                core.setOutput('all-labels', labelsToAdd.join(','));
-                if (excessLabels.length) {
-                    core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
-                }
-            }
-            catch (error) {
-                if (error.name === 'HttpError' &&
-                    error.message === 'Resource not accessible by integration') {
-                    core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
-                        title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
-                    });
-                    core.setFailed(error.message);
-                }
-                else {
-                    throw error;
+                catch (error) {
+                    if (error.name === 'HttpError' &&
+                        error.message === 'Resource not accessible by integration') {
+                        core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
+                            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+                        });
+                        core.setFailed(error.message);
+                    }
+                    else {
+                        throw error;
+                    }
                 }
             }
         }
@@ -113,16 +119,28 @@ function run() {
     });
 }
 exports.run = run;
-function getPrNumber() {
-    const pullRequestNumber = core.getInput('pr-number', { required: false });
-    if (pullRequestNumber) {
-        return parseInt(pullRequestNumber, 10);
+function getPrNumbers() {
+    const pullRequestNumbers = core.getMultilineInput('pr-number', {
+        required: false
+    });
+    if (pullRequestNumbers) {
+        const prNumbers = [];
+        for (const prNumber of pullRequestNumbers) {
+            const prNumberInt = parseInt(prNumber, 10);
+            if (isNaN(prNumberInt) || prNumberInt <= 0) {
+                core.warning(`'${prNumber}' is not a valid pull request number`);
+            }
+            else {
+                prNumbers.push(prNumberInt);
+            }
+        }
+        return prNumbers;
     }
     const pullRequest = github.context.payload.pull_request;
     if (!pullRequest) {
         return undefined;
     }
-    return pullRequest.number;
+    return [pullRequest.number];
 }
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -4390,7 +4408,6 @@ __export(dist_src_exports, {
   retry: () => retry
 });
 module.exports = __toCommonJS(dist_src_exports);
-var import_core = __nccwpck_require__(6762);
 
 // pkg/dist-src/error-request.js
 async function errorRequest(state, octokit, error, options) {
@@ -4407,7 +4424,7 @@ async function errorRequest(state, octokit, error, options) {
 
 // pkg/dist-src/wrap-request.js
 var import_light = __toESM(__nccwpck_require__(1174));
-var import_request_error = __nccwpck_require__(8036);
+var import_request_error = __nccwpck_require__(537);
 async function wrapRequest(state, octokit, request, options) {
   const limiter = new import_light.default();
   limiter.on("failed", function(error, info) {
@@ -4438,7 +4455,7 @@ async function requestWithGraphqlErrorHandling(state, octokit, request, options)
 }
 
 // pkg/dist-src/index.js
-var VERSION = "5.0.4";
+var VERSION = "5.0.2";
 function retry(octokit, octokitOptions) {
   const state = Object.assign(
     {
@@ -4466,104 +4483,6 @@ function retry(octokit, octokitOptions) {
   };
 }
 retry.VERSION = VERSION;
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 8036:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  RequestError: () => RequestError
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_deprecation = __nccwpck_require__(8932);
-var import_once = __toESM(__nccwpck_require__(1223));
-var logOnceCode = (0, import_once.default)((deprecation) => console.warn(deprecation));
-var logOnceHeaders = (0, import_once.default)((deprecation) => console.warn(deprecation));
-var RequestError = class extends Error {
-  constructor(message, statusCode, options) {
-    super(message);
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-    this.name = "HttpError";
-    this.status = statusCode;
-    let headers;
-    if ("headers" in options && typeof options.headers !== "undefined") {
-      headers = options.headers;
-    }
-    if ("response" in options) {
-      this.response = options.response;
-      headers = options.response.headers;
-    }
-    const requestCopy = Object.assign({}, options.request);
-    if (options.request.headers.authorization) {
-      requestCopy.headers = Object.assign({}, options.request.headers, {
-        authorization: options.request.headers.authorization.replace(
-          / .*$/,
-          " [REDACTED]"
-        )
-      });
-    }
-    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
-    this.request = requestCopy;
-    Object.defineProperty(this, "code", {
-      get() {
-        logOnceCode(
-          new import_deprecation.Deprecation(
-            "[@octokit/request-error] `error.code` is deprecated, use `error.status`."
-          )
-        );
-        return statusCode;
-      }
-    });
-    Object.defineProperty(this, "headers", {
-      get() {
-        logOnceHeaders(
-          new import_deprecation.Deprecation(
-            "[@octokit/request-error] `error.headers` is deprecated, use `error.response.headers`."
-          )
-        );
-        return headers || {};
-      }
-    });
-  }
-};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 
