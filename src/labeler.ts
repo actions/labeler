@@ -3,7 +3,6 @@ import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
-import {getMultilineInput} from '@actions/core';
 
 interface MatchConfig {
   all?: string[];
