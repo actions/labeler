@@ -38,7 +38,12 @@ export async function run() {
         pull_number: prNumber
       });
 
-      core.debug(`fetching changed files for pr #${prNumbers}`);
+      if(!pullRequest) {
+        core.warning(`Could not find pull request #${prNumber}, skipping`);
+        continue;
+      }
+
+      core.debug(`fetching changed files for pr #${prNumber}`);
       const changedFiles: string[] = await getChangedFiles(client, prNumber);
       const labelGlobs: Map<string, StringOrMatchConfig[]> =
         await getLabelGlobs(client, configPath);
