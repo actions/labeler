@@ -28,7 +28,7 @@
     "@actions/github": "^5.1.1",
     "@octokit/plugin-retry": "^5.0.4",
     "js-yaml": "^4.1.0",
-    "minimatch": "^7.4.3"
+    "minimatch": "^9.0.2"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
