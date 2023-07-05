@@ -107,7 +107,7 @@ export async function run() {
 
 function getPrNumbers(): number[] {
   const pullRequestNumbers = core.getMultilineInput('pr-number');
-  if (pullRequestNumbers) {
+  if (pullRequestNumbers.length) {
     const prNumbers: number[] = [];
 
     for (const prNumber of pullRequestNumbers) {
