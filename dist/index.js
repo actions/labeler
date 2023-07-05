@@ -55,8 +55,8 @@ function run() {
             const syncLabels = !!core.getInput('sync-labels');
             const dot = core.getBooleanInput('dot');
             const prNumbers = getPrNumbers();
-            if (!prNumbers) {
-                core.info('Could not get pull request number, exiting');
+            if (!prNumbers.length) {
+                core.info('Could not get pull request number(s), exiting');
                 return;
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);
@@ -137,7 +137,7 @@ function getPrNumbers() {
     }
     const pullRequest = github.context.payload.pull_request;
     if (!pullRequest) {
-        return undefined;
+        return [];
     }
     return [pullRequest.number];
 }

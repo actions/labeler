@@ -23,8 +23,8 @@ export async function run() {
     const dot = core.getBooleanInput('dot');
 
     const prNumbers = getPrNumbers();
-    if (!prNumbers) {
-      core.info('Could not get pull request number, exiting');
+    if (!prNumbers.length) {
+      core.info('Could not get pull request number(s), exiting');
       return;
     }
 
@@ -105,7 +105,7 @@ export async function run() {
   }
 }
 
-function getPrNumbers(): number[] | undefined {
+function getPrNumbers(): number[] {
   const pullRequestNumbers = core.getMultilineInput('pr-number');
   if (pullRequestNumbers) {
     const prNumbers: number[] = [];
@@ -124,7 +124,7 @@ function getPrNumbers(): number[] | undefined {
 
   const pullRequest = github.context.payload.pull_request;
   if (!pullRequest) {
-    return undefined;
+    return [];
   }
 
   return [pullRequest.number];
