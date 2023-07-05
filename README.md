@@ -165,16 +165,16 @@ jobs:
       pull-requests: write
     steps:
     - id: label-the-PR
-      uses: actions/labeler@v3
+      uses: actions/labeler@v4
       
     - id: run-frontend-tests
-      if: contains(fromJson(steps.label-the-PR.outputs.all-labels), 'frontend')
+      if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
       run: |
         echo "Running frontend tests..."
         # Put your commands for running frontend tests here
   
     - id: run-backend-tests
-      if: contains(fromJson(steps.label-the-PR.outputs.all-labels), 'backend')
+      if: contains(steps.label-the-PR.outputs.all-labels, 'backend')
       run: |
         echo "Running backend tests..."
         # Put your commands for running backend tests here
