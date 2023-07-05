@@ -143,6 +143,35 @@ label1:
 - path/to/folder/**
 ```
 
+##### Example workflow specifying Pull request numbers
+
+```yml
+name: "Label Previous Pull Requests"
+on:
+  schedule:
+    - cron: "0 1 * * 1"
+
+jobs:
+  triage:
+    permissions:
+      contents: read
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+    steps:
+    
+    # Label PRs 1, 2, and 3
+    - uses: actions/labeler@v4
+      with:        
+        pr-number: |
+          1
+          2
+          3
+```
+
+note in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
+
+
 #### Outputs 
 
 Labeler provides the following outputs:  
@@ -166,7 +195,7 @@ jobs:
       pull-requests: write
     steps:
     - id: label-the-PR
-      uses: actions/labeler@v3
+      uses: actions/labeler@v4
       
     - id: run-frontend-tests
       if: contains(fromJson(steps.label-the-PR.outputs.all-labels), 'frontend')
