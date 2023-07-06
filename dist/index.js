@@ -54,55 +54,66 @@ function run() {
             const configPath = core.getInput('configuration-path', { required: true });
             const syncLabels = !!core.getInput('sync-labels');
             const dot = core.getBooleanInput('dot');
-            const prNumber = getPrNumber();
-            if (!prNumber) {
-                core.info('Could not get pull request number from context, exiting');
+            const prNumbers = getPrNumbers();
+            if (!prNumbers.length) {
+                core.warning('Could not get pull request number(s), exiting');
                 return;
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);
-            const { data: pullRequest } = yield client.rest.pulls.get({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
-                pull_number: prNumber
-            });
-            core.debug(`fetching changed files for pr #${prNumber}`);
-            const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
-            const preexistingLabels = pullRequest.labels.map(l => l.name);
-            const allLabels = new Set(preexistingLabels);
-            for (const [label, globs] of labelGlobs.entries()) {
-                core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs, dot)) {
-                    allLabels.add(label);
-                }
-                else if (syncLabels) {
-                    allLabels.delete(label);
-                }
-            }
-            const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
-            const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
-            try {
-                let newLabels = [];
-                if (!isListEqual(labelsToAdd, preexistingLabels)) {
-                    yield setLabels(client, prNumber, labelsToAdd);
-                    newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
-                }
-                core.setOutput('new-labels', newLabels.join(','));
-                core.setOutput('all-labels', labelsToAdd.join(','));
-                if (excessLabels.length) {
-                    core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
-                }
-            }
-            catch (error) {
-                if (error.name === 'HttpError' &&
-                    error.message === 'Resource not accessible by integration') {
-                    core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
-                        title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+            for (const prNumber of prNumbers) {
+                core.debug(`looking for pr #${prNumber}`);
+                let pullRequest;
+                try {
+                    const result = yield client.rest.pulls.get({
+                        owner: github.context.repo.owner,
+                        repo: github.context.repo.repo,
+                        pull_number: prNumber
                     });
-                    core.setFailed(error.message);
+                    pullRequest = result.data;
                 }
-                else {
-                    throw error;
+                catch (error) {
+                    core.warning(`Could not find pull request #${prNumber}, skipping`);
+                    continue;
+                }
+                core.debug(`fetching changed files for pr #${prNumber}`);
+                const changedFiles = yield getChangedFiles(client, prNumber);
+                const labelGlobs = yield getLabelGlobs(client, configPath);
+                const preexistingLabels = pullRequest.labels.map(l => l.name);
+                const allLabels = new Set(preexistingLabels);
+                for (const [label, globs] of labelGlobs.entries()) {
+                    core.debug(`processing ${label}`);
+                    if (checkGlobs(changedFiles, globs, dot)) {
+                        allLabels.add(label);
+                    }
+                    else if (syncLabels) {
+                        allLabels.delete(label);
+                    }
+                }
+                const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+                const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+                try {
+                    let newLabels = [];
+                    if (!isListEqual(labelsToAdd, preexistingLabels)) {
+                        yield setLabels(client, prNumber, labelsToAdd);
+                        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+                    }
+                    core.setOutput('new-labels', newLabels.join(','));
+                    core.setOutput('all-labels', labelsToAdd.join(','));
+                    if (excessLabels.length) {
+                        core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
+                    }
+                }
+                catch (error) {
+                    if (error.name === 'HttpError' &&
+                        error.message === 'Resource not accessible by integration') {
+                        core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
+                            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+                        });
+                        core.setFailed(error.message);
+                    }
+                    else {
+                        throw error;
+                    }
                 }
             }
         }
@@ -113,12 +124,26 @@ function run() {
     });
 }
 exports.run = run;
-function getPrNumber() {
+function getPrNumbers() {
+    const pullRequestNumbers = core.getMultilineInput('pr-number');
+    if (pullRequestNumbers && pullRequestNumbers.length) {
+        const prNumbers = [];
+        for (const prNumber of pullRequestNumbers) {
+            const prNumberInt = parseInt(prNumber, 10);
+            if (isNaN(prNumberInt) || prNumberInt <= 0) {
+                core.warning(`'${prNumber}' is not a valid pull request number`);
+            }
+            else {
+                prNumbers.push(prNumberInt);
+            }
+        }
+        return prNumbers;
+    }
     const pullRequest = github.context.payload.pull_request;
     if (!pullRequest) {
-        return undefined;
+        return [];
     }
-    return pullRequest.number;
+    return [pullRequest.number];
 }
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {

@@ -16,7 +16,11 @@ const mockApi = {
       setLabels: jest.fn()
     },
     pulls: {
-      get: jest.fn().mockResolvedValue({}),
+      get: jest.fn().mockResolvedValue({
+        data: {
+          labels: []
+        }
+      }),
       listFiles: {
         endpoint: {
           merge: jest.fn().mockReturnValue({})

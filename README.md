@@ -126,8 +126,9 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `configuration-path` | The path to the label configuration file                                                        | `.github/labeler.yml` |
 | `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`               |
 | `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                         | `false`               |
+| `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context | N/A |
 
-When `dot` is disabled and you want to include _all_ files in a folder:
+When `dot` is disabled, and you want to include _all_ files in a folder:
 
 ```yml
 label1:
@@ -141,6 +142,35 @@ If `dot` is enabled:
 label1:
 - path/to/folder/**
 ```
+
+##### Example workflow specifying Pull request numbers
+
+```yml
+name: "Label Previous Pull Requests"
+on:
+  schedule:
+    - cron: "0 1 * * 1"
+
+jobs:
+  triage:
+    permissions:
+      contents: read
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+    steps:
+    
+    # Label PRs 1, 2, and 3
+    - uses: actions/labeler@v4
+      with:        
+        pr-number: |
+          1
+          2
+          3
+```
+
+**Note:** in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
+
 
 #### Outputs 
 
