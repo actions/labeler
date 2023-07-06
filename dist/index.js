@@ -126,7 +126,7 @@ function run() {
 exports.run = run;
 function getPrNumbers() {
     const pullRequestNumbers = core.getMultilineInput('pr-number');
-    if (pullRequestNumbers.length) {
+    if (pullRequestNumbers && pullRequestNumbers.length) {
         const prNumbers = [];
         for (const prNumber of pullRequestNumbers) {
             const prNumberInt = parseInt(prNumber, 10);
