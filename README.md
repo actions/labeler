@@ -169,7 +169,7 @@ jobs:
           3
 ```
 
-note in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
+**Note:** in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
 
 
 #### Outputs 
