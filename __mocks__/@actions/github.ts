@@ -13,8 +13,7 @@ export const context = {
 const mockApi = {
   rest: {
     issues: {
-      addLabels: jest.fn(),
-      removeLabel: jest.fn()
+      setLabels: jest.fn()
     },
     pulls: {
       get: jest.fn().mockResolvedValue({}),

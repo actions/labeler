@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
 import {Minimatch} from 'minimatch';
 import {readFile} from 'fs/promises';
@@ -14,6 +15,9 @@ type ClientType = ReturnType<typeof github.getOctokit>;
 
 const warningPrefix = '[warning]';
 
+// GitHub Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
+
 export async function run() {
   try {
     const token = core.getInput('repo-token');
@@ -27,7 +31,7 @@ export async function run() {
       return;
     }
 
-    const client: ClientType = github.getOctokit(token);
+    const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
     const {data: pullRequest} = await client.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -42,23 +46,55 @@ export async function run() {
       configPath
     );
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
+    const preexistingLabels = pullRequest.labels.map(l => l.name);
+    const allLabels: Set<string> = new Set<string>(preexistingLabels);
+
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs, dot)) {
-        labels.push(label);
-      } else if (pullRequest.labels.find(l => l.name === label)) {
-        labelsToRemove.push(label);
+        allLabels.add(label);
+      } else if (syncLabels) {
+        allLabels.delete(label);
       }
     }
 
-    if (labels.length > 0) {
-      await addLabels(client, prNumber, labels);
-    }
+    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
+    try {
+      let newLabels: string[] = [];
+
+      if (!isListEqual(labelsToAdd, preexistingLabels)) {
+        await setLabels(client, prNumber, labelsToAdd);
+        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+      }
+
+      core.setOutput('new-labels', newLabels.join(','));
+      core.setOutput('all-labels', labelsToAdd.join(','));
+
+      if (excessLabels.length) {
+        core.warning(
+          `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+            ', '
+          )}`,
+          {title: 'Label limit for a PR exceeded'}
+        );
+      }
+    } catch (error: any) {
+      if (
+        error.name === 'HttpError' &&
+        error.message === 'Resource not accessible by integration'
+      ) {
+        core.warning(
+          `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+          {
+            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+          }
+        );
+        core.setFailed(error.message);
+      } else {
+        throw error;
+      }
     }
   } catch (error: any) {
     core.error(error);
@@ -101,19 +137,15 @@ async function getLabelGlobs(
   configurationPath: string
 ): Promise<Map<string, StringOrMatchConfig[]>> {
   let configurationContent: string;
-
   try {
-    configurationContent = (
-      await readFile(configurationPath, {
-        encoding: 'utf8'
-      })
-    ).toString();
-  } catch (error) {
-    core.info(
-      `${warningPrefix} configuration file (path: ${configurationPath}) not found locally (${error}), fetching via the api`
-    );
-
     configurationContent = await fetchContent(client, configurationPath);
+  } catch (e: any) {
+    if (e.name == 'HttpError' || e.name == 'NotFound') {
+      core.warning(
+        `The config file was not found at ${configurationPath}. Make sure it exists and that this action has the correct access rights.`
+      );
+    }
+    throw e;
   }
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
@@ -257,32 +289,19 @@ function checkMatch(
   return true;
 }
 
-async function addLabels(
+function isListEqual(listA: string[], listB: string[]): boolean {
+  return listA.length === listB.length && listA.every(el => listB.includes(el));
+}
+
+async function setLabels(
   client: ClientType,
   prNumber: number,
   labels: string[]
 ) {
-  await client.rest.issues.addLabels({
+  await client.rest.issues.setLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
     labels: labels
   });
-}
-
-async function removeLabels(
-  client: ClientType,
-  prNumber: number,
-  labels: string[]
-) {
-  await Promise.all(
-    labels.map(label =>
-      client.rest.issues.removeLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        issue_number: prNumber,
-        name: label
-      })
-    )
-  );
 }

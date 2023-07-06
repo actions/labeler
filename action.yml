@@ -19,6 +19,11 @@ inputs:
     default: false
     required: false
 
+outputs:
+  new-labels:
+    description: 'A comma-separated list of all new labels'
+  all-labels:
+    description: 'A comma-separated list of all labels that the PR contains'
 runs:
   using: 'node16'
   main: 'dist/index.js'
