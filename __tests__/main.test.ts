@@ -25,7 +25,7 @@ const configureInput = (
     'configuration-path': string;
     'sync-labels': boolean;
     dot: boolean;
-    'pr-number': string | string[];
+    'pr-number': string[];
   }>
 ) => {
   jest

@@ -56,7 +56,7 @@ function run() {
             const dot = core.getBooleanInput('dot');
             const prNumbers = getPrNumbers();
             if (!prNumbers.length) {
-                core.info('Could not get pull request number(s), exiting');
+                core.warning('Could not get pull request number(s), exiting');
                 return;
             }
             const client = github.getOctokit(token, {}, pluginRetry.retry);
