@@ -81,6 +81,10 @@ function run() {
                 }
                 core.debug(`fetching changed files for pr #${prNumber}`);
                 const changedFiles = yield getChangedFiles(client, prNumber);
+                if (!changedFiles.length) {
+                    core.warning(`Pull request #${prNumber} has no changed files, skipping`);
+                    continue;
+                }
                 const labelGlobs = yield getLabelGlobs(client, configPath);
                 const preexistingLabels = pullRequest.labels.map(l => l.name);
                 const allLabels = new Set(preexistingLabels);

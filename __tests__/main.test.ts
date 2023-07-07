@@ -313,6 +313,15 @@ describe('run', () => {
     );
   });
 
+  it('does not add labels to PRs that have no changed files', async () => {
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles();
+
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
   it('should use local configuration file if it exists', async () => {
     const configFile = 'only_pdfs.yml';
     const configFilePath = path.join(__dirname, 'fixtures', configFile);
