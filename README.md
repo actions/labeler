@@ -128,6 +128,7 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                                                                                                  | `false`               |
 | `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context                                                                                 | N/A                   |
 
+##### Using `configuration-path` input together with the `@actions/checkout` action
 You might want to use our action called [@actions/checkout](https://github.com/actions/checkout) to upload label configuration file onto the runner from the current or any other repositories. See usage example below:
 
 ```yml
@@ -138,7 +139,7 @@ You might want to use our action called [@actions/checkout](https://github.com/a
     - uses: actions/labeler@v4
 ```
 
-See the peculiarities of using the `dot` input below:
+##### Peculiarities of using the `dot` input
 
 When `dot` is disabled, and you want to include _all_ files in a folder:
 
