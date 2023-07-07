@@ -1,8 +1,9 @@
 import {run} from '../src/labeler';
 import * as github from '@actions/github';
 import * as core from '@actions/core';
-
-const fs = jest.requireActual('fs');
+import path from 'path';
+import fs from 'fs';
+import each from 'jest-each';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
@@ -12,8 +13,26 @@ const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
 const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
+const readFileSyncMock = jest.spyOn(fs, 'readFileSync');
+const existsSyncMock = jest.spyOn(fs, 'existsSync');
+const coreErrorMock = jest.spyOn(core, 'error');
 const coreWarningMock = jest.spyOn(core, 'warning');
+const coreSetFailedMock = jest.spyOn(core, 'setFailed');
 const setOutputSpy = jest.spyOn(core, 'setOutput');
+
+class HttpError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+class NotFound extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFound';
+  }
+}
 
 const yamlFixtures = {
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
@@ -231,7 +250,6 @@ describe('run', () => {
     });
 
     await run();
-
     expect(setLabelsMock).toHaveBeenCalledTimes(1);
     expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
@@ -272,7 +290,6 @@ describe('run', () => {
     });
 
     await run();
-
     expect(setLabelsMock).toHaveBeenCalledTimes(2);
     expect(setLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
@@ -295,6 +312,61 @@ describe('run', () => {
       'manually-added,touched-a-pdf-file'
     );
   });
+
+  it('should use local configuration file if it exists', async () => {
+    const configFile = 'only_pdfs.yml';
+    const configFilePath = path.join(__dirname, 'fixtures', configFile);
+    mockGitHubResponseChangedFiles('foo.pdf');
+    const readFileSyncOptions = {encoding: 'utf8'};
+
+    configureInput({
+      'configuration-path': configFilePath
+    });
+    await run();
+
+    expect(existsSyncMock).toHaveBeenCalledWith(configFilePath);
+    expect(readFileSyncMock).toHaveBeenCalledWith(
+      configFilePath,
+      readFileSyncOptions
+    );
+    expect(reposMock).not.toHaveBeenCalled();
+  });
+
+  it('should fetch configuration file from API if it does not exist locally', async () => {
+    const configFilePath = 'non_existed_path/labeler.yml';
+    mockGitHubResponseChangedFiles('foo.pdf');
+    configureInput({
+      'configuration-path': configFilePath
+    });
+    await run();
+    expect(existsSyncMock).toHaveBeenCalledWith(configFilePath);
+    expect(readFileSyncMock).not.toHaveBeenCalled();
+    expect(reposMock).toHaveBeenCalled();
+  });
+
+  each([
+    [new HttpError('Error message')],
+    [new NotFound('Error message')]
+  ]).test(
+    'should warn if configuration file could not be fetched through the API, log error and fail the action',
+    async error => {
+      const configFilePath = 'non_existed_path/labeler.yml';
+      reposMock.mockImplementation(() => {
+        throw error;
+      });
+      const warningMessage = `The config file was not found at ${configFilePath}. Make sure it exists and that this action has the correct access rights.`;
+      mockGitHubResponseChangedFiles('foo.pdf');
+      configureInput({
+        'configuration-path': configFilePath
+      });
+
+      await run();
+
+      expect(coreWarningMock).toHaveBeenCalledWith(warningMessage);
+      expect(coreErrorMock).toHaveBeenCalledWith(error);
+      expect(coreSetFailedMock).toHaveBeenCalledWith(error.message);
+    }
+  );
 });
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {

@@ -38,12 +38,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkGlobs = exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const pluginRetry = __importStar(__nccwpck_require__(6298));
 const yaml = __importStar(__nccwpck_require__(1917));
+const fs_1 = __importDefault(__nccwpck_require__(7147));
 const minimatch_1 = __nccwpck_require__(2002);
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
@@ -165,7 +169,16 @@ function getLabelGlobs(client, configurationPath) {
     return __awaiter(this, void 0, void 0, function* () {
         let configurationContent;
         try {
-            configurationContent = yield fetchContent(client, configurationPath);
+            if (!fs_1.default.existsSync(configurationPath)) {
+                core.info(`The configuration file (path: ${configurationPath}) isn't not found locally, fetching via the api`);
+                configurationContent = yield fetchContent(client, configurationPath);
+            }
+            else {
+                core.info(`The configuration file (path: ${configurationPath}) is found locally, reading from the file`);
+                configurationContent = fs_1.default.readFileSync(configurationPath, {
+                    encoding: 'utf8'
+                });
+            }
         }
         catch (e) {
             if (e.name == 'HttpError' || e.name == 'NotFound') {

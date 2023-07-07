@@ -120,13 +120,26 @@ jobs:
 
 Various inputs are defined in [`action.yml`](action.yml) to let you configure the labeler:
 
-| Name                 | Description                                                                                     | Default               |
-|----------------------|-------------------------------------------------------------------------------------------------|-----------------------|
-| `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                      | N/A                   |
-| `configuration-path` | The path to the label configuration file                                                        | `.github/labeler.yml` |
-| `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR | `false`               |
-| `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                         | `false`               |
-| `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context | N/A |
+| Name                 | Description                                                                                                                                                              | Default               |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                                                                                               | N/A                   |
+| `configuration-path` | The path to the label configuration file. If the file doesn't exist at the specified path on the runner, action will read from the source repository via the Github API. | `.github/labeler.yml` |
+| `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR                                                                          | `false`               |
+| `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                                                                                                  | `false`               |
+| `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context                                                                                 | N/A                   |
+
+##### Using `configuration-path` input together with the `@actions/checkout` action
+You might want to use action called [@actions/checkout](https://github.com/actions/checkout) to upload label configuration file onto the runner from the current or any other repositories. See usage example below:
+
+```yml
+    steps:
+    - uses: actions/checkout@v3 # Uploads repository content to the runner
+      with:
+        repository: "owner/repositoryName" # The one of the available inputs, visit https://github.com/actions/checkout#readme to find more
+    - uses: actions/labeler@v4
+```
+
+##### Peculiarities of using the `dot` input
 
 When `dot` is disabled, and you want to include _all_ files in a folder:
 

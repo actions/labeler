@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
+import fs from 'fs';
 import {Minimatch} from 'minimatch';
 
 interface MatchConfig {
@@ -159,7 +160,19 @@ async function getLabelGlobs(
 ): Promise<Map<string, StringOrMatchConfig[]>> {
   let configurationContent: string;
   try {
-    configurationContent = await fetchContent(client, configurationPath);
+    if (!fs.existsSync(configurationPath)) {
+      core.info(
+        `The configuration file (path: ${configurationPath}) isn't not found locally, fetching via the api`
+      );
+      configurationContent = await fetchContent(client, configurationPath);
+    } else {
+      core.info(
+        `The configuration file (path: ${configurationPath}) is found locally, reading from the file`
+      );
+      configurationContent = fs.readFileSync(configurationPath, {
+        encoding: 'utf8'
+      });
+    }
   } catch (e: any) {
     if (e.name == 'HttpError' || e.name == 'NotFound') {
       core.warning(
