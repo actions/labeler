@@ -2,8 +2,8 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import * as yaml from 'js-yaml';
+import fs from 'fs';
 import {Minimatch} from 'minimatch';
-import {readFile} from 'fs/promises';
 
 interface MatchConfig {
   all?: string[];
@@ -12,8 +12,6 @@ interface MatchConfig {
 
 type StringOrMatchConfig = string | MatchConfig;
 type ClientType = ReturnType<typeof github.getOctokit>;
-
-const warningPrefix = '[warning]';
 
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
@@ -162,7 +160,16 @@ async function getLabelGlobs(
 ): Promise<Map<string, StringOrMatchConfig[]>> {
   let configurationContent: string;
   try {
-    configurationContent = await fetchContent(client, configurationPath);
+    if (!fs.existsSync(configurationPath)) {
+      core.info(
+        `The configuration file (path: ${configurationPath}) isn't not found locally, fetching via the api`
+      );
+      configurationContent = await fetchContent(client, configurationPath);
+    } else {
+      configurationContent = fs.readFileSync(configurationPath, {
+        encoding: 'utf8'
+      });
+    }
   } catch (e: any) {
     if (e.name == 'HttpError' || e.name == 'NotFound') {
       core.warning(
