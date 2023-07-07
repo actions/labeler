@@ -49,7 +49,9 @@ export async function run() {
       core.debug(`fetching changed files for pr #${prNumber}`);
       const changedFiles: string[] = await getChangedFiles(client, prNumber);
       if (!changedFiles.length) {
-        core.warning(`Pull request #${prNumber} has no changed files, skipping`);  
+        core.warning(
+          `Pull request #${prNumber} has no changed files, skipping`
+        );
         continue;
       }
 
