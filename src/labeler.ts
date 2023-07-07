@@ -166,6 +166,9 @@ async function getLabelGlobs(
       );
       configurationContent = await fetchContent(client, configurationPath);
     } else {
+      core.info(
+        `The configuration file (path: ${configurationPath}) is found locally, reading from the file`
+      );
       configurationContent = fs.readFileSync(configurationPath, {
         encoding: 'utf8'
       });

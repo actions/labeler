@@ -174,6 +174,7 @@ function getLabelGlobs(client, configurationPath) {
                 configurationContent = yield fetchContent(client, configurationPath);
             }
             else {
+                core.info(`The configuration file (path: ${configurationPath}) is found locally, reading from the file`);
                 configurationContent = fs_1.default.readFileSync(configurationPath, {
                     encoding: 'utf8'
                 });
