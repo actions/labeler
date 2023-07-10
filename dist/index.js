@@ -4476,13 +4476,13 @@ async function requestWithGraphqlErrorHandling(state, octokit, request, options)
 }
 
 // pkg/dist-src/index.js
-var VERSION = "5.0.4";
+var VERSION = "5.0.5";
 function retry(octokit, octokitOptions) {
   const state = Object.assign(
     {
       enabled: true,
       retryAfterBaseValue: 1e3,
-      doNotRetry: [400, 401, 403, 404, 422],
+      doNotRetry: [400, 401, 403, 404, 422, 451],
       retries: 3
     },
     octokitOptions.retry
