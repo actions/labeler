@@ -3,7 +3,6 @@ import * as github from '@actions/github';
 import * as core from '@actions/core';
 import path from 'path';
 import fs from 'fs';
-import each from 'jest-each';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
@@ -353,10 +352,10 @@ describe('run', () => {
     expect(reposMock).toHaveBeenCalled();
   });
 
-  each([
+  test.each([
     [new HttpError('Error message')],
     [new NotFound('Error message')]
-  ]).test(
+  ])(
     'should warn if configuration file could not be fetched through the API, log error and fail the action',
     async error => {
       const configFilePath = 'non_existed_path/labeler.yml';
