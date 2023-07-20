@@ -1,6 +1,6 @@
 ---
 name: minimatch
-version: 7.4.3
+version: 9.0.3
 type: npm
 summary: a glob matcher in javascript
 homepage: 
