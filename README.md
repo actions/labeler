@@ -169,7 +169,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-
     runs-on: ubuntu-latest
     steps:
     
@@ -202,10 +201,10 @@ on:
 
 jobs:
   triage:
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    runs-on: ubuntu-latest
     steps:
     - id: label-the-PR
       uses: actions/labeler@v4
