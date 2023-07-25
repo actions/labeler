@@ -174,11 +174,11 @@ function getLabelGlobs(client, configurationPath) {
         let configurationContent;
         try {
             if (!fs_1.default.existsSync(configurationPath)) {
-                core.info(`The configuration file (path: ${configurationPath}) isn't not found locally, fetching via the api`);
+                core.info(`The configuration file (path: ${configurationPath}) was not found locally, fetching via the api`);
                 configurationContent = yield fetchContent(client, configurationPath);
             }
             else {
-                core.info(`The configuration file (path: ${configurationPath}) is found locally, reading from the file`);
+                core.info(`The configuration file (path: ${configurationPath}) was found locally, reading from the file`);
                 configurationContent = fs_1.default.readFileSync(configurationPath, {
                     encoding: 'utf8'
                 });
