@@ -3,7 +3,8 @@ import {
   MatchConfig,
   toMatchConfig,
   getLabelConfigMapFromObject,
-  BaseMatchConfig
+  BaseMatchConfig,
+  PrFileType
 } from '../src/labeler';
 import * as yaml from 'js-yaml';
 import * as core from '@actions/core';
@@ -92,14 +93,17 @@ describe('checkMatchConfigs', () => {
     const matchConfig: MatchConfig[] = [{any: [{changedFiles: ['*.txt']}]}];
 
     it('returns true when our pattern does match changed files', () => {
-      const changedFiles = ['foo.txt', 'bar.txt'];
+      const changedFiles: PrFileType[] = [
+        {name: 'foo.txt', size: 6},
+        {name: 'bar.txt', size: 20}
+      ];
       const result = checkMatchConfigs(changedFiles, matchConfig);
 
       expect(result).toBeTruthy();
     });
 
     it('returns false when our pattern does not match changed files', () => {
-      const changedFiles = ['foo.docx'];
+      const changedFiles: PrFileType[] = [{name: 'foo.docx', size: 13}];
       const result = checkMatchConfigs(changedFiles, matchConfig);
 
       expect(result).toBeFalsy();
@@ -109,7 +113,10 @@ describe('checkMatchConfigs', () => {
       const matchConfig: MatchConfig[] = [
         {any: [{changedFiles: ['*.txt']}, {headBranch: ['some-branch']}]}
       ];
-      const changedFiles = ['foo.txt', 'bar.txt'];
+      const changedFiles: PrFileType[] = [
+        {name: 'foo.txt', size: 6},
+        {name: 'bar.txt', size: 20}
+      ];
 
       const result = checkMatchConfigs(changedFiles, matchConfig);
       expect(result).toBe(true);
@@ -121,7 +128,10 @@ describe('checkMatchConfigs', () => {
       {any: [{changedFiles: ['*.txt']}]},
       {any: [{headBranch: ['some-branch']}]}
     ];
-    const changedFiles = ['foo.txt', 'bar.md'];
+    const changedFiles: PrFileType[] = [
+      {name: 'foo.txt', size: 6},
+      {name: 'bar.md', size: 20}
+    ];
 
     it('returns false when only one config matches', () => {
       const result = checkMatchConfigs(changedFiles, matchConfig);

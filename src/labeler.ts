@@ -23,6 +23,11 @@ export type MatchConfig = {
   all?: BaseMatchConfig[];
 };
 
+export type PrFileType = {
+  name: string;
+  size: number;
+};
+
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
@@ -48,7 +53,7 @@ export async function run() {
     });
 
     core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
+    const changedFiles: PrFileType[] = await getChangedFiles(client, prNumber);
     const labelConfigs: Map<string, MatchConfig[]> = await getMatchConfigs(
       client,
       configPath
@@ -185,7 +190,7 @@ export function toMatchConfig(config: any): BaseMatchConfig {
 }
 
 export function checkMatchConfigs(
-  changedFiles: string[],
+  changedFiles: PrFileType[],
   matchConfigs: MatchConfig[]
 ): boolean {
   for (const config of matchConfigs) {
@@ -198,7 +203,10 @@ export function checkMatchConfigs(
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(
+  changedFiles: PrFileType[],
+  matchConfig: MatchConfig
+): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
     return false;
@@ -222,7 +230,7 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 // equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: PrFileType[]
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -260,7 +268,7 @@ export function checkAny(
 // equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: PrFileType[]
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (
