@@ -1,4 +1,4 @@
-import {run} from '../src/labeler';
+import {run, PrFileType} from '../src/labeler';
 import * as github from '@actions/github';
 import * as core from '@actions/core';
 
@@ -6,6 +6,13 @@ const fs = jest.requireActual('fs');
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
+
+type mockGitHubResponseChangedFilesType = {
+  filename: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+};
 
 const gh = github.getOctokit('_');
 const addLabelsMock = jest.spyOn(gh.rest.issues, 'addLabels');
@@ -17,6 +24,9 @@ const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
 const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
+  'only_pdfs_custom_size.yml': fs.readFileSync(
+    '__tests__/fixtures/only_pdfs_custom_size.yml'
+  ),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
   'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
 };
@@ -26,7 +36,12 @@ afterAll(() => jest.restoreAllMocks());
 describe('run', () => {
   it('adds labels to PRs that match our glob patterns', async () => {
     usingLabelerConfigYaml('only_pdfs.yml');
-    mockGitHubResponseChangedFiles('foo.pdf');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.pdf',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
 
     await run();
 
@@ -42,7 +57,12 @@ describe('run', () => {
 
   it('does not add labels to PRs that do not match our glob patterns', async () => {
     usingLabelerConfigYaml('only_pdfs.yml');
-    mockGitHubResponseChangedFiles('foo.txt');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
 
     await run();
 
@@ -75,7 +95,12 @@ describe('run', () => {
       );
 
     usingLabelerConfigYaml('only_pdfs.yml');
-    mockGitHubResponseChangedFiles('foo.txt');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
     getPullMock.mockResolvedValue(<any>{
       data: {
         labels: [{name: 'touched-a-pdf-file'}]
@@ -111,7 +136,12 @@ describe('run', () => {
       );
 
     usingLabelerConfigYaml('only_pdfs.yml');
-    mockGitHubResponseChangedFiles('foo.txt');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
     getPullMock.mockResolvedValue(<any>{
       data: {
         labels: [{name: 'touched-a-pdf-file'}]
@@ -184,7 +214,12 @@ describe('run', () => {
 
   it('adds a label when matching any and all patterns are provided', async () => {
     usingLabelerConfigYaml('any_and_all.yml');
-    mockGitHubResponseChangedFiles('tests/test.ts');
+    mockGitHubResponseChangedFiles({
+      filename: 'tests/test.ts',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
@@ -198,11 +233,142 @@ describe('run', () => {
 
   it('does not add a label when not all any and all patterns are matched', async () => {
     usingLabelerConfigYaml('any_and_all.yml');
-    mockGitHubResponseChangedFiles('tests/requirements.txt');
+    mockGitHubResponseChangedFiles({
+      filename: 'tests/requirements.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
     await run();
 
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('(with check-size: true, sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern and adds the size label', async () => {
+    const mockInput = {
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'check-size': 'true',
+      'sync-labels': 'true'
+    };
+
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+    jest
+      .spyOn(core, 'getBooleanInput')
+      .mockImplementation(
+        (name: string, ...opts) => mockInput[name] === 'true'
+      );
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{name: 'touched-a-pdf-file'}]
+      }
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['size/M']
+    });
+    expect(removeLabelMock).toHaveBeenCalledTimes(1);
+    expect(removeLabelMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      name: 'touched-a-pdf-file'
+    });
+  });
+
+  it('(with check-size: true) adds a label based on the PR size', async () => {
+    const mockInput = {
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'check-size': 'true'
+    };
+
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation((name: string, ...opts) => mockInput[name]);
+    jest
+      .spyOn(core, 'getBooleanInput')
+      .mockImplementation(
+        (name: string, ...opts) => mockInput[name] === 'true'
+      );
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles({
+      filename: 'foo.txt',
+      additions: 10,
+      deletions: 10,
+      changes: 10
+    });
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{name: 'touched-a-pdf-file'}]
+      }
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['size/M']
+    });
+  });
+});
+
+it('(with check-size: true with custom size config) adds a label based on the PR size and customf size config', async () => {
+  const mockInput = {
+    'repo-token': 'foo',
+    'configuration-path': 'bar',
+    'check-size': 'true'
+  };
+
+  jest
+    .spyOn(core, 'getInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name]);
+  jest
+    .spyOn(core, 'getBooleanInput')
+    .mockImplementation((name: string, ...opts) => mockInput[name] === 'true');
+
+  usingLabelerConfigYaml('only_pdfs_custom_size.yml');
+  mockGitHubResponseChangedFiles({
+    filename: 'foo.txt',
+    additions: 10,
+    deletions: 10,
+    changes: 10
+  });
+  getPullMock.mockResolvedValue(<any>{
+    data: {
+      labels: [{name: 'touched-a-pdf-file'}]
+    }
+  });
+
+  await run();
+
+  expect(addLabelsMock).toHaveBeenCalledTimes(1);
+  expect(addLabelsMock).toHaveBeenCalledWith({
+    owner: 'monalisa',
+    repo: 'helloworld',
+    issue_number: 123,
+    labels: ['size/XXS']
   });
 });
 
@@ -212,7 +378,14 @@ function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
   });
 }
 
-function mockGitHubResponseChangedFiles(...files: string[]): void {
-  const returnValue = files.map(f => ({filename: f}));
+function mockGitHubResponseChangedFiles(
+  ...files: mockGitHubResponseChangedFilesType[]
+): void {
+  const returnValue = files.map(f => ({
+    filename: f.filename,
+    additions: f.additions,
+    deletions: f.deletions,
+    changes: f.changes
+  }));
   paginateMock.mockReturnValue(<any>returnValue);
 }

@@ -1,2 +1,3 @@
-touched-a-pdf-file:
-  - changed-files: ['*.pdf']
+label-config:
+  touched-a-pdf-file:
+    - changed-files: ['*.pdf']

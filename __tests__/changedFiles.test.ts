@@ -4,12 +4,16 @@ import {
   checkAnyChangedFiles,
   toChangedFilesMatchConfig
 } from '../src/changedFiles';
+import {PrFileType} from '../src/labeler';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
 describe('checkAllChangedFiles', () => {
-  const changedFiles = ['foo.txt', 'bar.txt'];
+  const changedFiles: PrFileType[] = [
+    {name: 'foo.txt', size: 6},
+    {name: 'bar.txt', size: 20}
+  ];
 
   describe('when the globs match every file that has been changed', () => {
     const globs = ['*.txt'];
@@ -31,7 +35,10 @@ describe('checkAllChangedFiles', () => {
 });
 
 describe('checkAnyChangedFiles', () => {
-  const changedFiles = ['foo.txt', 'bar.txt'];
+  const changedFiles: PrFileType[] = [
+    {name: 'foo.txt', size: 6},
+    {name: 'bar.txt', size: 20}
+  ];
 
   describe('when any glob matches any of the files that have changed', () => {
     const globs = ['*.txt', '*.md'];

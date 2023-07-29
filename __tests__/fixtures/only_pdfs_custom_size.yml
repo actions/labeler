@@ -1,0 +1,12 @@
+label-config:
+  touched-a-pdf-file:
+    - changed-files: ['*.pdf']
+size-config: >
+  {
+    "100": "XS",
+    "200": "S",
+    "500": "M",
+    "800": "L",
+    "1000": "XL",
+    "2000": "XXL"
+  }

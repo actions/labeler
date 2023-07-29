@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {Minimatch} from 'minimatch';
+import {PrFileType} from './labeler';
 
 export interface ChangedFilesMatchConfig {
   changedFiles?: string[];
@@ -11,7 +12,7 @@ type ClientType = ReturnType<typeof github.getOctokit>;
 export async function getChangedFiles(
   client: ClientType,
   prNumber: number
-): Promise<string[]> {
+): Promise<PrFileType[]> {
   const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
@@ -19,7 +20,12 @@ export async function getChangedFiles(
   });
 
   const listFilesResponse = await client.paginate(listFilesOptions);
-  const changedFiles = listFilesResponse.map((f: any) => f.filename);
+  const changedFiles = listFilesResponse.map((f: any) => {
+    return {
+      name: f.filename as string,
+      size: (f.additions + f.deletions + f.changes) as number
+    };
+  });
 
   core.debug('found changed files:');
   for (const file of changedFiles) {
@@ -49,11 +55,11 @@ function printPattern(matcher: Minimatch): string {
   return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 
-function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
+function isAnyMatch(changedFile: PrFileType, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`     - ${printPattern(matcher)}`);
-    if (matcher.match(changedFile)) {
+    if (matcher.match(changedFile.name)) {
       core.debug(`    ${printPattern(matcher)} matched`);
       return true;
     }
@@ -63,11 +69,11 @@ function isAnyMatch(changedFile: string, matchers: Minimatch[]): boolean {
   return false;
 }
 
-function isAllMatch(changedFile: string, matchers: Minimatch[]): boolean {
+function isAllMatch(changedFile: PrFileType, matchers: Minimatch[]): boolean {
   core.debug(`    matching patterns against file ${changedFile}`);
   for (const matcher of matchers) {
     core.debug(`     - ${printPattern(matcher)}`);
-    if (!matcher.match(changedFile)) {
+    if (!matcher.match(changedFile.name)) {
       core.debug(`    ${printPattern(matcher)} did not match`);
       return false;
     }
@@ -78,7 +84,7 @@ function isAllMatch(changedFile: string, matchers: Minimatch[]): boolean {
 }
 
 export function checkAnyChangedFiles(
-  changedFiles: string[],
+  changedFiles: PrFileType[],
   globs: string[]
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));
@@ -94,7 +100,7 @@ export function checkAnyChangedFiles(
 }
 
 export function checkAllChangedFiles(
-  changedFiles: string[],
+  changedFiles: PrFileType[],
   globs: string[]
 ): boolean {
   const matchers = globs.map(g => new Minimatch(g));

@@ -4,16 +4,16 @@ import * as yaml from 'js-yaml';
 
 import {
   ChangedFilesMatchConfig,
-  getChangedFiles,
-  toChangedFilesMatchConfig,
   checkAllChangedFiles,
-  checkAnyChangedFiles
+  checkAnyChangedFiles,
+  getChangedFiles,
+  toChangedFilesMatchConfig
 } from './changedFiles';
 import {
-  checkAnyBranch,
+  BranchMatchConfig,
   checkAllBranch,
-  toBranchMatchConfig,
-  BranchMatchConfig
+  checkAnyBranch,
+  toBranchMatchConfig
 } from './branch';
 
 export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
@@ -23,15 +23,34 @@ export type MatchConfig = {
   all?: BaseMatchConfig[];
 };
 
+export type LabelerConfig = {
+  labels: Map<string, MatchConfig[]>;
+  size: Map<number, string>;
+};
+
+export type PrFileType = {
+  name: string;
+  size: number;
+};
+
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const DEFAULT_SIZES = new Map([
+  [0, 'XS'],
+  [10, 'S'],
+  [30, 'M'],
+  [100, 'L'],
+  [500, 'XL'],
+  [1000, 'XXL']
+]);
 
 export async function run() {
   try {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
     const syncLabels = core.getBooleanInput('sync-labels');
+    const checkSizeEnabled = core.getBooleanInput('check-size');
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -48,21 +67,23 @@ export async function run() {
     });
 
     core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelConfigs: Map<string, MatchConfig[]> = await getMatchConfigs(
-      client,
-      configPath
-    );
+    const changedFiles: PrFileType[] = await getChangedFiles(client, prNumber);
+    const labelerConfigs: LabelerConfig = await getConfigs(client, configPath);
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
-    for (const [label, configs] of labelConfigs.entries()) {
+    for (const [label, configs] of labelerConfigs.labels.entries()) {
       core.debug(`processing ${label}`);
       if (checkMatchConfigs(changedFiles, configs)) {
         labels.push(label);
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
       }
+    }
+
+    if (checkSizeEnabled) {
+      const sizeLabel = checkSizeConfigs(changedFiles, labelerConfigs.size);
+      labels.push(sizeLabel);
     }
 
     if (labels.length > 0) {
@@ -87,10 +108,10 @@ function getPrNumber(): number | undefined {
   return pullRequest.number;
 }
 
-async function getMatchConfigs(
+async function getConfigs(
   client: ClientType,
   configurationPath: string
-): Promise<Map<string, MatchConfig[]>> {
+): Promise<LabelerConfig> {
   const configurationContent: string = await fetchContent(
     client,
     configurationPath
@@ -99,8 +120,11 @@ async function getMatchConfigs(
   // loads (hopefully) a `{[label:string]: MatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
 
-  // transform `any` => `Map<string,MatchConfig[]>` or throw if yaml is malformed:
-  return getLabelConfigMapFromObject(configObject);
+  return {
+    // transform `any` => `Map<string,MatchConfig[]>` or throw if yaml is malformed:
+    labels: getLabelConfigMapFromObject(configObject),
+    size: getSizeConfigMapFromObject(configObject)
+  };
 }
 
 async function fetchContent(
@@ -120,9 +144,10 @@ async function fetchContent(
 export function getLabelConfigMapFromObject(
   configObject: any
 ): Map<string, MatchConfig[]> {
+  const labelConfigObject = configObject['label-config'];
   const labelMap: Map<string, MatchConfig[]> = new Map();
-  for (const label in configObject) {
-    const configOptions = configObject[label];
+  for (const label in labelConfigObject) {
+    const configOptions = labelConfigObject[label];
     if (
       !Array.isArray(configOptions) ||
       !configOptions.every(opts => typeof opts === 'object')
@@ -174,6 +199,28 @@ export function getLabelConfigMapFromObject(
   return labelMap;
 }
 
+export function getSizeConfigMapFromObject(
+  configObject: any
+): Map<number, string> {
+  const sizeConfigObject = configObject['size-config'];
+  if (sizeConfigObject === undefined) {
+    return DEFAULT_SIZES;
+  }
+
+  const sizesConfig: Map<number, string> = new Map();
+  const sizesObject = JSON.parse(sizeConfigObject);
+  for (const [key, value] of Object.entries(sizesObject)) {
+    const keyNum = Number(key);
+    if (Number.isNaN(keyNum)) {
+      throw Error(
+        `found non-number as key in size config ${key} (keys of size config should always be a valid number)`
+      );
+    }
+    sizesConfig.set(keyNum, value as string);
+  }
+  return sizesConfig;
+}
+
 export function toMatchConfig(config: any): BaseMatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
@@ -185,7 +232,7 @@ export function toMatchConfig(config: any): BaseMatchConfig {
 }
 
 export function checkMatchConfigs(
-  changedFiles: string[],
+  changedFiles: PrFileType[],
   matchConfigs: MatchConfig[]
 ): boolean {
   for (const config of matchConfigs) {
@@ -198,7 +245,10 @@ export function checkMatchConfigs(
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(
+  changedFiles: PrFileType[],
+  matchConfig: MatchConfig
+): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
     return false;
@@ -219,10 +269,39 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
   return true;
 }
 
+export function checkSizeConfigs(
+  changedFiles: PrFileType[],
+  sizeConfigs: Map<number, string>
+): string {
+  let label: string | undefined = undefined;
+  let totalSize = 0;
+  for (const file of changedFiles) {
+    totalSize += file.size;
+  }
+  const sortedSizeKeys = [...sizeConfigs.keys()].sort((a, b) => {
+    return a - b;
+  });
+  for (const lines of sortedSizeKeys) {
+    if (totalSize >= lines) {
+      label = `size/${sizeConfigs.get(lines)}`;
+    }
+  }
+  if (label === undefined) {
+    core.warning(
+      `The size of the PR is smaller than the smallest configured size ${sortedSizeKeys.slice(
+        -1
+      )}. Setting size to XXS.`
+    );
+    label = 'size/XXS';
+  }
+
+  return label;
+}
+
 // equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: PrFileType[]
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -260,7 +339,7 @@ export function checkAny(
 // equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: PrFileType[]
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (

@@ -1,3 +1,4 @@
-label:
-  - all:
-      - unknown: 'this-is-not-supported'
+label-config:
+  label:
+    - all:
+        - unknown: 'this-is-not-supported'
