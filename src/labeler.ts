@@ -50,6 +50,7 @@ export async function run() {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
     const syncLabels = core.getBooleanInput('sync-labels');
+    const checkSizeEnabled = core.getBooleanInput('check-size');
 
     const prNumber = getPrNumber();
     if (!prNumber) {
@@ -78,6 +79,11 @@ export async function run() {
       } else if (pullRequest.labels.find(l => l.name === label)) {
         labelsToRemove.push(label);
       }
+    }
+
+    if (checkSizeEnabled) {
+      const sizeLabel = checkSizeConfigs(changedFiles, labelerConfigs.size);
+      labels.push(sizeLabel);
     }
 
     if (labels.length > 0) {
@@ -193,13 +199,16 @@ export function getLabelConfigMapFromObject(
   return labelMap;
 }
 
-function getSizeConfigMapFromObject(configObject: any): Map<number, string> {
-  if (configObject['size-config'] === undefined) {
+export function getSizeConfigMapFromObject(
+  configObject: any
+): Map<number, string> {
+  const sizeConfigObject = configObject['size-config'];
+  if (sizeConfigObject === undefined) {
     return DEFAULT_SIZES;
   }
 
   const sizesConfig: Map<number, string> = new Map();
-  const sizesObject = JSON.parse(configObject['sizes']);
+  const sizesObject = JSON.parse(sizeConfigObject);
   for (const [key, value] of Object.entries(sizesObject)) {
     const keyNum = Number(key);
     if (Number.isNaN(keyNum)) {
@@ -258,6 +267,35 @@ function checkMatch(
   }
 
   return true;
+}
+
+export function checkSizeConfigs(
+  changedFiles: PrFileType[],
+  sizeConfigs: Map<number, string>
+): string {
+  let label: string | undefined = undefined;
+  let totalSize = 0;
+  for (const file of changedFiles) {
+    totalSize += file.size;
+  }
+  const sortedSizeKeys = [...sizeConfigs.keys()].sort((a, b) => {
+    return a - b;
+  });
+  for (const lines of sortedSizeKeys) {
+    if (totalSize >= lines) {
+      label = `size/${sizeConfigs.get(lines)}`;
+    }
+  }
+  if (label === undefined) {
+    core.warning(
+      `The size of the PR is smaller than the smallest configured size ${sortedSizeKeys.slice(
+        -1
+      )}. Setting size to XXS.`
+    );
+    label = 'size/XXS';
+  }
+
+  return label;
 }
 
 // equivalent to "Array.some()" but expanded for debugging and clarity

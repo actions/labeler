@@ -14,6 +14,10 @@ inputs:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false
     required: false
+  check-size:
+    description: 'Whether or not to apply labels based on PR size'
+    default: false
+    required: false
 
 runs:
   using: 'node16'
