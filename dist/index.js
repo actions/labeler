@@ -1,6 +1,497 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 8622:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getChangedFiles = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const getChangedFiles = (client, prNumber) => __awaiter(void 0, void 0, void 0, function* () {
+    const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        pull_number: prNumber
+    });
+    const listFilesResponse = yield client.paginate(listFilesOptions);
+    const changedFiles = listFilesResponse.map((f) => f.filename);
+    core.debug('found changed files:');
+    for (const file of changedFiles) {
+        core.debug('  ' + file);
+    }
+    return changedFiles;
+});
+exports.getChangedFiles = getChangedFiles;
+
+
+/***/ }),
+
+/***/ 2084:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
+var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []), i, q = [];
+    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+    function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+    function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+    function fulfill(value) { resume("next", value); }
+    function reject(value) { resume("throw", value); }
+    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getChangedPullRequests = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const get_changed_files_1 = __nccwpck_require__(8622);
+function getChangedPullRequests(client, prNumbers) {
+    return __asyncGenerator(this, arguments, function* getChangedPullRequests_1() {
+        for (const prNumber of prNumbers) {
+            core.debug(`looking for pr #${prNumber}`);
+            let prData;
+            try {
+                const result = yield __await(client.rest.pulls.get({
+                    owner: github.context.repo.owner,
+                    repo: github.context.repo.repo,
+                    pull_number: prNumber
+                }));
+                prData = result.data;
+            }
+            catch (error) {
+                core.warning(`Could not find pull request #${prNumber}, skipping`);
+                continue;
+            }
+            core.debug(`fetching changed files for pr #${prNumber}`);
+            const changedFiles = yield __await((0, get_changed_files_1.getChangedFiles)(client, prNumber));
+            if (!changedFiles.length) {
+                core.warning(`Pull request #${prNumber} has no changed files, skipping`);
+                continue;
+            }
+            yield yield __await({
+                data: prData,
+                number: prNumber,
+                changedFiles
+            });
+        }
+    });
+}
+exports.getChangedPullRequests = getChangedPullRequests;
+
+
+/***/ }),
+
+/***/ 4059:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getContent = void 0;
+const github = __importStar(__nccwpck_require__(5438));
+const getContent = (client, repoPath) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield client.rest.repos.getContent({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        path: repoPath,
+        ref: github.context.sha
+    });
+    return Buffer.from(response.data.content, response.data.encoding).toString();
+});
+exports.getContent = getContent;
+
+
+/***/ }),
+
+/***/ 8976:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getLabelGlobs = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const yaml = __importStar(__nccwpck_require__(1917));
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const get_content_1 = __nccwpck_require__(4059);
+const getLabelGlobs = (client, configurationPath) => Promise.resolve()
+    .then(() => {
+    if (!fs_1.default.existsSync(configurationPath)) {
+        core.info(`The configuration file (path: ${configurationPath}) was not found locally, fetching via the api`);
+        return (0, get_content_1.getContent)(client, configurationPath);
+    }
+    core.info(`The configuration file (path: ${configurationPath}) was found locally, reading from the file`);
+    return fs_1.default.readFileSync(configurationPath, {
+        encoding: 'utf8'
+    });
+})
+    .catch(error => {
+    if (error.name == 'HttpError' || error.name == 'NotFound') {
+        core.warning(`The config file was not found at ${configurationPath}. Make sure it exists and that this action has the correct access rights.`);
+    }
+    return Promise.reject(error);
+})
+    .then(configuration => {
+    // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+    const configObject = yaml.load(configuration);
+    // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
+    return getLabelGlobMapFromObject(configObject);
+});
+exports.getLabelGlobs = getLabelGlobs;
+function getLabelGlobMapFromObject(configObject) {
+    const labelGlobs = new Map();
+    for (const label in configObject) {
+        if (typeof configObject[label] === 'string') {
+            labelGlobs.set(label, [configObject[label]]);
+        }
+        else if (configObject[label] instanceof Array) {
+            labelGlobs.set(label, configObject[label]);
+        }
+        else {
+            throw Error(`found unexpected type for label ${label} (should be string or array of globs)`);
+        }
+    }
+    return labelGlobs;
+}
+
+
+/***/ }),
+
+/***/ 5614:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__nccwpck_require__(8622), exports);
+__exportStar(__nccwpck_require__(2084), exports);
+__exportStar(__nccwpck_require__(4059), exports);
+__exportStar(__nccwpck_require__(8976), exports);
+__exportStar(__nccwpck_require__(5389), exports);
+__exportStar(__nccwpck_require__(3068), exports);
+
+
+/***/ }),
+
+/***/ 5389:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.setLabels = void 0;
+const github = __importStar(__nccwpck_require__(5438));
+const setLabels = (client, prNumber, labels) => __awaiter(void 0, void 0, void 0, function* () {
+    yield client.rest.issues.setLabels({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber,
+        labels: labels
+    });
+});
+exports.setLabels = setLabels;
+
+
+/***/ }),
+
+/***/ 3068:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+
+/***/ }),
+
+/***/ 5607:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getInputs = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const get_pr_numbers_1 = __nccwpck_require__(1389);
+const getInputs = () => ({
+    token: core.getInput('repo-token'),
+    configPath: core.getInput('configuration-path', { required: true }),
+    syncLabels: !!core.getInput('sync-labels'),
+    dot: core.getBooleanInput('dot'),
+    prNumbers: (0, get_pr_numbers_1.getPrNumbers)()
+});
+exports.getInputs = getInputs;
+
+
+/***/ }),
+
+/***/ 1389:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getPrNumbers = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const getPrNumberFromContext = () => { var _a; return (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number; };
+const getPrNumbers = () => {
+    const prInput = core.getMultilineInput('pr-number');
+    if (!(prInput === null || prInput === void 0 ? void 0 : prInput.length)) {
+        return [getPrNumberFromContext()].filter(Boolean);
+    }
+    const result = [];
+    for (const line of prInput) {
+        const prNumber = parseInt(line, 10);
+        if (isNaN(prNumber) && prNumber <= 0) {
+            core.warning(`'${prNumber}' is not a valid pull request number`);
+            continue;
+        }
+        result.push(prNumber);
+    }
+    return result;
+};
+exports.getPrNumbers = getPrNumbers;
+
+
+/***/ }),
+
+/***/ 4288:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__nccwpck_require__(5607), exports);
+
+
+/***/ }),
+
 /***/ 5272:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -38,72 +529,75 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkGlobs = exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const pluginRetry = __importStar(__nccwpck_require__(6298));
-const yaml = __importStar(__nccwpck_require__(1917));
-const fs_1 = __importDefault(__nccwpck_require__(7147));
 const minimatch_1 = __nccwpck_require__(1953);
+const api = __importStar(__nccwpck_require__(5614));
+const utils_1 = __nccwpck_require__(1606);
+const get_inputs_1 = __nccwpck_require__(4288);
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
-function run() {
+const run = () => labeler().catch(error => {
+    core.error(error);
+    core.setFailed(error.message);
+});
+exports.run = run;
+function labeler() {
+    var _a, e_1, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
+        const { token, configPath, syncLabels, dot, prNumbers } = (0, get_inputs_1.getInputs)();
+        if (!prNumbers.length) {
+            core.warning('Could not get pull request number(s), exiting');
+            return;
+        }
+        const client = github.getOctokit(token, {}, pluginRetry.retry);
         try {
-            const token = core.getInput('repo-token');
-            const configPath = core.getInput('configuration-path', { required: true });
-            const syncLabels = !!core.getInput('sync-labels');
-            const dot = core.getBooleanInput('dot');
-            const prNumbers = getPrNumbers();
-            if (!prNumbers.length) {
-                core.warning('Could not get pull request number(s), exiting');
-                return;
-            }
-            const client = github.getOctokit(token, {}, pluginRetry.retry);
-            for (const prNumber of prNumbers) {
-                core.debug(`looking for pr #${prNumber}`);
-                let pullRequest;
+            for (var _d = true, _e = __asyncValues(api.getChangedPullRequests(client, prNumbers)), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                _c = _f.value;
+                _d = false;
                 try {
-                    const result = yield client.rest.pulls.get({
-                        owner: github.context.repo.owner,
-                        repo: github.context.repo.repo,
-                        pull_number: prNumber
-                    });
-                    pullRequest = result.data;
-                }
-                catch (error) {
-                    core.warning(`Could not find pull request #${prNumber}, skipping`);
-                    continue;
-                }
-                core.debug(`fetching changed files for pr #${prNumber}`);
-                const changedFiles = yield getChangedFiles(client, prNumber);
-                if (!changedFiles.length) {
-                    core.warning(`Pull request #${prNumber} has no changed files, skipping`);
-                    continue;
-                }
-                const labelGlobs = yield getLabelGlobs(client, configPath);
-                const preexistingLabels = pullRequest.labels.map(l => l.name);
-                const allLabels = new Set(preexistingLabels);
-                for (const [label, globs] of labelGlobs.entries()) {
-                    core.debug(`processing ${label}`);
-                    if (checkGlobs(changedFiles, globs, dot)) {
-                        allLabels.add(label);
+                    const pullRequest = _c;
+                    const labelGlobs = yield api.getLabelGlobs(client, configPath);
+                    const preexistingLabels = pullRequest.data.labels.map(l => l.name);
+                    const allLabels = new Set(preexistingLabels);
+                    for (const [label, globs] of labelGlobs.entries()) {
+                        core.debug(`processing ${label}`);
+                        if (checkGlobs(pullRequest.changedFiles, globs, dot)) {
+                            allLabels.add(label);
+                        }
+                        else if (syncLabels) {
+                            allLabels.delete(label);
+                        }
                     }
-                    else if (syncLabels) {
-                        allLabels.delete(label);
-                    }
-                }
-                const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
-                const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
-                try {
+                    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+                    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
                     let newLabels = [];
-                    if (!isListEqual(labelsToAdd, preexistingLabels)) {
-                        yield setLabels(client, prNumber, labelsToAdd);
-                        newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
+                    try {
+                        if (!(0, utils_1.isListEqual)(labelsToAdd, preexistingLabels)) {
+                            yield api.setLabels(client, pullRequest.number, labelsToAdd);
+                            newLabels = labelsToAdd.filter(label => !preexistingLabels.includes(label));
+                        }
+                    }
+                    catch (error) {
+                        if (error.name !== 'HttpError' ||
+                            error.message !== 'Resource not accessible by integration') {
+                            throw error;
+                        }
+                        core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
+                            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+                        });
+                        core.setFailed(error.message);
+                        return;
                     }
                     core.setOutput('new-labels', newLabels.join(','));
                     core.setOutput('all-labels', labelsToAdd.join(','));
@@ -111,116 +605,19 @@ function run() {
                         core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
                     }
                 }
-                catch (error) {
-                    if (error.name === 'HttpError' &&
-                        error.message === 'Resource not accessible by integration') {
-                        core.warning(`The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`, {
-                            title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
-                        });
-                        core.setFailed(error.message);
-                    }
-                    else {
-                        throw error;
-                    }
+                finally {
+                    _d = true;
                 }
             }
         }
-        catch (error) {
-            core.error(error);
-            core.setFailed(error.message);
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+            }
+            finally { if (e_1) throw e_1.error; }
         }
     });
-}
-exports.run = run;
-function getPrNumbers() {
-    const pullRequestNumbers = core.getMultilineInput('pr-number');
-    if (pullRequestNumbers && pullRequestNumbers.length) {
-        const prNumbers = [];
-        for (const prNumber of pullRequestNumbers) {
-            const prNumberInt = parseInt(prNumber, 10);
-            if (isNaN(prNumberInt) || prNumberInt <= 0) {
-                core.warning(`'${prNumber}' is not a valid pull request number`);
-            }
-            else {
-                prNumbers.push(prNumberInt);
-            }
-        }
-        return prNumbers;
-    }
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return [];
-    }
-    return [pullRequest.number];
-}
-function getChangedFiles(client, prNumber) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            pull_number: prNumber
-        });
-        const listFilesResponse = yield client.paginate(listFilesOptions);
-        const changedFiles = listFilesResponse.map((f) => f.filename);
-        core.debug('found changed files:');
-        for (const file of changedFiles) {
-            core.debug('  ' + file);
-        }
-        return changedFiles;
-    });
-}
-function getLabelGlobs(client, configurationPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let configurationContent;
-        try {
-            if (!fs_1.default.existsSync(configurationPath)) {
-                core.info(`The configuration file (path: ${configurationPath}) was not found locally, fetching via the api`);
-                configurationContent = yield fetchContent(client, configurationPath);
-            }
-            else {
-                core.info(`The configuration file (path: ${configurationPath}) was found locally, reading from the file`);
-                configurationContent = fs_1.default.readFileSync(configurationPath, {
-                    encoding: 'utf8'
-                });
-            }
-        }
-        catch (e) {
-            if (e.name == 'HttpError' || e.name == 'NotFound') {
-                core.warning(`The config file was not found at ${configurationPath}. Make sure it exists and that this action has the correct access rights.`);
-            }
-            throw e;
-        }
-        // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
-        const configObject = yaml.load(configurationContent);
-        // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-        return getLabelGlobMapFromObject(configObject);
-    });
-}
-function fetchContent(client, repoPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const response = yield client.rest.repos.getContent({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            path: repoPath,
-            ref: github.context.sha
-        });
-        return Buffer.from(response.data.content, response.data.encoding).toString();
-    });
-}
-function getLabelGlobMapFromObject(configObject) {
-    const labelGlobs = new Map();
-    for (const label in configObject) {
-        if (typeof configObject[label] === 'string') {
-            labelGlobs.set(label, [configObject[label]]);
-        }
-        else if (configObject[label] instanceof Array) {
-            labelGlobs.set(label, configObject[label]);
-        }
-        else {
-            throw Error(`found unexpected type for label ${label} (should be string or array of globs)`);
-        }
-    }
-    return labelGlobs;
 }
 function toMatchConfig(config) {
     if (typeof config === 'string') {
@@ -229,9 +626,6 @@ function toMatchConfig(config) {
         };
     }
     return config;
-}
-function printPattern(matcher) {
-    return (matcher.negate ? '!' : '') + matcher.pattern;
 }
 function checkGlobs(changedFiles, globs, dot) {
     for (const glob of globs) {
@@ -247,9 +641,9 @@ exports.checkGlobs = checkGlobs;
 function isMatch(changedFile, matchers) {
     core.debug(`    matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
-        core.debug(`   - ${printPattern(matcher)}`);
+        core.debug(`   - ${(0, utils_1.printPattern)(matcher)}`);
         if (!matcher.match(changedFile)) {
-            core.debug(`   ${printPattern(matcher)} did not match`);
+            core.debug(`   ${(0, utils_1.printPattern)(matcher)} did not match`);
             return false;
         }
     }
@@ -295,19 +689,62 @@ function checkMatch(changedFiles, matchConfig, dot) {
     }
     return true;
 }
-function isListEqual(listA, listB) {
+
+
+/***/ }),
+
+/***/ 1606:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__nccwpck_require__(8725), exports);
+__exportStar(__nccwpck_require__(2897), exports);
+
+
+/***/ }),
+
+/***/ 8725:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isListEqual = void 0;
+const isListEqual = (listA, listB) => {
     return listA.length === listB.length && listA.every(el => listB.includes(el));
-}
-function setLabels(client, prNumber, labels) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield client.rest.issues.setLabels({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            labels: labels
-        });
-    });
-}
+};
+exports.isListEqual = isListEqual;
+
+
+/***/ }),
+
+/***/ 2897:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.printPattern = void 0;
+const printPattern = (matcher) => {
+    return (matcher.negate ? '!' : '') + matcher.pattern;
+};
+exports.printPattern = printPattern;
 
 
 /***/ }),
