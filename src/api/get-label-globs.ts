@@ -19,14 +19,14 @@ export const getLabelGlobs = (
     .then(() => {
       if (!fs.existsSync(configurationPath)) {
         core.info(
-          `The configuration file (path: ${configurationPath}) isn't not found locally, fetching via the api`
+          `The configuration file (path: ${configurationPath}) was not found locally, fetching via the api`
         );
 
         return getContent(client, configurationPath);
       }
 
       core.info(
-        `The configuration file (path: ${configurationPath}) is found locally, reading from the file`
+        `The configuration file (path: ${configurationPath}) was found locally, reading from the file`
       );
 
       return fs.readFileSync(configurationPath, {
