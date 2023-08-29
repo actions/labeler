@@ -42,6 +42,7 @@ export async function run() {
         });
         pullRequest = result.data;
       } catch (error: any) {
+        core.debug(`#${error.message}`);
         core.warning(`Could not find pull request #${prNumber}, skipping`);
         continue;
       }
