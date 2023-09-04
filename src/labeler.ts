@@ -236,18 +236,21 @@ export function checkAny(
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
       if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
+        core.debug(`  "any" patterns matched`);
         return true;
       }
     }
 
     if (matchConfig.changedFiles) {
       if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles)) {
+        core.debug(`  "any" patterns matched`);
         return true;
       }
     }
 
     if (matchConfig.headBranch) {
       if (checkAnyBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "any" patterns matched`);
         return true;
       }
     }
@@ -274,6 +277,7 @@ export function checkAll(
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
       if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
+        core.debug(`  "all" patterns did not match`);
         return false;
       }
     }
@@ -285,12 +289,14 @@ export function checkAll(
       }
 
       if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
+        core.debug(`  "all" patterns did not match`);
         return false;
       }
     }
 
     if (matchConfig.headBranch) {
       if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "all" patterns did not match`);
         return false;
       }
     }

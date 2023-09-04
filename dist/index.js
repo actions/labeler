@@ -150,10 +150,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkAllChangedFiles = exports.checkAnyChangedFiles = exports.toChangedFilesMatchConfig = exports.getChangedFiles = void 0;
+exports.checkIfAllGlobsMatchAllFiles = exports.checkIfAnyGlobMatchesAllFiles = exports.checkIfAllGlobsMatchAnyFile = exports.checkIfAnyGlobMatchesAnyFile = exports.checkAllChangedFiles = exports.checkAnyChangedFiles = exports.toChangedFilesMatchConfig = exports.getChangedFiles = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const minimatch_1 = __nccwpck_require__(2002);
+const ALLOWED_FILES_CONFIG_KEYS = [
+    'AnyGlobToAnyFile',
+    'AnyGlobToAllFiles',
+    'AllGlobsToAnyFile',
+    'AllGlobsToAllFiles'
+];
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
@@ -175,65 +181,178 @@ function toChangedFilesMatchConfig(config) {
     if (!config['changed-files'] || !config['changed-files'].length) {
         return {};
     }
-    const changedFilesConfig = config['changed-files'];
+    const changedFilesConfigs = Array.isArray(config['changed-files'])
+        ? config['changed-files']
+        : [config['changed-files']];
+    const validChangedFilesConfigs = [];
+    changedFilesConfigs.forEach(changedFilesConfig => {
+        if (!isObject(changedFilesConfig)) {
+            throw new Error(`The "changed-files" section must have a valid config structure. Please read the action documentation for more information`);
+        }
+        const changedFilesConfigKeys = Object.keys(changedFilesConfig);
+        const invalidKeys = changedFilesConfigKeys.filter(key => !ALLOWED_FILES_CONFIG_KEYS.includes(key));
+        if (invalidKeys.length) {
+            throw new Error(`Unknown config options were under "changed-files": ${invalidKeys.join(', ')}`);
+        }
+        changedFilesConfigKeys.forEach(key => {
+            validChangedFilesConfigs.push({
+                [key]: Array.isArray(changedFilesConfig[key])
+                    ? changedFilesConfig[key]
+                    : [changedFilesConfig[key]]
+            });
+        });
+    });
     return {
-        changedFiles: Array.isArray(changedFilesConfig)
-            ? changedFilesConfig
-            : [changedFilesConfig]
+        changedFiles: validChangedFilesConfigs
     };
 }
 exports.toChangedFilesMatchConfig = toChangedFilesMatchConfig;
+function isObject(obj) {
+    return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
+}
 function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
-function isAnyMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
-    for (const matcher of matchers) {
-        core.debug(`     - ${printPattern(matcher)}`);
-        if (matcher.match(changedFile)) {
-            core.debug(`    ${printPattern(matcher)} matched`);
-            return true;
+function checkAnyChangedFiles(changedFiles, globPatternsConfigs) {
+    core.debug(`   checking "changed-files" patterns`);
+    for (const globPatternsConfig of globPatternsConfigs) {
+        if (globPatternsConfig.AnyGlobToAnyFile) {
+            if (checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.AnyGlobToAnyFile)) {
+                core.debug(`   "changed-files" matched`);
+                return true;
+            }
+        }
+        if (globPatternsConfig.AnyGlobToAllFiles) {
+            if (checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.AnyGlobToAllFiles)) {
+                core.debug(`   "changed-files" matched`);
+                return true;
+            }
+        }
+        if (globPatternsConfig.AllGlobsToAnyFile) {
+            if (checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.AllGlobsToAnyFile)) {
+                core.debug(`   "changed-files" matched`);
+                return true;
+            }
+        }
+        if (globPatternsConfig.AllGlobsToAllFiles) {
+            if (checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.AllGlobsToAllFiles)) {
+                core.debug(`   "changed-files" matched`);
+                return true;
+            }
         }
     }
-    core.debug(`    no patterns matched`);
-    return false;
-}
-function isAllMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
-    for (const matcher of matchers) {
-        core.debug(`     - ${printPattern(matcher)}`);
-        if (!matcher.match(changedFile)) {
-            core.debug(`    ${printPattern(matcher)} did not match`);
-            return false;
-        }
-    }
-    core.debug(`    all patterns matched`);
-    return true;
-}
-function checkAnyChangedFiles(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
-    for (const changedFile of changedFiles) {
-        if (isAnyMatch(changedFile, matchers)) {
-            core.debug(`   "any" patterns matched against ${changedFile}`);
-            return true;
-        }
-    }
-    core.debug(`   "any" patterns did not match any files`);
+    core.debug(`   "changed-files" did not match`);
     return false;
 }
 exports.checkAnyChangedFiles = checkAnyChangedFiles;
-function checkAllChangedFiles(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
-    for (const changedFile of changedFiles) {
-        if (!isAllMatch(changedFile, matchers)) {
-            core.debug(`   "all" patterns did not match against ${changedFile}`);
-            return false;
+function checkAllChangedFiles(changedFiles, globPatternsConfigs) {
+    core.debug(`   checking "changed-files" patterns`);
+    for (const globPatternsConfig of globPatternsConfigs) {
+        if (globPatternsConfig.AnyGlobToAnyFile) {
+            if (!checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.AnyGlobToAnyFile)) {
+                core.debug(`   "changed-files" did not match`);
+                return false;
+            }
+        }
+        if (globPatternsConfig.AnyGlobToAllFiles) {
+            if (!checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.AnyGlobToAllFiles)) {
+                core.debug(`   "changed-files" did not match`);
+                return false;
+            }
+        }
+        if (globPatternsConfig.AllGlobsToAnyFile) {
+            if (!checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.AllGlobsToAnyFile)) {
+                core.debug(`   "changed-files" did not match`);
+                return false;
+            }
+        }
+        if (globPatternsConfig.AllGlobsToAllFiles) {
+            if (!checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.AllGlobsToAllFiles)) {
+                core.debug(`   "changed-files" did not match`);
+                return false;
+            }
         }
     }
-    core.debug(`   "all" patterns matched all files`);
+    core.debug(`   "changed-files" patterns matched`);
     return true;
 }
 exports.checkAllChangedFiles = checkAllChangedFiles;
+function checkIfAnyGlobMatchesAnyFile(changedFiles, globs) {
+    core.debug(`    checking "AnyGlobToAnyFile" config patterns`);
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    for (const matcher of matchers) {
+        for (const changedFile of changedFiles) {
+            core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
+            if (matcher.match(changedFile)) {
+                core.debug(`     "${printPattern(matcher)}" pattern matched ${changedFile}`);
+                return true;
+            }
+        }
+    }
+    core.debug(`    none of the patterns matched any of the files`);
+    return false;
+}
+exports.checkIfAnyGlobMatchesAnyFile = checkIfAnyGlobMatchesAnyFile;
+function checkIfAllGlobsMatchAnyFile(changedFiles, globs) {
+    core.debug(`    checking "AllGlobsToAnyFile" config patterns`);
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    for (const changedFile of changedFiles) {
+        let matched = true;
+        for (const matcher of matchers) {
+            core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
+            if (!matcher.match(changedFile)) {
+                core.debug(`     "${printPattern(matcher)}" pattern  did not match ${changedFile}`);
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            core.debug(`    all patterns matched ${changedFile}`);
+            return true;
+        }
+    }
+    core.debug(`    none of the files matched all patterns`);
+    return false;
+}
+exports.checkIfAllGlobsMatchAnyFile = checkIfAllGlobsMatchAnyFile;
+function checkIfAnyGlobMatchesAllFiles(changedFiles, globs) {
+    core.debug(`    checking "AnyGlobToAllFiles" config patterns`);
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    for (const matcher of matchers) {
+        let matched = true;
+        for (const changedFile of changedFiles) {
+            core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
+            if (!matcher.match(changedFile)) {
+                core.debug(`     "${printPattern(matcher)}" pattern did not match ${changedFile}`);
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
+            return true;
+        }
+    }
+    core.debug(`    none of the patterns matched all files`);
+    return false;
+}
+exports.checkIfAnyGlobMatchesAllFiles = checkIfAnyGlobMatchesAllFiles;
+function checkIfAllGlobsMatchAllFiles(changedFiles, globs) {
+    core.debug(`    checking "AllGlobsToAllFiles" config patterns`);
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    for (const changedFile of changedFiles) {
+        for (const matcher of matchers) {
+            core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
+            if (!matcher.match(changedFile)) {
+                core.debug(`     "${printPattern(matcher)}" pattern did not match ${changedFile}`);
+                return false;
+            }
+        }
+    }
+    core.debug(`    all patterns matched all files`);
+    return true;
+}
+exports.checkIfAllGlobsMatchAllFiles = checkIfAllGlobsMatchAllFiles;
 
 
 /***/ }),
@@ -447,16 +566,19 @@ function checkAny(matchConfigs, changedFiles) {
     for (const matchConfig of matchConfigs) {
         if (matchConfig.baseBranch) {
             if ((0, branch_1.checkAnyBranch)(matchConfig.baseBranch, 'base')) {
+                core.debug(`  "any" patterns matched`);
                 return true;
             }
         }
         if (matchConfig.changedFiles) {
             if ((0, changedFiles_1.checkAnyChangedFiles)(changedFiles, matchConfig.changedFiles)) {
+                core.debug(`  "any" patterns matched`);
                 return true;
             }
         }
         if (matchConfig.headBranch) {
             if ((0, branch_1.checkAnyBranch)(matchConfig.headBranch, 'head')) {
+                core.debug(`  "any" patterns matched`);
                 return true;
             }
         }
@@ -476,6 +598,7 @@ function checkAll(matchConfigs, changedFiles) {
     for (const matchConfig of matchConfigs) {
         if (matchConfig.baseBranch) {
             if (!(0, branch_1.checkAllBranch)(matchConfig.baseBranch, 'base')) {
+                core.debug(`  "all" patterns did not match`);
                 return false;
             }
         }
@@ -485,11 +608,13 @@ function checkAll(matchConfigs, changedFiles) {
                 return false;
             }
             if (!(0, changedFiles_1.checkAllChangedFiles)(changedFiles, matchConfig.changedFiles)) {
+                core.debug(`  "all" patterns did not match`);
                 return false;
             }
         }
         if (matchConfig.headBranch) {
             if (!(0, branch_1.checkAllBranch)(matchConfig.headBranch, 'head')) {
+                core.debug(`  "all" patterns did not match`);
                 return false;
             }
         }
