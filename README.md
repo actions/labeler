@@ -240,6 +240,10 @@ permissions
 documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
 for more details about access levels and event contexts.
 
+## Notes regarding `pull_request_target`
+
+When submitting a initial pull request to a repository using the `pull_request_target` event, the labeler action will not run on that pull request because the `pull_request_target` execution runs off the base branch instead of the pull request's branch. Unfortunately this means the introduction of the labeler can not be verified during that pull request and it needs to be committed blindly. 
+
 ## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
