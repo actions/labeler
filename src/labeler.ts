@@ -21,6 +21,7 @@ export async function run() {
     const token = core.getInput('repo-token');
     const configPath = core.getInput('configuration-path', {required: true});
     const syncLabels = !!core.getInput('sync-labels');
+    const removeLabels = !!core.getInput('remove-labels');
     const dot = core.getBooleanInput('dot');
 
     const prNumbers = getPrNumbers();
@@ -67,6 +68,12 @@ export async function run() {
           allLabels.add(label);
         } else if (syncLabels) {
           allLabels.delete(label);
+        }
+      }
+
+      if(!removeLabels){
+        for (const label of preexistingLabels){
+          allLabels.add(label);
         }
       }
 

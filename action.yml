@@ -14,6 +14,10 @@ inputs:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false
     required: false
+  remove-labels:
+    description: 'Whether or not to ever remove labels'
+    default: true
+    required: false
   dot:
     description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
     default: false
