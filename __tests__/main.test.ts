@@ -42,7 +42,7 @@ const configureInput = (
     'repo-token': string;
     'configuration-path': string;
     'sync-labels': string;
-    'dot': string;
+    dot: string;
     'pr-number': string[];
   }>
 ) => {
