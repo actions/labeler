@@ -41,8 +41,8 @@ const configureInput = (
   mockInput: Partial<{
     'repo-token': string;
     'configuration-path': string;
-    'sync-labels': boolean;
-    dot: boolean;
+    'sync-labels': string;
+    'dot': string;
     'pr-number': string[];
   }>
 ) => {
@@ -54,7 +54,7 @@ const configureInput = (
     .mockImplementation((name: string, ...opts) => mockInput[name]);
   jest
     .spyOn(core, 'getBooleanInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
+    .mockImplementation((name: string, ...opts) => mockInput[name] == 'true');
 };
 
 afterAll(() => jest.restoreAllMocks());
@@ -91,7 +91,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) adds labels to PRs that match our glob patterns', async () => {
-    configureInput({dot: true});
+    configureInput({dot: 'true'});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('.foo.pdf');
     getPullMock.mockResolvedValue(<any>{
@@ -137,7 +137,7 @@ describe('run', () => {
   });
 
   it('(with dot: true) does not add labels to PRs that do not match our glob patterns', async () => {
-    configureInput({dot: true});
+    configureInput({dot: 'true'});
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles('foo.txt');
 
@@ -150,7 +150,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': true
+      'sync-labels': 'true'
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
@@ -178,7 +178,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': false
+      'sync-labels': 'false'
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
@@ -203,7 +203,7 @@ describe('run', () => {
     configureInput({
       'repo-token': 'foo',
       'configuration-path': 'bar',
-      'sync-labels': false
+      'sync-labels': 'false'
     });
 
     usingLabelerConfigYaml('only_pdfs.yml');
