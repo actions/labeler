@@ -281,12 +281,13 @@ function checkIfAnyGlobMatchesAnyFile(changedFiles, globs) {
     core.debug(`    checking "AnyGlobToAnyFile" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const matcher of matchers) {
-        for (const changedFile of changedFiles) {
+        const matchedFile = changedFiles.find(changedFile => {
             core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
-            if (matcher.match(changedFile)) {
-                core.debug(`     "${printPattern(matcher)}" pattern matched ${changedFile}`);
-                return true;
-            }
+            return matcher.match(changedFile);
+        });
+        if (matchedFile) {
+            core.debug(`     "${printPattern(matcher)}" pattern matched ${matchedFile}`);
+            return true;
         }
     }
     core.debug(`    none of the patterns matched any of the files`);
@@ -297,19 +298,16 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs) {
     core.debug(`    checking "AllGlobsToAnyFile" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const changedFile of changedFiles) {
-        let matched = true;
-        for (const matcher of matchers) {
+        const mismatchedGlob = matchers.find(matcher => {
             core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
-            if (!matcher.match(changedFile)) {
-                core.debug(`     "${printPattern(matcher)}" pattern  did not match ${changedFile}`);
-                matched = false;
-                break;
-            }
+            return !matcher.match(changedFile);
+        });
+        if (mismatchedGlob) {
+            core.debug(`     "${printPattern(mismatchedGlob)}" pattern did not match ${changedFile}`);
+            continue;
         }
-        if (matched) {
-            core.debug(`    all patterns matched ${changedFile}`);
-            return true;
-        }
+        core.debug(`    all patterns matched ${changedFile}`);
+        return true;
     }
     core.debug(`    none of the files matched all patterns`);
     return false;
@@ -319,19 +317,16 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs) {
     core.debug(`    checking "AnyGlobToAllFiles" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const matcher of matchers) {
-        let matched = true;
-        for (const changedFile of changedFiles) {
+        const mismatchedFile = changedFiles.find(changedFile => {
             core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
-            if (!matcher.match(changedFile)) {
-                core.debug(`     "${printPattern(matcher)}" pattern did not match ${changedFile}`);
-                matched = false;
-                break;
-            }
+            return !matcher.match(changedFile);
+        });
+        if (mismatchedFile) {
+            core.debug(`     "${printPattern(matcher)}" pattern did not match ${mismatchedFile}`);
+            continue;
         }
-        if (matched) {
-            core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
-            return true;
-        }
+        core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
+        return true;
     }
     core.debug(`    none of the patterns matched all files`);
     return false;
@@ -341,12 +336,13 @@ function checkIfAllGlobsMatchAllFiles(changedFiles, globs) {
     core.debug(`    checking "AllGlobsToAllFiles" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g));
     for (const changedFile of changedFiles) {
-        for (const matcher of matchers) {
+        const mismatchedGlob = matchers.find(matcher => {
             core.debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
-            if (!matcher.match(changedFile)) {
-                core.debug(`     "${printPattern(matcher)}" pattern did not match ${changedFile}`);
-                return false;
-            }
+            return !matcher.match(changedFile);
+        });
+        if (mismatchedGlob) {
+            core.debug(`     "${printPattern(mismatchedGlob)}" pattern did not match ${changedFile}`);
+            return false;
         }
     }
     core.debug(`    all patterns matched all files`);

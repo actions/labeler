@@ -89,7 +89,7 @@ export function toChangedFilesMatchConfig(
   };
 }
 
-function isObject(obj: any): boolean {
+function isObject(obj: unknown): obj is object {
   return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
 }
 
@@ -225,19 +225,21 @@ export function checkIfAnyGlobMatchesAnyFile(
   const matchers = globs.map(g => new Minimatch(g));
 
   for (const matcher of matchers) {
-    for (const changedFile of changedFiles) {
+    const matchedFile = changedFiles.find(changedFile => {
       core.debug(
         `     checking "${printPattern(
           matcher
         )}" pattern against ${changedFile}`
       );
 
-      if (matcher.match(changedFile)) {
-        core.debug(
-          `     "${printPattern(matcher)}" pattern matched ${changedFile}`
-        );
-        return true;
-      }
+      return matcher.match(changedFile);
+    });
+
+    if (matchedFile) {
+      core.debug(
+        `     "${printPattern(matcher)}" pattern matched ${matchedFile}`
+      );
+      return true;
     }
   }
 
@@ -253,30 +255,28 @@ export function checkIfAllGlobsMatchAnyFile(
   const matchers = globs.map(g => new Minimatch(g));
 
   for (const changedFile of changedFiles) {
-    let matched = true;
-
-    for (const matcher of matchers) {
+    const mismatchedGlob = matchers.find(matcher => {
       core.debug(
         `     checking "${printPattern(
           matcher
         )}" pattern against ${changedFile}`
       );
 
-      if (!matcher.match(changedFile)) {
-        core.debug(
-          `     "${printPattern(
-            matcher
-          )}" pattern  did not match ${changedFile}`
-        );
-        matched = false;
-        break;
-      }
+      return !matcher.match(changedFile);
+    });
+
+    if (mismatchedGlob) {
+      core.debug(
+        `     "${printPattern(
+          mismatchedGlob
+        )}" pattern did not match ${changedFile}`
+      );
+
+      continue;
     }
 
-    if (matched) {
-      core.debug(`    all patterns matched ${changedFile}`);
-      return true;
-    }
+    core.debug(`    all patterns matched ${changedFile}`);
+    return true;
   }
 
   core.debug(`    none of the files matched all patterns`);
@@ -291,28 +291,28 @@ export function checkIfAnyGlobMatchesAllFiles(
   const matchers = globs.map(g => new Minimatch(g));
 
   for (const matcher of matchers) {
-    let matched = true;
-
-    for (const changedFile of changedFiles) {
+    const mismatchedFile = changedFiles.find(changedFile => {
       core.debug(
         `     checking "${printPattern(
           matcher
         )}" pattern against ${changedFile}`
       );
 
-      if (!matcher.match(changedFile)) {
-        core.debug(
-          `     "${printPattern(matcher)}" pattern did not match ${changedFile}`
-        );
-        matched = false;
-        break;
-      }
+      return !matcher.match(changedFile);
+    });
+
+    if (mismatchedFile) {
+      core.debug(
+        `     "${printPattern(
+          matcher
+        )}" pattern did not match ${mismatchedFile}`
+      );
+
+      continue;
     }
 
-    if (matched) {
-      core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
-      return true;
-    }
+    core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
+    return true;
   }
 
   core.debug(`    none of the patterns matched all files`);
@@ -327,19 +327,24 @@ export function checkIfAllGlobsMatchAllFiles(
   const matchers = globs.map(g => new Minimatch(g));
 
   for (const changedFile of changedFiles) {
-    for (const matcher of matchers) {
+    const mismatchedGlob = matchers.find(matcher => {
       core.debug(
         `     checking "${printPattern(
           matcher
         )}" pattern against ${changedFile}`
       );
 
-      if (!matcher.match(changedFile)) {
-        core.debug(
-          `     "${printPattern(matcher)}" pattern did not match ${changedFile}`
-        );
-        return false;
-      }
+      return !matcher.match(changedFile);
+    });
+
+    if (mismatchedGlob) {
+      core.debug(
+        `     "${printPattern(
+          mismatchedGlob
+        )}" pattern did not match ${changedFile}`
+      );
+
+      return false;
     }
   }
 
