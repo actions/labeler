@@ -2,7 +2,11 @@ import {
   ChangedFilesMatchConfig,
   checkAllChangedFiles,
   checkAnyChangedFiles,
-  toChangedFilesMatchConfig
+  toChangedFilesMatchConfig,
+  checkIfAnyGlobMatchesAnyFile,
+  checkIfAllGlobsMatchAnyFile,
+  checkIfAnyGlobMatchesAllFiles,
+  checkIfAllGlobsMatchAllFiles
 } from '../src/changedFiles';
 
 jest.mock('@actions/core');
@@ -11,20 +15,28 @@ jest.mock('@actions/github');
 describe('checkAllChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
-  describe('when the globs match every file that has been changed', () => {
-    const globs = ['*.txt'];
+  describe('when all given glob pattern configs matched', () => {
+    const globPatternsConfigs = [
+      {AnyGlobToAnyFile: ['foo.txt']},
+      {AnyGlobToAllFiles: ['*.txt']},
+      {AllGlobsToAllFiles: ['**']}
+    ];
 
     it('returns true', () => {
-      const result = checkAllChangedFiles(changedFiles, globs);
+      const result = checkAllChangedFiles(changedFiles, globPatternsConfigs);
       expect(result).toBe(true);
     });
   });
 
-  describe(`when the globs don't match every file that has changed`, () => {
-    const globs = ['foo.txt'];
+  describe(`when some given glob pattern config did not match`, () => {
+    const globPatternsConfigs = [
+      {AnyGlobToAnyFile: ['*.md']},
+      {AnyGlobToAllFiles: ['*.txt']},
+      {AllGlobsToAllFiles: ['**']}
+    ];
 
     it('returns false', () => {
-      const result = checkAllChangedFiles(changedFiles, globs);
+      const result = checkAllChangedFiles(changedFiles, globPatternsConfigs);
       expect(result).toBe(false);
     });
   });
@@ -33,20 +45,26 @@ describe('checkAllChangedFiles', () => {
 describe('checkAnyChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
 
-  describe('when any glob matches any of the files that have changed', () => {
-    const globs = ['*.txt', '*.md'];
+  describe('when any given glob pattern config matched', () => {
+    const globPatternsConfigs = [
+      {AnyGlobToAnyFile: ['*.md']},
+      {AnyGlobToAllFiles: ['*.txt']}
+    ];
 
     it('returns true', () => {
-      const result = checkAnyChangedFiles(changedFiles, globs);
+      const result = checkAnyChangedFiles(changedFiles, globPatternsConfigs);
       expect(result).toBe(true);
     });
   });
 
-  describe('when none of the globs match any files that have changed', () => {
-    const globs = ['*.md'];
+  describe('when none of the given glob pattern configs matched', () => {
+    const globPatternsConfigs = [
+      {AnyGlobToAnyFile: ['*.md']},
+      {AnyGlobToAllFiles: ['!*.txt']}
+    ];
 
     it('returns false', () => {
-      const result = checkAnyChangedFiles(changedFiles, globs);
+      const result = checkAnyChangedFiles(changedFiles, globPatternsConfigs);
       expect(result).toBe(false);
     });
   });
@@ -63,44 +81,140 @@ describe('toChangedFilesMatchConfig', () => {
   });
 
   describe(`when there is a 'changed-files' key in the config`, () => {
-    describe('and the value is an array of strings', () => {
-      const config = {'changed-files': ['testing']};
+    describe('but the glob pattern config key is not provided', () => {
+      const config = {'changed-files': ['bar']};
 
-      it('sets the value in the config object', () => {
-        const result = toChangedFilesMatchConfig(config);
-        expect(result).toEqual<ChangedFilesMatchConfig>({
-          changedFiles: ['testing']
+      it('throws the error', () => {
+        expect(() => {
+          toChangedFilesMatchConfig(config);
+        }).toThrow(
+          `The "changed-files" section must have a valid config structure. Please read the action documentation for more information`
+        );
+      });
+    });
+
+    describe('but the glob pattern config key is not valid', () => {
+      const config = {'changed-files': [{NotValidConfigKey: ['bar']}]};
+
+      it('throws the error', () => {
+        expect(() => {
+          toChangedFilesMatchConfig(config);
+        }).toThrow(
+          `Unknown config options were under "changed-files": NotValidConfigKey`
+        );
+      });
+    });
+
+    describe('and the glob pattern config key is provided', () => {
+      describe('and the value is an array of strings', () => {
+        const config = {'changed-files': [{AnyGlobToAnyFile: ['testing']}]};
+
+        it('sets the value in the config object', () => {
+          const result = toChangedFilesMatchConfig(config);
+          expect(result).toEqual<ChangedFilesMatchConfig>({
+            changedFiles: [{AnyGlobToAnyFile: ['testing']}]
+          });
+        });
+      });
+
+      describe('and the value is a string', () => {
+        const config = {'changed-files': [{AnyGlobToAnyFile: 'testing'}]};
+
+        it(`sets the string as an array in the config object`, () => {
+          const result = toChangedFilesMatchConfig(config);
+          expect(result).toEqual<ChangedFilesMatchConfig>({
+            changedFiles: [{AnyGlobToAnyFile: ['testing']}]
+          });
         });
       });
     });
+  });
+});
 
-    describe('and the value is a string', () => {
-      const config = {'changed-files': 'testing'};
+describe('checkIfAnyGlobMatchesAnyFile', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
 
-      it(`sets the string as an array in the config object`, () => {
-        const result = toChangedFilesMatchConfig(config);
-        expect(result).toEqual<ChangedFilesMatchConfig>({
-          changedFiles: ['testing']
-        });
-      });
+  describe('when any given glob pattern matched any file', () => {
+    const globPatterns = ['*.md', 'foo.txt'];
+
+    it('returns true', () => {
+      const result = checkIfAnyGlobMatchesAnyFile(changedFiles, globPatterns);
+      expect(result).toBe(true);
     });
+  });
 
-    describe('but the value is an empty string', () => {
-      const config = {'changed-files': ''};
+  describe('when none of the given glob pattern matched any file', () => {
+    const globPatterns = ['*.md', '!*.txt'];
 
-      it(`returns an empty object`, () => {
-        const result = toChangedFilesMatchConfig(config);
-        expect(result).toEqual<ChangedFilesMatchConfig>({});
-      });
+    it('returns false', () => {
+      const result = checkIfAnyGlobMatchesAnyFile(changedFiles, globPatterns);
+      expect(result).toBe(false);
     });
+  });
+});
 
-    describe('but the value is an empty array', () => {
-      const config = {'changed-files': []};
+describe('checkIfAllGlobsMatchAnyFile', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
 
-      it(`returns an empty object`, () => {
-        const result = toChangedFilesMatchConfig(config);
-        expect(result).toEqual<ChangedFilesMatchConfig>({});
-      });
+  describe('when all given glob patterns matched any file', () => {
+    const globPatterns = ['**/bar.txt', 'bar.txt'];
+
+    it('returns true', () => {
+      const result = checkIfAllGlobsMatchAnyFile(changedFiles, globPatterns);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('when some of the given glob patterns did not match any file', () => {
+    const globPatterns = ['*.txt', '*.md'];
+
+    it('returns false', () => {
+      const result = checkIfAllGlobsMatchAnyFile(changedFiles, globPatterns);
+      expect(result).toBe(false);
+    });
+  });
+});
+
+describe('checkIfAnyGlobMatchesAllFiles', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
+
+  describe('when any given glob pattern matched all files', () => {
+    const globPatterns = ['*.md', '*.txt'];
+
+    it('returns true', () => {
+      const result = checkIfAnyGlobMatchesAllFiles(changedFiles, globPatterns);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('when none of the given glob patterns matched all files', () => {
+    const globPatterns = ['*.md', 'bar.txt', 'foo.txt'];
+
+    it('returns false', () => {
+      const result = checkIfAnyGlobMatchesAllFiles(changedFiles, globPatterns);
+      expect(result).toBe(false);
+    });
+  });
+});
+
+describe('checkIfAllGlobsMatchAllFiles', () => {
+  const changedFiles = ['foo.txt', 'bar.txt'];
+
+  describe('when all given glob patterns matched all files', () => {
+    const globPatterns = ['*.txt', '**'];
+
+    it('returns true', () => {
+      const result = checkIfAllGlobsMatchAllFiles(changedFiles, globPatterns);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('when some of the given glob patterns did not match all files', () => {
+    const globPatterns = ['**', 'foo.txt'];
+
+    it('returns false', () => {
+      const result = checkIfAllGlobsMatchAllFiles(changedFiles, globPatterns);
+      expect(result).toBe(false);
     });
   });
 });
