@@ -76,6 +76,7 @@ function run() {
                     pullRequest = result.data;
                 }
                 catch (error) {
+                    core.debug(`#${error.message}`);
                     core.warning(`Could not find pull request #${prNumber}, skipping`);
                     continue;
                 }
