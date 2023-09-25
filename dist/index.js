@@ -102,12 +102,12 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
     function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getChangedPullRequests = void 0;
+exports.getPullRequests = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const get_changed_files_1 = __nccwpck_require__(8622);
-function getChangedPullRequests(client, prNumbers) {
-    return __asyncGenerator(this, arguments, function* getChangedPullRequests_1() {
+function getPullRequests(client, prNumbers) {
+    return __asyncGenerator(this, arguments, function* getPullRequests_1() {
         for (const prNumber of prNumbers) {
             core.debug(`looking for pr #${prNumber}`);
             let prData;
@@ -137,7 +137,7 @@ function getChangedPullRequests(client, prNumbers) {
         }
     });
 }
-exports.getChangedPullRequests = getChangedPullRequests;
+exports.getPullRequests = getPullRequests;
 
 
 /***/ }),
@@ -561,9 +561,10 @@ function labeler() {
             return;
         }
         const client = github.getOctokit(token, {}, pluginRetry.retry);
+        const pullRequests = api.getPullRequests(client, prNumbers);
         try {
-            for (var _d = true, _e = __asyncValues(api.getChangedPullRequests(client, prNumbers)), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
-                _c = _f.value;
+            for (var _d = true, pullRequests_1 = __asyncValues(pullRequests), pullRequests_1_1; pullRequests_1_1 = yield pullRequests_1.next(), _a = pullRequests_1_1.done, !_a;) {
+                _c = pullRequests_1_1.value;
                 _d = false;
                 try {
                     const pullRequest = _c;
@@ -613,7 +614,7 @@ function labeler() {
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+                if (!_d && !_a && (_b = pullRequests_1.return)) yield _b.call(pullRequests_1);
             }
             finally { if (e_1) throw e_1.error; }
         }

@@ -33,10 +33,9 @@ async function labeler() {
 
   const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
-  for await (const pullRequest of api.getChangedPullRequests(
-    client,
-    prNumbers
-  )) {
+  const pullRequests = api.getPullRequests(client, prNumbers);
+
+  for await (const pullRequest of pullRequests) {
     const labelGlobs: Map<string, StringOrMatchConfig[]> =
       await api.getLabelGlobs(client, configPath);
     const preexistingLabels = pullRequest.data.labels.map(l => l.name);

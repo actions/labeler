@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import {getChangedFiles} from './get-changed-files';
 import {ClientType} from './types';
 
-export async function* getChangedPullRequests(
+export async function* getPullRequests(
   client: ClientType,
   prNumbers: number[]
 ) {
