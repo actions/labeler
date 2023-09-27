@@ -40,7 +40,7 @@ label1:
 
 From a boolean logic perspective, top-level match objects are `OR`-ed together and individual match rules within an object are `AND`-ed. Combined with `!` negation, you can write complex matching rules.
 
-> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns.
+> ⚠️ This action uses [minimatch](https://www.npmjs.com/package/minimatch) to apply glob patterns to the names of files changed.
 > For historical reasons, paths starting with dot (e.g. `.github`) are not matched by default.
 > You need to set `dot: true` to change this behavior.
 > See [Inputs](#inputs) table below for details.
@@ -155,6 +155,43 @@ If `dot` is enabled:
 label1:
 - path/to/folder/**
 ```
+
+
+##### Matching based on body or title
+The match expression can also have the prefixes 'body:' or 'title:'. This are matched against the PR title and description. Can be combined like any other file name match expression.
+
+
+Examples 1:
+
+```yml
+slackNotify:
+- "body:flagProduction"
+```
+
+Would add the label "slackNotify" if the PR has the text "flagProduction" somewhere in the description
+
+Examples 2:
+
+```yml
+impactsRealease:
+- all:
+  - "body:flagProduction"
+  - *.properties
+```
+
+Would add the label "impactsRelease" if the PR has the text "flagProduction" somewhere in the description, and affects any file with the extension "properties" 
+
+Example 3:
+
+```yml
+customer:
+- all:
+  - "body:customer"
+  - "title:customer"
+```
+
+Would add the label customer if both the body and the title contain "customer"
+
 
 ##### Example workflow specifying Pull request numbers
 

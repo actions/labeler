@@ -90,7 +90,7 @@ function run() {
                 const allLabels = new Set(preexistingLabels);
                 for (const [label, globs] of labelGlobs.entries()) {
                     core.debug(`processing ${label}`);
-                    if (checkGlobs(changedFiles, globs, dot)) {
+                    if (checkGlobs(pullRequest.title, pullRequest.body, changedFiles, globs, dot)) {
                         allLabels.add(label);
                     }
                     else if (syncLabels) {
@@ -233,17 +233,41 @@ function toMatchConfig(config) {
 function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
-function checkGlobs(changedFiles, globs, dot) {
+function checkGlobs(prTitle, prBody, changedFiles, globs, dot) {
     for (const glob of globs) {
         core.debug(` checking pattern ${JSON.stringify(glob)}`);
         const matchConfig = toMatchConfig(glob);
-        if (checkMatch(changedFiles, matchConfig, dot)) {
+        if (checkMatch(prTitle, prBody, changedFiles, matchConfig, dot)) {
             return true;
         }
     }
     return false;
 }
 exports.checkGlobs = checkGlobs;
+function isMatchTitle(prTitle, titleMatchers) {
+    core.debug(`    matching patterns against title ${prTitle}`);
+    for (const titleMatcher of titleMatchers) {
+        core.debug(`   - pattern ${titleMatcher}`);
+        if (!prTitle.includes(titleMatcher)) {
+            core.debug(`   pattern ${titleMatcher} did not match`);
+            return false;
+        }
+    }
+    core.debug(`   all patterns matched title`);
+    return true;
+}
+function isMatchBody(prBody, bodyMatchers) {
+    core.debug(`    matching patterns against body ${prBody}`);
+    for (const bodyMatcher of bodyMatchers) {
+        core.debug(`   - pattern ${bodyMatcher}`);
+        if (!prBody.includes(bodyMatcher)) {
+            core.debug(`   pattern ${bodyMatcher} did not match`);
+            return false;
+        }
+    }
+    core.debug(`   all patterns matched body`);
+    return true;
+}
 function isMatch(changedFile, matchers) {
     core.debug(`    matching patterns against file ${changedFile}`);
     for (const matcher of matchers) {
@@ -257,24 +281,57 @@ function isMatch(changedFile, matchers) {
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles, globs, dot) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
-    core.debug(`  checking "any" patterns`);
-    for (const changedFile of changedFiles) {
-        if (isMatch(changedFile, matchers)) {
-            core.debug(`  "any" patterns matched against ${changedFile}`);
-            return true;
+function checkAny(prTitle, prBody, changedFiles, globs, dot) {
+    const matchers = groupMatchers(globs, dot);
+    core.debug(` checking "any" patterns`);
+    if (matchers.byTitle.length > 0 && isMatchTitle(prTitle, matchers.byTitle)) {
+        core.debug(`  "any" patterns matched against pr title ${prTitle}`);
+        return true;
+    }
+    if (matchers.byBody.length > 0 && isMatchBody(prBody, matchers.byBody)) {
+        core.debug(`  "any" patterns matched against pr body ${prBody}`);
+        return true;
+    }
+    if (matchers.byFile.length > 0) {
+        for (const changedFile of changedFiles) {
+            if (isMatch(changedFile, matchers.byFile)) {
+                core.debug(`  "any" patterns matched against ${changedFile}`);
+                return true;
+            }
         }
     }
     core.debug(`  "any" patterns did not match any files`);
     return false;
 }
+function groupMatchers(globs, dot) {
+    const grouped = { byBody: [], byTitle: [], byFile: [] };
+    return globs.reduce((g, glob) => {
+        if (glob.startsWith('title:')) {
+            g.byTitle.push(glob.substring(6));
+        }
+        else if (glob.startsWith('body:')) {
+            g.byBody.push(glob.substring(5));
+        }
+        else {
+            g.byFile.push(new minimatch_1.Minimatch(glob, { dot }));
+        }
+        return g;
+    }, grouped);
+}
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles, globs, dot) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
+function checkAll(prTitle, prBody, changedFiles, globs, dot) {
+    const matchers = groupMatchers(globs, dot);
     core.debug(` checking "all" patterns`);
+    if (!isMatchTitle(prTitle, matchers.byTitle)) {
+        core.debug(`  "all" patterns dit not match against pr title ${prTitle}`);
+        return false;
+    }
+    if (!isMatchBody(prBody, matchers.byBody)) {
+        core.debug(`  "all" patterns dit not match against pr body ${prBody}`);
+        return false;
+    }
     for (const changedFile of changedFiles) {
-        if (!isMatch(changedFile, matchers)) {
+        if (!isMatch(changedFile, matchers.byFile)) {
             core.debug(`  "all" patterns did not match against ${changedFile}`);
             return false;
         }
@@ -282,14 +339,14 @@ function checkAll(changedFiles, globs, dot) {
     core.debug(`  "all" patterns matched all files`);
     return true;
 }
-function checkMatch(changedFiles, matchConfig, dot) {
+function checkMatch(prTitle, prBody, changedFiles, matchConfig, dot) {
     if (matchConfig.all !== undefined) {
-        if (!checkAll(changedFiles, matchConfig.all, dot)) {
+        if (!checkAll(prTitle, prBody, changedFiles, matchConfig.all, dot)) {
             return false;
         }
     }
     if (matchConfig.any !== undefined) {
-        if (!checkAny(changedFiles, matchConfig.any, dot)) {
+        if (!checkAny(prTitle, prBody, changedFiles, matchConfig.any, dot)) {
             return false;
         }
     }
