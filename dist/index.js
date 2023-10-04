@@ -85,10 +85,10 @@ function run() {
                     core.warning(`Pull request #${prNumber} has no changed files, skipping`);
                     continue;
                 }
-                const labelGlobs = yield getLabelGlobs(client, configPath);
+                const labelsConfig = yield getLabelGlobs(client, configPath);
                 const preexistingLabels = pullRequest.labels.map(l => l.name);
                 const allLabels = new Set(preexistingLabels);
-                for (const [label, globs] of labelGlobs.entries()) {
+                for (const [label, { stringOrMatch: globs }] of labelsConfig.entries()) {
                     core.debug(`processing ${label}`);
                     if (checkGlobs(changedFiles, globs, dot)) {
                         allLabels.add(label);
@@ -102,7 +102,7 @@ function run() {
                 try {
                     let newLabels = [];
                     if (!isListEqual(labelsToAdd, preexistingLabels)) {
-                        yield setLabels(client, prNumber, labelsToAdd);
+                        yield setLabels(client, prNumber, labelsToAdd, getLabelsColor(labelsConfig));
                         newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
                     }
                     core.setOutput('new-labels', newLabels.join(','));
@@ -196,6 +196,15 @@ function getLabelGlobs(client, configurationPath) {
         return getLabelGlobMapFromObject(configObject);
     });
 }
+function getLabelsColor(labelsConfig) {
+    const labelsColor = new Map();
+    for (const [label, { color }] of labelsConfig.entries()) {
+        if (color) {
+            labelsColor.set(label, color);
+        }
+    }
+    return labelsColor;
+}
 function fetchContent(client, repoPath) {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield client.rest.repos.getContent({
@@ -208,13 +217,21 @@ function fetchContent(client, repoPath) {
     });
 }
 function getLabelGlobMapFromObject(configObject) {
+    var _a;
     const labelGlobs = new Map();
     for (const label in configObject) {
         if (typeof configObject[label] === 'string') {
-            labelGlobs.set(label, [configObject[label]]);
+            labelGlobs.set(label, { stringOrMatch: [configObject[label]] });
         }
         else if (configObject[label] instanceof Array) {
-            labelGlobs.set(label, configObject[label]);
+            labelGlobs.set(label, { stringOrMatch: configObject[label] });
+        }
+        else if (typeof configObject[label] === 'object' &&
+            ((_a = configObject[label]) === null || _a === void 0 ? void 0 : _a.pattern)) {
+            labelGlobs.set(label, {
+                stringOrMatch: configObject[label].pattern,
+                color: configObject[label].color
+            });
         }
         else {
             throw Error(`found unexpected type for label ${label} (should be string or array of globs)`);
@@ -298,14 +315,27 @@ function checkMatch(changedFiles, matchConfig, dot) {
 function isListEqual(listA, listB) {
     return listA.length === listB.length && listA.every(el => listB.includes(el));
 }
-function setLabels(client, prNumber, labels) {
+function setLabels(client, prNumber, labels, labelsColour) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        // remove previous labels
         yield client.rest.issues.setLabels({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             issue_number: prNumber,
-            labels: labels
+            labels
         });
+        for (const label of labels) {
+            const color = labelsColour.get(label);
+            if (color) {
+                yield client.rest.issues.updateLabel({
+                    owner: github.context.repo.owner,
+                    repo: github.context.repo.repo,
+                    name: label,
+                    color: (_a = color.replace('#', '')) !== null && _a !== void 0 ? _a : 'EDEDED'
+                });
+            }
+        }
     });
 }
 

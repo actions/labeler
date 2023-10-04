@@ -11,6 +11,10 @@ interface MatchConfig {
 }
 
 type StringOrMatchConfig = string | MatchConfig;
+type LabelsConfig = Map<
+  string,
+  {stringOrMatch: StringOrMatchConfig[]; color?: string}
+>;
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 // GitHub Issues cannot have more than 100 labels
@@ -55,13 +59,15 @@ export async function run() {
         continue;
       }
 
-      const labelGlobs: Map<string, StringOrMatchConfig[]> =
-        await getLabelGlobs(client, configPath);
+      const labelsConfig: LabelsConfig = await getLabelGlobs(
+        client,
+        configPath
+      );
 
       const preexistingLabels = pullRequest.labels.map(l => l.name);
       const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
-      for (const [label, globs] of labelGlobs.entries()) {
+      for (const [label, {stringOrMatch: globs}] of labelsConfig.entries()) {
         core.debug(`processing ${label}`);
         if (checkGlobs(changedFiles, globs, dot)) {
           allLabels.add(label);
@@ -77,7 +83,12 @@ export async function run() {
         let newLabels: string[] = [];
 
         if (!isListEqual(labelsToAdd, preexistingLabels)) {
-          await setLabels(client, prNumber, labelsToAdd);
+          await setLabels(
+            client,
+            prNumber,
+            labelsToAdd,
+            getLabelsColor(labelsConfig)
+          );
           newLabels = labelsToAdd.filter(l => !preexistingLabels.includes(l));
         }
 
@@ -164,7 +175,7 @@ async function getChangedFiles(
 async function getLabelGlobs(
   client: ClientType,
   configurationPath: string
-): Promise<Map<string, StringOrMatchConfig[]>> {
+): Promise<LabelsConfig> {
   let configurationContent: string;
   try {
     if (!fs.existsSync(configurationPath)) {
@@ -196,6 +207,16 @@ async function getLabelGlobs(
   return getLabelGlobMapFromObject(configObject);
 }
 
+function getLabelsColor(labelsConfig: LabelsConfig): Map<string, string> {
+  const labelsColor: Map<string, string> = new Map();
+  for (const [label, {color}] of labelsConfig.entries()) {
+    if (color) {
+      labelsColor.set(label, color);
+    }
+  }
+  return labelsColor;
+}
+
 async function fetchContent(
   client: ClientType,
   repoPath: string
@@ -210,15 +231,24 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelGlobMapFromObject(
-  configObject: any
-): Map<string, StringOrMatchConfig[]> {
-  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
+function getLabelGlobMapFromObject(configObject: any): LabelsConfig {
+  const labelGlobs: Map<
+    string,
+    {stringOrMatch: StringOrMatchConfig[]; color?: string}
+  > = new Map();
   for (const label in configObject) {
     if (typeof configObject[label] === 'string') {
-      labelGlobs.set(label, [configObject[label]]);
+      labelGlobs.set(label, {stringOrMatch: [configObject[label]]});
     } else if (configObject[label] instanceof Array) {
-      labelGlobs.set(label, configObject[label]);
+      labelGlobs.set(label, {stringOrMatch: configObject[label]});
+    } else if (
+      typeof configObject[label] === 'object' &&
+      configObject[label]?.pattern
+    ) {
+      labelGlobs.set(label, {
+        stringOrMatch: configObject[label].pattern,
+        color: configObject[label].color
+      });
     } else {
       throw Error(
         `found unexpected type for label ${label} (should be string or array of globs)`
@@ -337,12 +367,26 @@ function isListEqual(listA: string[], listB: string[]): boolean {
 async function setLabels(
   client: ClientType,
   prNumber: number,
-  labels: string[]
+  labels: string[],
+  labelsColour: Map<string, string>
 ) {
+  // remove previous labels
   await client.rest.issues.setLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: prNumber,
-    labels: labels
+    labels
   });
+
+  for (const label of labels) {
+    const color = labelsColour.get(label);
+    if (color) {
+      await client.rest.issues.updateLabel({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        name: label,
+        color: color.replace('#', '') ?? 'EDEDED'
+      });
+    }
+  }
 }

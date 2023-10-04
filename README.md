@@ -45,6 +45,31 @@ From a boolean logic perspective, top-level match objects are `OR`-ed together a
 > You need to set `dot: true` to change this behavior.
 > See [Inputs](#inputs) table below for details.
 
+#### Advanced configuration
+
+In order to define label colors, the `.github/labeler.yml` can be extended as follow:
+```yml
+# Add 'label1' to any changes within 'example' folder or any subfolders
+label1:
+  pattern:
+    - example/**
+  color:
+    '#FFFF00'
+
+
+# Add 'label2' to any file changes within 'example2' folder
+label2: example2/*
+
+# Add label3 to any change to .txt files within the entire repository. Quotation marks are required for the leading asterisk
+label3:
+  pattern:
+    - '**/*.txt'
+  color:
+    '#ECECEC'
+
+```
+
+
 #### Basic Examples
 
 ```yml

@@ -1,0 +1,4 @@
+touched-a-pdf-file:
+  pattern:
+    - any: ['*.pdf']
+  color: '#FF0011'
