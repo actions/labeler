@@ -3,7 +3,8 @@ import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import {Minimatch} from 'minimatch';
 import * as api from './api';
-import {isListEqual, printPattern} from './utils';
+import isEqual from 'lodash.isequal';
+import {printPattern} from './utils';
 import {getInputs} from './get-inputs';
 
 interface MatchConfig {
@@ -56,7 +57,7 @@ async function labeler() {
     let newLabels: string[] = [];
 
     try {
-      if (!isListEqual(labelsToAdd, preexistingLabels)) {
+      if (!isEqual(labelsToAdd, preexistingLabels)) {
         await api.setLabels(client, pullRequest.number, labelsToAdd);
         newLabels = labelsToAdd.filter(
           label => !preexistingLabels.includes(label)
