@@ -1,13 +1,13 @@
+import * as yaml from 'js-yaml';
+import * as core from '@actions/core';
+import * as fs from 'fs';
+import {checkMatchConfigs} from '../src/labeler';
 import {
-  checkMatchConfigs,
   MatchConfig,
   toMatchConfig,
   getLabelConfigMapFromObject,
   BaseMatchConfig
-} from '../src/labeler';
-import * as yaml from 'js-yaml';
-import * as core from '@actions/core';
-import * as fs from 'fs';
+} from '../src/api/get-label-configs';
 
 jest.mock('@actions/core');
 
@@ -95,14 +95,14 @@ describe('checkMatchConfigs', () => {
 
     it('returns true when our pattern does match changed files', () => {
       const changedFiles = ['foo.txt', 'bar.txt'];
-      const result = checkMatchConfigs(changedFiles, matchConfig);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
 
       expect(result).toBeTruthy();
     });
 
     it('returns false when our pattern does not match changed files', () => {
       const changedFiles = ['foo.docx'];
-      const result = checkMatchConfigs(changedFiles, matchConfig);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
 
       expect(result).toBeFalsy();
     });
@@ -118,8 +118,22 @@ describe('checkMatchConfigs', () => {
       ];
       const changedFiles = ['foo.txt', 'bar.txt'];
 
-      const result = checkMatchConfigs(changedFiles, matchConfig);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
       expect(result).toBe(true);
+    });
+
+    it('returns false for a file starting with dot if `dot` option is false', () => {
+      const changedFiles = ['.foo.txt'];
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+
+      expect(result).toBeFalsy();
+    });
+
+    it('returns true for a file starting with dot if `dot` option is true', () => {
+      const changedFiles = ['.foo.txt'];
+      const result = checkMatchConfigs(changedFiles, matchConfig, true);
+
+      expect(result).toBeTruthy();
     });
   });
 
@@ -131,7 +145,7 @@ describe('checkMatchConfigs', () => {
     const changedFiles = ['foo.txt', 'bar.md'];
 
     it('returns false when only one config matches', () => {
-      const result = checkMatchConfigs(changedFiles, matchConfig);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
       expect(result).toBe(false);
     });
 
@@ -140,7 +154,7 @@ describe('checkMatchConfigs', () => {
         {any: [{changedFiles: [{AnyGlobToAnyFile: ['*.txt']}]}]},
         {any: [{headBranch: ['head-branch']}]}
       ];
-      const result = checkMatchConfigs(changedFiles, matchConfig);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
       expect(result).toBe(true);
     });
   });

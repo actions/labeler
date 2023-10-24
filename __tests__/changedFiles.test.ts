@@ -23,7 +23,11 @@ describe('checkAllChangedFiles', () => {
     ];
 
     it('returns true', () => {
-      const result = checkAllChangedFiles(changedFiles, globPatternsConfigs);
+      const result = checkAllChangedFiles(
+        changedFiles,
+        globPatternsConfigs,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -36,7 +40,11 @@ describe('checkAllChangedFiles', () => {
     ];
 
     it('returns false', () => {
-      const result = checkAllChangedFiles(changedFiles, globPatternsConfigs);
+      const result = checkAllChangedFiles(
+        changedFiles,
+        globPatternsConfigs,
+        false
+      );
       expect(result).toBe(false);
     });
   });
@@ -52,7 +60,11 @@ describe('checkAnyChangedFiles', () => {
     ];
 
     it('returns true', () => {
-      const result = checkAnyChangedFiles(changedFiles, globPatternsConfigs);
+      const result = checkAnyChangedFiles(
+        changedFiles,
+        globPatternsConfigs,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -64,7 +76,11 @@ describe('checkAnyChangedFiles', () => {
     ];
 
     it('returns false', () => {
-      const result = checkAnyChangedFiles(changedFiles, globPatternsConfigs);
+      const result = checkAnyChangedFiles(
+        changedFiles,
+        globPatternsConfigs,
+        false
+      );
       expect(result).toBe(false);
     });
   });
@@ -138,7 +154,11 @@ describe('checkIfAnyGlobMatchesAnyFile', () => {
     const globPatterns = ['*.md', 'foo.txt'];
 
     it('returns true', () => {
-      const result = checkIfAnyGlobMatchesAnyFile(changedFiles, globPatterns);
+      const result = checkIfAnyGlobMatchesAnyFile(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -147,7 +167,11 @@ describe('checkIfAnyGlobMatchesAnyFile', () => {
     const globPatterns = ['*.md', '!*.txt'];
 
     it('returns false', () => {
-      const result = checkIfAnyGlobMatchesAnyFile(changedFiles, globPatterns);
+      const result = checkIfAnyGlobMatchesAnyFile(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(false);
     });
   });
@@ -160,7 +184,11 @@ describe('checkIfAllGlobsMatchAnyFile', () => {
     const globPatterns = ['**/bar.txt', 'bar.txt'];
 
     it('returns true', () => {
-      const result = checkIfAllGlobsMatchAnyFile(changedFiles, globPatterns);
+      const result = checkIfAllGlobsMatchAnyFile(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -169,7 +197,11 @@ describe('checkIfAllGlobsMatchAnyFile', () => {
     const globPatterns = ['*.txt', '*.md'];
 
     it('returns false', () => {
-      const result = checkIfAllGlobsMatchAnyFile(changedFiles, globPatterns);
+      const result = checkIfAllGlobsMatchAnyFile(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(false);
     });
   });
@@ -182,7 +214,11 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
     const globPatterns = ['*.md', '*.txt'];
 
     it('returns true', () => {
-      const result = checkIfAnyGlobMatchesAllFiles(changedFiles, globPatterns);
+      const result = checkIfAnyGlobMatchesAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -191,7 +227,11 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
     const globPatterns = ['*.md', 'bar.txt', 'foo.txt'];
 
     it('returns false', () => {
-      const result = checkIfAnyGlobMatchesAllFiles(changedFiles, globPatterns);
+      const result = checkIfAnyGlobMatchesAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(false);
     });
   });
@@ -204,7 +244,11 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
     const globPatterns = ['*.txt', '**'];
 
     it('returns true', () => {
-      const result = checkIfAllGlobsMatchAllFiles(changedFiles, globPatterns);
+      const result = checkIfAllGlobsMatchAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(true);
     });
   });
@@ -213,7 +257,11 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
     const globPatterns = ['**', 'foo.txt'];
 
     it('returns false', () => {
-      const result = checkIfAllGlobsMatchAllFiles(changedFiles, globPatterns);
+      const result = checkIfAllGlobsMatchAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
       expect(result).toBe(false);
     });
   });
