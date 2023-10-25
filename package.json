@@ -1,6 +1,6 @@
 {
   "name": "labeler",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
