@@ -160,7 +160,7 @@ You might want to use action called [@actions/checkout](https://github.com/actio
 
 ```yml
     steps:
-    - uses: actions/checkout@v3 # Uploads repository content to the runner
+    - uses: actions/checkout@v4 # Uploads repository content to the runner
       with:
         repository: "owner/repositoryName" # The one of the available inputs, visit https://github.com/actions/checkout#readme to find more
     - uses: actions/labeler@v4
