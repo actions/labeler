@@ -1,196 +1,110 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import * as yaml from 'js-yaml';
+import * as pluginRetry from '@octokit/plugin-retry';
+import * as api from './api';
+import isEqual from 'lodash.isequal';
+import {getInputs} from './get-inputs';
 
-import {
-  ChangedFilesMatchConfig,
-  getChangedFiles,
-  toChangedFilesMatchConfig,
-  checkAllChangedFiles,
-  checkAnyChangedFiles
-} from './changedFiles';
-import {
-  checkAnyBranch,
-  checkAllBranch,
-  toBranchMatchConfig,
-  BranchMatchConfig
-} from './branch';
+import {BaseMatchConfig, MatchConfig} from './api/get-label-configs';
 
-export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
+import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles';
 
-export type MatchConfig = {
-  any?: BaseMatchConfig[];
-  all?: BaseMatchConfig[];
-};
+import {checkAnyBranch, checkAllBranch} from './branch';
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+// GitHub Issues cannot have more than 100 labels
+const GITHUB_MAX_LABELS = 100;
 
-export async function run() {
-  try {
-    const token = core.getInput('repo-token');
-    const configPath = core.getInput('configuration-path', {required: true});
-    const syncLabels = core.getBooleanInput('sync-labels');
+export const run = () =>
+  labeler().catch(error => {
+    core.error(error);
+    core.setFailed(error.message);
+  });
 
-    const prNumber = getPrNumber();
-    if (!prNumber) {
-      core.info('Could not get pull request number from context, exiting');
-      return;
-    }
+async function labeler() {
+  const {token, configPath, syncLabels, dot, prNumbers} = getInputs();
 
-    const client: ClientType = github.getOctokit(token);
+  if (!prNumbers.length) {
+    core.warning('Could not get pull request number(s), exiting');
+    return;
+  }
 
-    const {data: pullRequest} = await client.rest.pulls.get({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      pull_number: prNumber
-    });
+  const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
 
-    core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelConfigs: Map<string, MatchConfig[]> = await getMatchConfigs(
+  const pullRequests = api.getPullRequests(client, prNumbers);
+
+  for await (const pullRequest of pullRequests) {
+    const labelConfigs: Map<string, MatchConfig[]> = await api.getLabelConfigs(
       client,
       configPath
     );
+    const preexistingLabels = pullRequest.data.labels.map(l => l.name);
+    const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
-    const labels: string[] = [];
-    const labelsToRemove: string[] = [];
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkMatchConfigs(changedFiles, configs)) {
-        labels.push(label);
-      } else if (pullRequest.labels.find(l => l.name === label)) {
-        labelsToRemove.push(label);
+      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+        allLabels.add(label);
+      } else if (syncLabels) {
+        allLabels.delete(label);
       }
     }
 
-    if (labels.length > 0) {
-      await addLabels(client, prNumber, labels);
+    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+
+    let newLabels: string[] = [];
+
+    try {
+      if (!isEqual(labelsToAdd, preexistingLabels)) {
+        await api.setLabels(client, pullRequest.number, labelsToAdd);
+        newLabels = labelsToAdd.filter(
+          label => !preexistingLabels.includes(label)
+        );
+      }
+    } catch (error: any) {
+      if (
+        error.name !== 'HttpError' ||
+        error.message !== 'Resource not accessible by integration'
+      ) {
+        throw error;
+      }
+
+      core.warning(
+        `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+        {
+          title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
+        }
+      );
+
+      core.setFailed(error.message);
+
+      return;
     }
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
-    }
-  } catch (error: any) {
-    core.error(error);
-    core.setFailed(error.message);
-  }
-}
+    core.setOutput('new-labels', newLabels.join(','));
+    core.setOutput('all-labels', labelsToAdd.join(','));
 
-function getPrNumber(): number | undefined {
-  const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
-  }
-
-  return pullRequest.number;
-}
-
-async function getMatchConfigs(
-  client: ClientType,
-  configurationPath: string
-): Promise<Map<string, MatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
-    client,
-    configurationPath
-  );
-
-  // loads (hopefully) a `{[label:string]: MatchConfig[]}`, but is `any`:
-  const configObject: any = yaml.load(configurationContent);
-
-  // transform `any` => `Map<string,MatchConfig[]>` or throw if yaml is malformed:
-  return getLabelConfigMapFromObject(configObject);
-}
-
-async function fetchContent(
-  client: ClientType,
-  repoPath: string
-): Promise<string> {
-  const response: any = await client.rest.repos.getContent({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    path: repoPath,
-    ref: github.context.sha
-  });
-
-  return Buffer.from(response.data.content, response.data.encoding).toString();
-}
-
-export function getLabelConfigMapFromObject(
-  configObject: any
-): Map<string, MatchConfig[]> {
-  const labelMap: Map<string, MatchConfig[]> = new Map();
-  for (const label in configObject) {
-    const configOptions = configObject[label];
-    if (
-      !Array.isArray(configOptions) ||
-      !configOptions.every(opts => typeof opts === 'object')
-    ) {
-      throw Error(
-        `found unexpected type for label '${label}' (should be array of config options)`
+    if (excessLabels.length) {
+      core.warning(
+        `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
+          ', '
+        )}`,
+        {title: 'Label limit for a PR exceeded'}
       );
     }
-    const matchConfigs = configOptions.reduce<MatchConfig[]>(
-      (updatedConfig, configValue) => {
-        if (!configValue) {
-          return updatedConfig;
-        }
-
-        Object.entries(configValue).forEach(([key, value]) => {
-          // If the top level `any` or `all` keys are provided then set them, and convert their values to
-          // our config objects.
-          if (key === 'any' || key === 'all') {
-            if (Array.isArray(value)) {
-              const newConfigs = value.map(toMatchConfig);
-              updatedConfig.push({[key]: newConfigs});
-            }
-          } else if (ALLOWED_CONFIG_KEYS.includes(key)) {
-            const newMatchConfig = toMatchConfig({[key]: value});
-            // Find or set the `any` key so that we can add these properties to that rule,
-            // Or create a new `any` key and add that to our array of configs.
-            const indexOfAny = updatedConfig.findIndex(mc => !!mc['any']);
-            if (indexOfAny >= 0) {
-              updatedConfig[indexOfAny].any?.push(newMatchConfig);
-            } else {
-              updatedConfig.push({any: [newMatchConfig]});
-            }
-          } else {
-            // Log the key that we don't know what to do with.
-            core.info(`An unknown config option was under ${label}: ${key}`);
-          }
-        });
-
-        return updatedConfig;
-      },
-      []
-    );
-
-    if (matchConfigs.length) {
-      labelMap.set(label, matchConfigs);
-    }
   }
-
-  return labelMap;
-}
-
-export function toMatchConfig(config: any): BaseMatchConfig {
-  const changedFilesConfig = toChangedFilesMatchConfig(config);
-  const branchConfig = toBranchMatchConfig(config);
-
-  return {
-    ...changedFilesConfig,
-    ...branchConfig
-  };
 }
 
 export function checkMatchConfigs(
   changedFiles: string[],
-  matchConfigs: MatchConfig[]
+  matchConfigs: MatchConfig[],
+  dot: boolean
 ): boolean {
   for (const config of matchConfigs) {
     core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config)) {
+    if (!checkMatch(changedFiles, config, dot)) {
       return false;
     }
   }
@@ -198,20 +112,24 @@ export function checkMatchConfigs(
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(
+  changedFiles: string[],
+  matchConfig: MatchConfig,
+  dot: boolean
+): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
     return false;
   }
 
   if (matchConfig.all) {
-    if (!checkAll(matchConfig.all, changedFiles)) {
+    if (!checkAll(matchConfig.all, changedFiles, dot)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    if (!checkAny(matchConfig.any, changedFiles)) {
+    if (!checkAny(matchConfig.any, changedFiles, dot)) {
       return false;
     }
   }
@@ -222,7 +140,8 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 // equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: string[],
+  dot: boolean
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -242,7 +161,7 @@ export function checkAny(
     }
 
     if (matchConfig.changedFiles) {
-      if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles)) {
+      if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -263,7 +182,8 @@ export function checkAny(
 // equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
-  changedFiles: string[]
+  changedFiles: string[],
+  dot: boolean
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (
@@ -288,7 +208,7 @@ export function checkAll(
         return false;
       }
 
-      if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles)) {
+      if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
@@ -304,34 +224,4 @@ export function checkAll(
 
   core.debug(`  "all" patterns matched all configs`);
   return true;
-}
-
-async function addLabels(
-  client: ClientType,
-  prNumber: number,
-  labels: string[]
-) {
-  await client.rest.issues.addLabels({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    issue_number: prNumber,
-    labels: labels
-  });
-}
-
-async function removeLabels(
-  client: ClientType,
-  prNumber: number,
-  labels: string[]
-) {
-  await Promise.all(
-    labels.map(label =>
-      client.rest.issues.removeLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        issue_number: prNumber,
-        name: label
-      })
-    )
-  );
 }
