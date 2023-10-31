@@ -683,7 +683,7 @@ function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot) {
 }
 exports.checkAllChangedFiles = checkAllChangedFiles;
 function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
-    core.debug(`    checking "anyGlobToAnyFile" config patterns`);
+    core.debug(`    checking "any-glob-to-any-file" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     for (const matcher of matchers) {
         const matchedFile = changedFiles.find(changedFile => {
@@ -700,7 +700,7 @@ function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
 }
 exports.checkIfAnyGlobMatchesAnyFile = checkIfAnyGlobMatchesAnyFile;
 function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
-    core.debug(`    checking "allGlobsToAnyFile" config patterns`);
+    core.debug(`    checking "all-globs-to-any-file" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
@@ -719,7 +719,7 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
 }
 exports.checkIfAllGlobsMatchAnyFile = checkIfAllGlobsMatchAnyFile;
 function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
-    core.debug(`    checking "anyGlobToAllFiles" config patterns`);
+    core.debug(`    checking "any-glob-to-all-files" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     for (const matcher of matchers) {
         const mismatchedFile = changedFiles.find(changedFile => {
@@ -738,7 +738,7 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
 }
 exports.checkIfAnyGlobMatchesAllFiles = checkIfAnyGlobMatchesAllFiles;
 function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
-    core.debug(`    checking "allGlobsToAllFiles" config patterns`);
+    core.debug(`    checking "all-globs-to-all-files" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
