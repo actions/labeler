@@ -1,17 +1,17 @@
 label1:
   - any:
       - changed-files:
-          - AnyGlobToAnyFile: ['glob']
+          - any-glob-to-any-file: ['glob']
       - head-branch: ['regexp']
       - base-branch: ['regexp']
   - all:
       - changed-files:
-          - AllGlobsToAllFiles: ['glob']
+          - all-globs-to-all-files: ['glob']
       - head-branch: ['regexp']
       - base-branch: ['regexp']
 
 label2:
   - changed-files:
-      - AnyGlobToAnyFile: ['glob']
+      - any-glob-to-any-file: ['glob']
   - head-branch: ['regexp']
   - base-branch: ['regexp']
