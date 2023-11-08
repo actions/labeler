@@ -16,7 +16,7 @@ inputs:
     required: false
   dot:
     description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
-    default: false
+    default: true
     required: false
   pr-number:
     description: 'The pull request number(s)'

@@ -2,7 +2,7 @@ tests:
   - any:
       - head-branch: ['^tests/', '^test/']
       - changed-files:
-          - AnyGlobToAnyFile: ['tests/**/*']
+          - any-glob-to-any-file: ['tests/**/*']
   - all:
       - changed-files:
-          - AllGlobsToAllFiles: ['!tests/requirements.txt']
+          - all-globs-to-all-files: ['!tests/requirements.txt']

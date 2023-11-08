@@ -17,9 +17,9 @@ describe('checkAllChangedFiles', () => {
 
   describe('when all given glob pattern configs matched', () => {
     const globPatternsConfigs = [
-      {AnyGlobToAnyFile: ['foo.txt']},
-      {AnyGlobToAllFiles: ['*.txt']},
-      {AllGlobsToAllFiles: ['**']}
+      {anyGlobToAnyFile: ['foo.txt']},
+      {anyGlobToAllFiles: ['*.txt']},
+      {allGlobsToAllFiles: ['**']}
     ];
 
     it('returns true', () => {
@@ -34,9 +34,9 @@ describe('checkAllChangedFiles', () => {
 
   describe(`when some given glob pattern config did not match`, () => {
     const globPatternsConfigs = [
-      {AnyGlobToAnyFile: ['*.md']},
-      {AnyGlobToAllFiles: ['*.txt']},
-      {AllGlobsToAllFiles: ['**']}
+      {anyGlobToAnyFile: ['*.md']},
+      {anyGlobToAllFiles: ['*.txt']},
+      {allGlobsToAllFiles: ['**']}
     ];
 
     it('returns false', () => {
@@ -55,8 +55,8 @@ describe('checkAnyChangedFiles', () => {
 
   describe('when any given glob pattern config matched', () => {
     const globPatternsConfigs = [
-      {AnyGlobToAnyFile: ['*.md']},
-      {AnyGlobToAllFiles: ['*.txt']}
+      {anyGlobToAnyFile: ['*.md']},
+      {anyGlobToAllFiles: ['*.txt']}
     ];
 
     it('returns true', () => {
@@ -71,8 +71,8 @@ describe('checkAnyChangedFiles', () => {
 
   describe('when none of the given glob pattern configs matched', () => {
     const globPatternsConfigs = [
-      {AnyGlobToAnyFile: ['*.md']},
-      {AnyGlobToAllFiles: ['!*.txt']}
+      {anyGlobToAnyFile: ['*.md']},
+      {anyGlobToAllFiles: ['!*.txt']}
     ];
 
     it('returns false', () => {
@@ -123,23 +123,25 @@ describe('toChangedFilesMatchConfig', () => {
 
     describe('and the glob pattern config key is provided', () => {
       describe('and the value is an array of strings', () => {
-        const config = {'changed-files': [{AnyGlobToAnyFile: ['testing']}]};
+        const config = {
+          'changed-files': [{'any-glob-to-any-file': ['testing']}]
+        };
 
         it('sets the value in the config object', () => {
           const result = toChangedFilesMatchConfig(config);
           expect(result).toEqual<ChangedFilesMatchConfig>({
-            changedFiles: [{AnyGlobToAnyFile: ['testing']}]
+            changedFiles: [{anyGlobToAnyFile: ['testing']}]
           });
         });
       });
 
       describe('and the value is a string', () => {
-        const config = {'changed-files': [{AnyGlobToAnyFile: 'testing'}]};
+        const config = {'changed-files': [{'any-glob-to-any-file': 'testing'}]};
 
         it(`sets the string as an array in the config object`, () => {
           const result = toChangedFilesMatchConfig(config);
           expect(result).toEqual<ChangedFilesMatchConfig>({
-            changedFiles: [{AnyGlobToAnyFile: ['testing']}]
+            changedFiles: [{anyGlobToAnyFile: ['testing']}]
           });
         });
       });

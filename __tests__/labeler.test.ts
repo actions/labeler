@@ -29,14 +29,14 @@ describe('getLabelConfigMapFromObject', () => {
   expected.set('label1', [
     {
       any: [
-        {changedFiles: [{AnyGlobToAnyFile: ['glob']}]},
+        {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
     },
     {
       all: [
-        {changedFiles: [{AllGlobsToAllFiles: ['glob']}]},
+        {changedFiles: [{allGlobsToAllFiles: ['glob']}]},
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
@@ -45,7 +45,7 @@ describe('getLabelConfigMapFromObject', () => {
   expected.set('label2', [
     {
       any: [
-        {changedFiles: [{AnyGlobToAnyFile: ['glob']}]},
+        {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
@@ -61,12 +61,12 @@ describe('getLabelConfigMapFromObject', () => {
 describe('toMatchConfig', () => {
   describe('when all expected config options are present', () => {
     const config = {
-      'changed-files': [{AnyGlobToAnyFile: ['testing-files']}],
+      'changed-files': [{'any-glob-to-any-file': ['testing-files']}],
       'head-branch': ['testing-head'],
       'base-branch': ['testing-base']
     };
     const expected: BaseMatchConfig = {
-      changedFiles: [{AnyGlobToAnyFile: ['testing-files']}],
+      changedFiles: [{anyGlobToAnyFile: ['testing-files']}],
       headBranch: ['testing-head'],
       baseBranch: ['testing-base']
     };
@@ -90,7 +90,7 @@ describe('toMatchConfig', () => {
 describe('checkMatchConfigs', () => {
   describe('when a single match config is provided', () => {
     const matchConfig: MatchConfig[] = [
-      {any: [{changedFiles: [{AnyGlobToAnyFile: ['*.txt']}]}]}
+      {any: [{changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]}
     ];
 
     it('returns true when our pattern does match changed files', () => {
@@ -111,7 +111,7 @@ describe('checkMatchConfigs', () => {
       const matchConfig: MatchConfig[] = [
         {
           any: [
-            {changedFiles: [{AnyGlobToAnyFile: ['*.txt']}]},
+            {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
             {headBranch: ['some-branch']}
           ]
         }
@@ -139,7 +139,7 @@ describe('checkMatchConfigs', () => {
 
   describe('when multiple MatchConfigs are supplied', () => {
     const matchConfig: MatchConfig[] = [
-      {any: [{changedFiles: [{AnyGlobToAnyFile: ['*.txt']}]}]},
+      {any: [{changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]},
       {any: [{headBranch: ['some-branch']}]}
     ];
     const changedFiles = ['foo.txt', 'bar.md'];
@@ -151,7 +151,7 @@ describe('checkMatchConfigs', () => {
 
     it('returns true when only both config matches', () => {
       const matchConfig: MatchConfig[] = [
-        {any: [{changedFiles: [{AnyGlobToAnyFile: ['*.txt']}]}]},
+        {any: [{changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]},
         {any: [{headBranch: ['head-branch']}]}
       ];
       const result = checkMatchConfigs(changedFiles, matchConfig, false);
