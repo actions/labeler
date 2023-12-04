@@ -34,7 +34,10 @@ class NotFound extends Error {
 }
 
 const yamlFixtures = {
-  'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml')
+  'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
+  'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
+  'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
+  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
 };
 
 const configureInput = (
@@ -146,6 +149,121 @@ describe('run', () => {
     expect(setLabelsMock).toHaveBeenCalledTimes(0);
   });
 
+  it('does not add a label when the match config options are not supported', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('not_supported.yml');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('adds labels based on the branch names that match the regexp pattern', async () => {
+    configureInput({});
+    github.context.payload.pull_request!.head = {ref: 'test/testing-time'};
+    usingLabelerConfigYaml('branches.yml');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['test-branch']
+    });
+
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'test-branch');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'test-branch');
+  });
+
+  it('adds multiple labels based on branch names that match different regexp patterns', async () => {
+    configureInput({});
+    github.context.payload.pull_request!.head = {
+      ref: 'test/feature/123'
+    };
+    usingLabelerConfigYaml('branches.yml');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['test-branch', 'feature-branch']
+    });
+
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'test-branch,feature-branch'
+    );
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'all-labels',
+      'test-branch,feature-branch'
+    );
+  });
+
+  it('can support multiple branches by batching', async () => {
+    configureInput({});
+    github.context.payload.pull_request!.head = {ref: 'fix/123'};
+    usingLabelerConfigYaml('branches.yml');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['bug-branch']
+    });
+
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'bug-branch');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'bug-branch');
+  });
+
+  it('can support multiple branches by providing an array', async () => {
+    configureInput({});
+    github.context.payload.pull_request!.head = {ref: 'array/123'};
+    usingLabelerConfigYaml('branches.yml');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['array-branch']
+    });
+
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'array-branch');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'array-branch');
+  });
+
+  it('adds a label when matching any and all patterns are provided', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('any_and_all.yml');
+    mockGitHubResponseChangedFiles('tests/test.ts');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['tests']
+    });
+
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'tests');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'tests');
+  });
+
+  it('does not add a label when not all any and all patterns are matched', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('any_and_all.yml');
+    mockGitHubResponseChangedFiles('tests/requirements.txt');
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
     configureInput({
       'repo-token': 'foo',
@@ -170,6 +288,7 @@ describe('run', () => {
       issue_number: 123,
       labels: ['manually-added']
     });
+
     expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'manually-added');
   });

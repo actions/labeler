@@ -1,2 +1,3 @@
 touched-a-pdf-file:
-  - any: ['*.pdf']
+  - changed-files:
+      - any-glob-to-any-file: ['*.pdf']

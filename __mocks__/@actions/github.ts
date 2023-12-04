@@ -1,7 +1,13 @@
 export const context = {
   payload: {
     pull_request: {
-      number: 123
+      number: 123,
+      head: {
+        ref: 'head-branch-name'
+      },
+      base: {
+        ref: 'base-branch-name'
+      }
     }
   },
   repo: {
