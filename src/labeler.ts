@@ -1,18 +1,16 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
-import {Minimatch} from 'minimatch';
 import * as api from './api';
 import isEqual from 'lodash.isequal';
-import {printPattern} from './utils';
 import {getInputs} from './get-inputs';
 
-interface MatchConfig {
-  all?: string[];
-  any?: string[];
-}
+import {BaseMatchConfig, MatchConfig} from './api/get-label-configs';
 
-type StringOrMatchConfig = string | MatchConfig;
+import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles';
+
+import {checkAnyBranch, checkAllBranch} from './branch';
+
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 // GitHub Issues cannot have more than 100 labels
@@ -37,14 +35,16 @@ async function labeler() {
   const pullRequests = api.getPullRequests(client, prNumbers);
 
   for await (const pullRequest of pullRequests) {
-    const labelGlobs: Map<string, StringOrMatchConfig[]> =
-      await api.getLabelGlobs(client, configPath);
+    const labelConfigs: Map<string, MatchConfig[]> = await api.getLabelConfigs(
+      client,
+      configPath
+    );
     const preexistingLabels = pullRequest.data.labels.map(l => l.name);
     const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
-    for (const [label, globs] of labelGlobs.entries()) {
+    for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkGlobs(pullRequest.changedFiles, globs, dot)) {
+      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
         allLabels.add(label);
       } else if (syncLabels) {
         allLabels.delete(label);
@@ -97,80 +97,18 @@ async function labeler() {
   }
 }
 
-function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
-  if (typeof config === 'string') {
-    return {
-      any: [config]
-    };
-  }
-
-  return config;
-}
-
-export function checkGlobs(
+export function checkMatchConfigs(
   changedFiles: string[],
-  globs: StringOrMatchConfig[],
+  matchConfigs: MatchConfig[],
   dot: boolean
 ): boolean {
-  for (const glob of globs) {
-    core.debug(` checking pattern ${JSON.stringify(glob)}`);
-    const matchConfig = toMatchConfig(glob);
-    if (checkMatch(changedFiles, matchConfig, dot)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isMatch(changedFile: string, matchers: Minimatch[]): boolean {
-  core.debug(`    matching patterns against file ${changedFile}`);
-  for (const matcher of matchers) {
-    core.debug(`   - ${printPattern(matcher)}`);
-    if (!matcher.match(changedFile)) {
-      core.debug(`   ${printPattern(matcher)} did not match`);
+  for (const config of matchConfigs) {
+    core.debug(` checking config ${JSON.stringify(config)}`);
+    if (!checkMatch(changedFiles, config, dot)) {
       return false;
     }
   }
 
-  core.debug(`   all patterns matched`);
-  return true;
-}
-
-// equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(
-  changedFiles: string[],
-  globs: string[],
-  dot: boolean
-): boolean {
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
-  core.debug(`  checking "any" patterns`);
-  for (const changedFile of changedFiles) {
-    if (isMatch(changedFile, matchers)) {
-      core.debug(`  "any" patterns matched against ${changedFile}`);
-      return true;
-    }
-  }
-
-  core.debug(`  "any" patterns did not match any files`);
-  return false;
-}
-
-// equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(
-  changedFiles: string[],
-  globs: string[],
-  dot: boolean
-): boolean {
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
-  core.debug(` checking "all" patterns`);
-  for (const changedFile of changedFiles) {
-    if (!isMatch(changedFile, matchers)) {
-      core.debug(`  "all" patterns did not match against ${changedFile}`);
-      return false;
-    }
-  }
-
-  core.debug(`  "all" patterns matched all files`);
   return true;
 }
 
@@ -179,17 +117,111 @@ function checkMatch(
   matchConfig: MatchConfig,
   dot: boolean
 ): boolean {
-  if (matchConfig.all !== undefined) {
-    if (!checkAll(changedFiles, matchConfig.all, dot)) {
+  if (!Object.keys(matchConfig).length) {
+    core.debug(`  no "any" or "all" patterns to check`);
+    return false;
+  }
+
+  if (matchConfig.all) {
+    if (!checkAll(matchConfig.all, changedFiles, dot)) {
       return false;
     }
   }
 
-  if (matchConfig.any !== undefined) {
-    if (!checkAny(changedFiles, matchConfig.any, dot)) {
+  if (matchConfig.any) {
+    if (!checkAny(matchConfig.any, changedFiles, dot)) {
       return false;
     }
   }
 
+  return true;
+}
+
+// equivalent to "Array.some()" but expanded for debugging and clarity
+export function checkAny(
+  matchConfigs: BaseMatchConfig[],
+  changedFiles: string[],
+  dot: boolean
+): boolean {
+  core.debug(`  checking "any" patterns`);
+  if (
+    !matchConfigs.length ||
+    !matchConfigs.some(configOption => Object.keys(configOption).length)
+  ) {
+    core.debug(`  no "any" patterns to check`);
+    return false;
+  }
+
+  for (const matchConfig of matchConfigs) {
+    if (matchConfig.baseBranch) {
+      if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
+
+    if (matchConfig.changedFiles) {
+      if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
+
+    if (matchConfig.headBranch) {
+      if (checkAnyBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
+  }
+
+  core.debug(`  "any" patterns did not match any configs`);
+  return false;
+}
+
+// equivalent to "Array.every()" but expanded for debugging and clarity
+export function checkAll(
+  matchConfigs: BaseMatchConfig[],
+  changedFiles: string[],
+  dot: boolean
+): boolean {
+  core.debug(`  checking "all" patterns`);
+  if (
+    !matchConfigs.length ||
+    !matchConfigs.some(configOption => Object.keys(configOption).length)
+  ) {
+    core.debug(`  no "all" patterns to check`);
+    return false;
+  }
+
+  for (const matchConfig of matchConfigs) {
+    if (matchConfig.baseBranch) {
+      if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
+
+    if (matchConfig.changedFiles) {
+      if (!changedFiles.length) {
+        core.debug(`  no files to check "changed-files" patterns against`);
+        return false;
+      }
+
+      if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
+
+    if (matchConfig.headBranch) {
+      if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
+  }
+
+  core.debug(`  "all" patterns matched all configs`);
   return true;
 }
