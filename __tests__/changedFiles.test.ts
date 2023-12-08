@@ -225,6 +225,19 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
     });
   });
 
+  describe('when none of the given glob patterns matched all files', () => {
+    const globPatterns = ['*.md', 'foo.txt'];
+
+    it('returns false', () => {
+      const result = checkIfAnyGlobMatchesAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
+      expect(result).toBe(false);
+    });
+  });
+
   describe('when at least one of the given glob patterns matched all files', () => {
     const globPatterns = ['*.md', 'bar.txt', 'foo.txt'];
 
