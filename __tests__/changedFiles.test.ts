@@ -268,3 +268,21 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
     });
   });
 });
+
+
+describe('check issue #423', () => {
+  const changedFiles = ['test.md', 'test.puml'];
+
+  describe('when at least one pattern matches all files', () => {
+    const globPatterns = ['*.md', '*.puml'];
+
+    it('returns true', () => {
+      const result = checkIfAnyGlobMatchesAllFiles(
+        changedFiles,
+        globPatterns,
+        false
+      );
+      expect(result).toBe(true);
+    });
+  });
+});

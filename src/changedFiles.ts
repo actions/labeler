@@ -296,33 +296,31 @@ export function checkIfAnyGlobMatchesAllFiles(
   core.debug(`    checking "any-glob-to-all-files" config patterns`);
   const matchers = globs.map(g => new Minimatch(g, {dot}));
 
+  const allMatchesFiles = new Set<string>();
+
   for (const matcher of matchers) {
-    const mismatchedFile = changedFiles.find(changedFile => {
+    const matchedFiles = changedFiles.filter(changedFile => {
       core.debug(
         `     checking "${printPattern(
           matcher
         )}" pattern against ${changedFile}`
       );
 
-      return !matcher.match(changedFile);
+      return matcher.match(changedFile);
     });
 
-    if (mismatchedFile) {
-      core.debug(
-        `     "${printPattern(
-          matcher
-        )}" pattern did not match ${mismatchedFile}`
-      );
-
-      continue;
-    }
-
-    core.debug(`    "${printPattern(matcher)}" pattern matched all files`);
-    return true;
+    matchedFiles.forEach(item => allMatchesFiles.add(item))
   }
 
-  core.debug(`    none of the patterns matched all files`);
-  return false;
+  for (const file of changedFiles) {
+    if(!allMatchesFiles.has(file)) {
+      core.debug(`    none of the patterns matched ${file}`);
+      return false;
+    }
+  }
+
+  core.debug(`    at least one pattern matched all files`);
+  return true;
 }
 
 export function checkIfAllGlobsMatchAllFiles(
