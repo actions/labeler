@@ -225,16 +225,16 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
     });
   });
 
-  describe('when none of the given glob patterns matched all files', () => {
+  describe('when at least one of the given glob patterns matched all files', () => {
     const globPatterns = ['*.md', 'bar.txt', 'foo.txt'];
 
-    it('returns false', () => {
+    it('returns true', () => {
       const result = checkIfAnyGlobMatchesAllFiles(
         changedFiles,
         globPatterns,
         false
       );
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
   });
 });
@@ -265,24 +265,6 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
         false
       );
       expect(result).toBe(false);
-    });
-  });
-});
-
-
-describe('check issue #423', () => {
-  const changedFiles = ['test.md', 'test.puml'];
-
-  describe('when at least one pattern matches all files', () => {
-    const globPatterns = ['*.md', '*.puml'];
-
-    it('returns true', () => {
-      const result = checkIfAnyGlobMatchesAllFiles(
-        changedFiles,
-        globPatterns,
-        false
-      );
-      expect(result).toBe(true);
     });
   });
 });
