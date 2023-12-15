@@ -13,7 +13,7 @@ Automatically label new pull requests based on the paths of files being changed 
 
 4) Version 5 of this action updated the [runtime to Node.js 20](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions). All scripts are now run with Node.js 20 instead of Node.js 16 and are affected by any breaking changes between Node.js 16 and 20.
 
-> [!CAUTION]
+> [!IMPORTANT]
 > Before the update to the v5, please check out [this information](#notes-regarding-pull_request_target-event) about the `pull_request_target` event trigger.
 
 ## Usage
