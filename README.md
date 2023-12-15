@@ -113,6 +113,18 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: docs/*
 
+# Add 'Documentation' label to any file changes within 'docs' or 'guides' folders
+Documentation:
+- changed-files:
+  - any-glob-to-any-file:
+    - docs/*
+    - guides/*
+
+## Equivalent of the above mentioned configuration using another syntax
+Documentation:
+- changed-files:
+  - any-glob-to-any-file: ['docs/*', 'guides/*']
+
 # Add 'Documentation' label to any change to .md files within the entire repository 
 Documentation:
 - changed-files:
