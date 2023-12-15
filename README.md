@@ -251,7 +251,7 @@ In order to add labels to pull requests, the GitHub labeler action requires writ
 
 ## Notes regarding `pull_request_target` event
 
-Using the `pull_request_target` event trigger involves several peculiarities related to initial set-up of the labeler or updating major version of the labeler.
+Using the `pull_request_target` event trigger involves several peculiarities related to initial set up of the labeler or updating version of the labeler.
 
 ### Initial set up of the labeler action
 
@@ -269,7 +269,7 @@ on:
 - pull_request
 ```
 
-Once you confirm that the updated configuration files function as intended, you can then revert to using the `pull_request_target`` event before merging the pull request. Following this step ensures that your workflow is robust and free from disruptions.
+Once you confirm that the updated configuration files function as intended, you can then revert to using the `pull_request_target` event before merging the pull request. Following this step ensures that your workflow is robust and free from disruptions.
 
 ## Contributions
 
