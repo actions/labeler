@@ -141,7 +141,7 @@ source:
 feature:
  - head-branch: ['^feature', 'feature']
 
- # Add 'release' label to any PR that is opened against the `main` branch
+# Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
 ```
