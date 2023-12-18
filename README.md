@@ -13,6 +13,9 @@ Automatically label new pull requests based on the paths of files being changed 
 
 4) Version 5 of this action updated the [runtime to Node.js 20](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions). All scripts are now run with Node.js 20 instead of Node.js 16 and are affected by any breaking changes between Node.js 16 and 20.
 
+> [!IMPORTANT]
+> Before the update to the v5, please check out [this information](#notes-regarding-pull_request_target-event) about the `pull_request_target` event trigger.
+
 ## Usage
 
 ### Create `.github/labeler.yml`
@@ -110,6 +113,18 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: docs/*
 
+# Add 'Documentation' label to any file changes within 'docs' or 'guides' folders
+Documentation:
+- changed-files:
+  - any-glob-to-any-file:
+    - docs/*
+    - guides/*
+
+## Equivalent of the above mentioned configuration using another syntax
+Documentation:
+- changed-files:
+  - any-glob-to-any-file: ['docs/*', 'guides/*']
+
 # Add 'Documentation' label to any change to .md files within the entire repository 
 Documentation:
 - changed-files:
@@ -126,7 +141,7 @@ source:
 feature:
  - head-branch: ['^feature', 'feature']
 
- # Add 'release' label to any PR that is opened against the `main` branch
+# Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
 ```
@@ -246,9 +261,27 @@ jobs:
 In order to add labels to pull requests, the GitHub labeler action requires write permissions on the pull-request. However, when the action runs on a pull request from a forked repository, GitHub only grants read access tokens for `pull_request` events, at most. If you encounter an `Error: HttpError: Resource not accessible by integration`, it's likely due to these permission constraints. To resolve this issue, you can modify the `on:` section of your workflow to use
 [`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) instead of `pull_request` (see example [above](#create-workflow)). This change allows the action to have write access, because `pull_request_target` alters the [context of the action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) and safely grants additional permissions. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
 
-## Notes regarding `pull_request_target`
+## Notes regarding `pull_request_target` event
 
-When submitting a initial pull request to a repository using the `pull_request_target` event, the labeler workflow will not run on that pull request because the `pull_request_target` execution runs off the base branch instead of the pull request's branch. Unfortunately this means the introduction of the labeler can not be verified during that pull request and it needs to be committed blindly. 
+Using the `pull_request_target` event trigger involves several peculiarities related to initial set up of the labeler or updating version of the labeler.
+
+### Initial set up of the labeler action
+
+When submitting an initial pull request to a repository using the `pull_request_target` event, the labeler workflow will not run on that pull request because the `pull_request_target` execution runs off the base branch instead of the pull request's branch. Unfortunately this means the introduction of the labeler can not be verified during that pull request and it needs to be committed blindly.
+
+### Updating major version of the labeler
+
+When submitting a pull request that includes updates of the labeler action version and associated configuration files, using the `pull_request_target` event may result in a failed workflow. This is due to the nature of `pull_request_target`, which uses the code from the base branch rather than the branch linked to the pull request — so, potentially outdated configuration files may not be compatible with the updated labeler action.
+
+To prevent this issue, you can switch to using the `pull_request` event temporarily, before merging. This event execution draws from the code within the branch of your pull request, allowing you to verify the new configuration's compatibility with the updated labeler action.
+
+```yml
+name: "Pull Request Labeler"
+on:
+- pull_request
+```
+
+Once you confirm that the updated configuration files function as intended, you can then revert to using the `pull_request_target` event before merging the pull request. Following this step ensures that your workflow is robust and free from disruptions.
 
 ## Contributions
 
