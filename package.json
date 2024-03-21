@@ -32,21 +32,22 @@
     "minimatch": "^9.0.3"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
+    "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.9",
-    "@types/lodash.isequal": "^4.5.6",
+    "@types/lodash.isequal": "^4.5.8",
     "@types/minimatch": "^5.1.2",
-    "@types/node": "^20.8.8",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
-    "@typescript-eslint/parser": "^6.19.0",
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
     "@vercel/ncc": "^0.38.1",
-    "eslint": "^8.56.0",
+    "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jest": "^27.6.3",
+    "eslint-plugin-jest": "^27.9.0",
     "eslint-plugin-node": "^11.1.0",
     "jest": "^29.7.0",
     "prettier": "^3.2.5",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.2.2"
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.3"
+
   }
 }
