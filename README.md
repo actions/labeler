@@ -148,7 +148,7 @@ release:
 
 ### Create Workflow
 
-Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)) to utilize the labeler action with content:
+Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow file](https://docs.github.com/en/actions/writing-workflows/quickstart#creating-your-first-workflow)) to utilize the labeler action with content:
 
 ```yml
 name: "Pull Request Labeler"
