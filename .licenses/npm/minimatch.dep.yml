@@ -4,11 +4,11 @@ version: 10.0.1
 type: npm
 summary: a glob matcher in javascript
 homepage: 
-license: MIT
+license: isc
 licenses:
 - sources: LICENSE
   text: |
-   The MIT License (MIT) 
+    The ISC License
 
     Copyright (c) 2011-2022 Isaac Z. Schlueter and Contributors
 
