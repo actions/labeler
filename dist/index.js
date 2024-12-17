@@ -22,13 +22,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -82,18 +92,28 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
 var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
     var g = generator.apply(thisArg, _arguments || []), i, q = [];
-    return i = {}, verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
+    return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
     function awaitReturn(f) { return function (v) { return Promise.resolve(v).then(f, reject); }; }
     function verb(n, f) { if (g[n]) { i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; if (f) i[n] = f(i[n]); } }
     function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
@@ -103,7 +123,7 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
     function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPullRequests = void 0;
+exports.getPullRequests = getPullRequests;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const get_changed_files_1 = __nccwpck_require__(8622);
@@ -138,7 +158,6 @@ function getPullRequests(client, prNumbers) {
         }
     });
 }
-exports.getPullRequests = getPullRequests;
 
 
 /***/ }),
@@ -164,13 +183,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -218,18 +247,30 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.toMatchConfig = exports.getLabelConfigMapFromObject = exports.getLabelConfigs = void 0;
+exports.getLabelConfigs = void 0;
+exports.getLabelConfigMapFromObject = getLabelConfigMapFromObject;
+exports.toMatchConfig = toMatchConfig;
 const core = __importStar(__nccwpck_require__(2186));
 const yaml = __importStar(__nccwpck_require__(1917));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
@@ -308,13 +349,11 @@ function getLabelConfigMapFromObject(configObject) {
     }
     return labelMap;
 }
-exports.getLabelConfigMapFromObject = getLabelConfigMapFromObject;
 function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
     return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
 }
-exports.toMatchConfig = toMatchConfig;
 
 
 /***/ }),
@@ -370,13 +409,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -433,15 +482,28 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkAllBranch = exports.checkAnyBranch = exports.getBranchName = exports.toBranchMatchConfig = void 0;
+exports.toBranchMatchConfig = toBranchMatchConfig;
+exports.getBranchName = getBranchName;
+exports.checkAnyBranch = checkAnyBranch;
+exports.checkAllBranch = checkAllBranch;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 function toBranchMatchConfig(config) {
@@ -459,7 +521,6 @@ function toBranchMatchConfig(config) {
     }
     return branchConfig;
 }
-exports.toBranchMatchConfig = toBranchMatchConfig;
 function getBranchName(branchBase) {
     var _a, _b;
     const pullRequest = github.context.payload.pull_request;
@@ -473,7 +534,6 @@ function getBranchName(branchBase) {
         return (_b = pullRequest.head) === null || _b === void 0 ? void 0 : _b.ref;
     }
 }
-exports.getBranchName = getBranchName;
 function checkAnyBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
@@ -491,7 +551,6 @@ function checkAnyBranch(regexps, branchBase) {
     core.debug(`   "branch" patterns did not match against ${branchName}`);
     return false;
 }
-exports.checkAnyBranch = checkAnyBranch;
 function checkAllBranch(regexps, branchBase) {
     const branchName = getBranchName(branchBase);
     if (!branchName) {
@@ -509,7 +568,6 @@ function checkAllBranch(regexps, branchBase) {
     core.debug(`   "branch" patterns matched against ${branchName}`);
     return true;
 }
-exports.checkAllBranch = checkAllBranch;
 function matchBranchPattern(matcher, branchName) {
     core.debug(`    - ${matcher}`);
     if (matcher.test(branchName)) {
@@ -544,13 +602,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -561,7 +629,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkIfAllGlobsMatchAllFiles = exports.checkIfAnyGlobMatchesAllFiles = exports.checkIfAllGlobsMatchAnyFile = exports.checkIfAnyGlobMatchesAnyFile = exports.checkAllChangedFiles = exports.checkAnyChangedFiles = exports.toChangedFilesMatchConfig = exports.getChangedFiles = void 0;
+exports.getChangedFiles = getChangedFiles;
+exports.toChangedFilesMatchConfig = toChangedFilesMatchConfig;
+exports.checkAnyChangedFiles = checkAnyChangedFiles;
+exports.checkAllChangedFiles = checkAllChangedFiles;
+exports.checkIfAnyGlobMatchesAnyFile = checkIfAnyGlobMatchesAnyFile;
+exports.checkIfAllGlobsMatchAnyFile = checkIfAllGlobsMatchAnyFile;
+exports.checkIfAnyGlobMatchesAllFiles = checkIfAnyGlobMatchesAllFiles;
+exports.checkIfAllGlobsMatchAllFiles = checkIfAllGlobsMatchAllFiles;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const minimatch_1 = __nccwpck_require__(4501);
@@ -588,7 +663,6 @@ function getChangedFiles(client, prNumber) {
         return changedFiles;
     });
 }
-exports.getChangedFiles = getChangedFiles;
 function toChangedFilesMatchConfig(config) {
     if (!config['changed-files'] || !config['changed-files'].length) {
         return {};
@@ -618,7 +692,6 @@ function toChangedFilesMatchConfig(config) {
         changedFiles: validChangedFilesConfigs
     };
 }
-exports.toChangedFilesMatchConfig = toChangedFilesMatchConfig;
 function checkAnyChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core.debug(`   checking "changed-files" patterns`);
     for (const globPatternsConfig of globPatternsConfigs) {
@@ -650,7 +723,6 @@ function checkAnyChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core.debug(`   "changed-files" did not match`);
     return false;
 }
-exports.checkAnyChangedFiles = checkAnyChangedFiles;
 function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core.debug(`   checking "changed-files" patterns`);
     for (const globPatternsConfig of globPatternsConfigs) {
@@ -682,7 +754,6 @@ function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core.debug(`   "changed-files" patterns matched`);
     return true;
 }
-exports.checkAllChangedFiles = checkAllChangedFiles;
 function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
     core.debug(`    checking "any-glob-to-any-file" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
@@ -699,7 +770,6 @@ function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
     core.debug(`    none of the patterns matched any of the files`);
     return false;
 }
-exports.checkIfAnyGlobMatchesAnyFile = checkIfAnyGlobMatchesAnyFile;
 function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
     core.debug(`    checking "all-globs-to-any-file" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
@@ -718,7 +788,6 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
     core.debug(`    none of the files matched all patterns`);
     return false;
 }
-exports.checkIfAllGlobsMatchAnyFile = checkIfAllGlobsMatchAnyFile;
 function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
     core.debug(`    checking "any-glob-to-all-files" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
@@ -737,7 +806,6 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
     core.debug(`    none of the patterns matched all files`);
     return false;
 }
-exports.checkIfAnyGlobMatchesAllFiles = checkIfAnyGlobMatchesAllFiles;
 function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
     core.debug(`    checking "all-globs-to-all-files" config patterns`);
     const matchers = globs.map(g => new minimatch_1.Minimatch(g, { dot }));
@@ -754,7 +822,6 @@ function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
     core.debug(`    all patterns matched all files`);
     return true;
 }
-exports.checkIfAllGlobsMatchAllFiles = checkIfAllGlobsMatchAllFiles;
 
 
 /***/ }),
@@ -780,13 +847,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getInputs = void 0;
 const core = __importStar(__nccwpck_require__(2186));
@@ -824,13 +901,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getPrNumbers = void 0;
 const core = __importStar(__nccwpck_require__(2186));
@@ -903,13 +990,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -930,7 +1027,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkAll = exports.checkAny = exports.checkMatchConfigs = exports.run = void 0;
+exports.run = void 0;
+exports.checkMatchConfigs = checkMatchConfigs;
+exports.checkAny = checkAny;
+exports.checkAll = checkAll;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const pluginRetry = __importStar(__nccwpck_require__(6298));
@@ -1018,7 +1118,6 @@ function checkMatchConfigs(changedFiles, matchConfigs, dot) {
     }
     return true;
 }
-exports.checkMatchConfigs = checkMatchConfigs;
 function checkMatch(changedFiles, matchConfig, dot) {
     if (!Object.keys(matchConfig).length) {
         core.debug(`  no "any" or "all" patterns to check`);
@@ -1067,7 +1166,6 @@ function checkAny(matchConfigs, changedFiles, dot) {
     core.debug(`  "any" patterns did not match any configs`);
     return false;
 }
-exports.checkAny = checkAny;
 // equivalent to "Array.every()" but expanded for debugging and clarity
 function checkAll(matchConfigs, changedFiles, dot) {
     core.debug(`  checking "all" patterns`);
@@ -1103,7 +1201,6 @@ function checkAll(matchConfigs, changedFiles, dot) {
     core.debug(`  "all" patterns matched all configs`);
     return true;
 }
-exports.checkAll = checkAll;
 
 
 /***/ }),
@@ -1114,7 +1211,8 @@ exports.checkAll = checkAll;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isObject = exports.kebabToCamel = exports.printPattern = void 0;
+exports.kebabToCamel = exports.printPattern = void 0;
+exports.isObject = isObject;
 const printPattern = (matcher) => {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 };
@@ -1126,7 +1224,6 @@ exports.kebabToCamel = kebabToCamel;
 function isObject(obj) {
     return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
 }
-exports.isObject = isObject;
 
 
 /***/ }),
