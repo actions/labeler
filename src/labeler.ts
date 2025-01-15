@@ -72,7 +72,7 @@ async function labeler() {
       }
 
       core.warning(
-        `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#permissions`,
+        `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#recommended-permissions`,
         {
           title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
         }
