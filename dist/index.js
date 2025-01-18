@@ -531,7 +531,7 @@ function getBranchName(branchBase) {
         return (_a = pullRequest.base) === null || _a === void 0 ? void 0 : _a.ref;
     }
     else {
-        return (_b = pullRequest.head) === null || _b === void 0 ? void 0 : _b.ref;
+        return (_b = pullRequest.head) === null || _b === void 0 ? void 0 : _b.ref.toLowerCase();
     }
 }
 function checkAnyBranch(regexps, branchBase) {
