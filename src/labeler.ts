@@ -31,6 +31,7 @@ export async function labeler() {
   }
 
   const client: ClientType = github.getOctokit(token, {}, pluginRetry.retry);
+  const repoLabelCache: api.RepoLabelCache = new Map();
 
   const pullRequests = api.getPullRequests(client, prNumbers);
 
@@ -39,13 +40,20 @@ export async function labeler() {
       client,
       configPath
     );
-    const preexistingLabels = pullRequest.data.labels.map(l => l.name);
-    const allLabels: Set<string> = new Set<string>(preexistingLabels);
+    const preexistingLabels: [string, string][] = pullRequest.data.labels.map(
+      (l: {name: string; color?: string}) => [l.name, l.color ?? '']
+    );
+    const preexistingLabelNames = new Set(
+      preexistingLabels.map(([label]) => label)
+    );
+    const allLabels = new Map<string, string>();
+    preexistingLabels.forEach(([label, color]) => allLabels.set(label, color));
 
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
       if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
-        allLabels.add(label);
+        const labelColor = configs.find(config => config.meta)?.meta?.color;
+        allLabels.set(label, labelColor ?? '');
       } else if (syncLabels) {
         allLabels.delete(label);
       }
@@ -60,29 +68,52 @@ export async function labeler() {
     try {
       if (!isEqual(labelsToApply, preexistingLabels)) {
         // Fetch the latest labels for the PR
-        const latestLabels: string[] = [];
+        const latestLabels: [string, string][] = [];
         // Skip fetching real labels when running tests (uses mock data instead)
         if (process.env.NODE_ENV !== 'test') {
           const pr = await client.rest.pulls.get({
             ...github.context.repo,
             pull_number: pullRequest.number
           });
-          latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
+          latestLabels.push(
+            ...pr.data.labels
+              .map(l => [l.name, l.color ?? ''] as [string, string])
+              .filter(([label]) => Boolean(label))
+          );
         }
 
         // Labels added manually during the run (not in first snapshot)
         const manualAddedDuringRun = latestLabels.filter(
-          l => !preexistingLabels.includes(l)
+          ([label]) => !preexistingLabelNames.has(label)
         );
 
         // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
-        finalLabels = [
-          ...new Set([...manualAddedDuringRun, ...labelsToApply])
-        ].slice(0, GITHUB_MAX_LABELS);
+        const mergedLabels = new Map<string, string>();
+        for (const [label, color] of manualAddedDuringRun) {
+          mergedLabels.set(label, color);
+        }
+        for (const [label, color] of labelsToApply) {
+          if (!mergedLabels.has(label)) {
+            mergedLabels.set(label, color);
+          } else if (!mergedLabels.get(label) && color) {
+            mergedLabels.set(label, color);
+          }
+        }
+        finalLabels = [...mergedLabels].slice(0, GITHUB_MAX_LABELS);
 
-        await api.setLabels(client, pullRequest.number, finalLabels);
+        await api.setLabels(
+          client,
+          pullRequest.number,
+          finalLabels.map(([label]) => label)
+        );
 
-        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
+        newLabels = finalLabels
+          .filter(([label]) => !preexistingLabelNames.has(label))
+          .map(([label]) => label);
+      }
+
+      if (newLabels.length > 0) {
+        await api.updateLabels(client, newLabels, labelConfigs, repoLabelCache);
       }
     } catch (error: any) {
       if (
@@ -115,13 +146,13 @@ export async function labeler() {
     }
 
     core.setOutput('new-labels', newLabels.join(','));
-    core.setOutput('all-labels', finalLabels.join(','));
+    core.setOutput('all-labels', finalLabels.map(([label]) => label).join(','));
 
     if (excessLabels.length) {
       core.warning(
-        `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(
-          ', '
-        )}`,
+        `Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels
+          .map(([label]) => label)
+          .join(', ')}`,
         {title: 'Label limit for a PR exceeded'}
       );
     }

@@ -8,9 +8,11 @@ import {checkMatchConfigs} from '../src/labeler';
 import {
   MatchConfig,
   toMatchConfig,
+  toLabelConfig,
   getLabelConfigMapFromObject,
   BaseMatchConfig
 } from '../src/api/get-label-configs';
+import {updateLabels} from '../src/api/set-labels';
 
 jest.mock('@actions/core');
 jest.mock('../src/api');
@@ -44,6 +46,12 @@ describe('getLabelConfigMapFromObject', () => {
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
+    },
+    {
+      meta: {
+        description: 'Label1 description',
+        color: 'ff00ff'
+      }
     }
   ]);
   expected.set('label2', [
@@ -53,6 +61,12 @@ describe('getLabelConfigMapFromObject', () => {
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
+    },
+    {
+      meta: {
+        description: 'Label2 description',
+        color: 'ffff00'
+      }
     }
   ]);
 
@@ -88,6 +102,24 @@ describe('toMatchConfig', () => {
         expect(result).toEqual(expected);
       });
     });
+  });
+});
+
+describe('toLabelConfig', () => {
+  it('normalizes color values and accepts # prefixes', () => {
+    const warningSpy = jest.spyOn(core, 'warning').mockImplementation();
+    const result = toLabelConfig({color: '#ff00ff'});
+    expect(result).toEqual({color: 'ff00ff'});
+    expect(warningSpy).not.toHaveBeenCalled();
+    warningSpy.mockRestore();
+  });
+
+  it('warns and drops invalid color values', () => {
+    const warningSpy = jest.spyOn(core, 'warning').mockImplementation();
+    const result = toLabelConfig({color: '#fff'});
+    expect(result).toEqual({});
+    expect(warningSpy).toHaveBeenCalledTimes(1);
+    warningSpy.mockRestore();
   });
 });
 
@@ -231,5 +263,83 @@ describe('labeler error handling', () => {
       expect.any(Object)
     );
     expect(core.setFailed).toHaveBeenCalledWith(error.message);
+  });
+});
+
+describe('updateLabels', () => {
+  const gh = github.getOctokit('_');
+  const updateLabelMock = jest.spyOn(gh.rest.issues, 'updateLabel');
+  const createLabelMock = jest.spyOn(gh.rest.issues, 'createLabel');
+  const paginateMock = jest.spyOn(gh, 'paginate');
+
+  const buildLabelConfigs = (
+    meta: MatchConfig['meta']
+  ): Map<string, MatchConfig[]> => new Map([['label1', [{meta}]]]);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('updates existing labels when metadata differs', async () => {
+    paginateMock.mockResolvedValue([
+      {name: 'label1', color: '000000', description: 'old'}
+    ]);
+
+    const labelConfigs = buildLabelConfigs({
+      color: 'ff00ff',
+      description: 'new'
+    });
+    const repoLabelCache = new Map();
+
+    await updateLabels(gh, ['label1'], labelConfigs, repoLabelCache);
+
+    expect(updateLabelMock).toHaveBeenCalledTimes(1);
+    expect(updateLabelMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'label1',
+      color: 'ff00ff',
+      description: 'new'
+    });
+    expect(createLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('does not update labels when metadata matches', async () => {
+    paginateMock.mockResolvedValue([
+      {name: 'label1', color: 'ff00ff', description: 'same'}
+    ]);
+
+    const labelConfigs = buildLabelConfigs({
+      color: 'ff00ff',
+      description: 'same'
+    });
+    const repoLabelCache = new Map();
+
+    await updateLabels(gh, ['label1'], labelConfigs, repoLabelCache);
+
+    expect(updateLabelMock).toHaveBeenCalledTimes(0);
+    expect(createLabelMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('creates labels when missing from the repository', async () => {
+    paginateMock.mockResolvedValue([]);
+
+    const labelConfigs = buildLabelConfigs({
+      color: 'ff00ff',
+      description: 'new'
+    });
+    const repoLabelCache = new Map();
+
+    await updateLabels(gh, ['label1'], labelConfigs, repoLabelCache);
+
+    expect(createLabelMock).toHaveBeenCalledTimes(1);
+    expect(createLabelMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'label1',
+      color: 'ff00ff',
+      description: 'new'
+    });
+    expect(updateLabelMock).toHaveBeenCalledTimes(0);
   });
 });

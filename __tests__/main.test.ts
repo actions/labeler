@@ -9,6 +9,8 @@ jest.mock('@actions/github');
 
 const gh = github.getOctokit('_');
 const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
+const updateLabelsMock = jest.spyOn(gh.rest.issues, 'updateLabel');
+const createLabelsMock = jest.spyOn(gh.rest.issues, 'createLabel');
 const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
@@ -37,7 +39,8 @@ const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
-  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
+  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml'),
+  'label_meta.yml': fs.readFileSync('__tests__/fixtures/label_meta.yml')
 };
 
 const configureInput = (
@@ -471,6 +474,78 @@ describe('run', () => {
     expect(reposMock).toHaveBeenCalled();
   });
 
+  it('creates missing labels with metadata', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar'
+    });
+
+    usingLabelerConfigYaml('label_meta.yml');
+    mockGitHubResponseChangedFiles('tests/test.txt');
+    mockGitHubResponseRepoLabels([]);
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
+
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['label1', 'label2', 'label3', 'label4']
+    });
+
+    expect(createLabelsMock).toHaveBeenCalledTimes(3);
+    expect(createLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'label2',
+      color: 'ff00ff',
+      description: 'Label2 description'
+    });
+    expect(createLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'label3',
+      description: 'Label3 description'
+    });
+    expect(createLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'label4',
+      color: '000000'
+    });
+    expect(updateLabelsMock).toHaveBeenCalledTimes(0);
+    expect(coreWarningMock).toHaveBeenCalledTimes(0); // No warnings issued
+  });
+
+  it('does not create labels or issue warnings if all labels exist', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar'
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [{name: 'touched-a-pdf-file'}]
+      }
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    await run();
+
+    expect(updateLabelsMock).toHaveBeenCalledTimes(0); // No labels are created
+    expect(coreWarningMock).toHaveBeenCalledTimes(0); // No warnings issued
+  });
+
   test.each([
     [new HttpError('Error message')],
     [new NotFound('Error message')]
@@ -502,7 +577,28 @@ function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
   });
 }
 
+let mockRepoLabels: Array<{
+  name: string;
+  color?: string;
+  description?: string;
+}> = [];
+
 function mockGitHubResponseChangedFiles(...files: string[]): void {
   const returnValue = files.map(f => ({filename: f}));
-  paginateMock.mockReturnValue(<any>returnValue);
+  mockRepoLabels = [];
+  paginateMock.mockImplementation((options: any) => {
+    if (options?.__labelerMock === 'listFiles') {
+      return returnValue as any;
+    }
+    if (options?.__labelerMock === 'listLabelsForRepo') {
+      return mockRepoLabels as any;
+    }
+    throw new Error('Unexpected paginate options in test');
+  });
+}
+
+function mockGitHubResponseRepoLabels(
+  labels: Array<{name: string; color?: string; description?: string}>
+): void {
+  mockRepoLabels = labels;
 }

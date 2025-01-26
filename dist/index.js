@@ -270,6 +270,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLabelConfigs = void 0;
 exports.getLabelConfigMapFromObject = getLabelConfigMapFromObject;
+exports.toLabelConfig = toLabelConfig;
 exports.toMatchConfig = toMatchConfig;
 const core = __importStar(__nccwpck_require__(7484));
 const yaml = __importStar(__nccwpck_require__(4281));
@@ -278,6 +279,7 @@ const get_content_1 = __nccwpck_require__(6519);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const META_CONFIG_KEYS = ['description', 'color'];
 const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(() => {
     if (!fs_1.default.existsSync(configurationPath)) {
@@ -336,6 +338,21 @@ function getLabelConfigMapFromObject(configObject) {
                         updatedConfig.push({ any: [newMatchConfig] });
                     }
                 }
+                else if (META_CONFIG_KEYS.includes(key)) {
+                    // Convert scalar config entries into the object shape expected by toLabelConfig.
+                    const metadata = toLabelConfig({ [key]: value });
+                    // Find or set the `meta` key so that we can add these properties to that rule,
+                    // Or create a new `meta` key and add that to our array of configs.
+                    const indexOfMeta = updatedConfig.findIndex(mc => !!mc['meta']);
+                    if (indexOfMeta >= 0) {
+                        const existingMeta = updatedConfig[indexOfMeta].meta || {};
+                        Object.assign(existingMeta, metadata);
+                        updatedConfig[indexOfMeta].meta = existingMeta;
+                    }
+                    else {
+                        updatedConfig.push({ meta: metadata });
+                    }
+                }
                 else {
                     // Log the key that we don't know what to do with.
                     core.info(`An unknown config option was under ${label}: ${key}`);
@@ -348,6 +365,31 @@ function getLabelConfigMapFromObject(configObject) {
         }
     }
     return labelMap;
+}
+function toLabelConfig(config) {
+    const metadata = {};
+    if (typeof config.description === 'string') {
+        metadata.description = config.description;
+    }
+    else if (config.description !== undefined) {
+        core.warning(`Invalid value for "description". It should be a string.`);
+    }
+    if (typeof config.color === 'string') {
+        const rawColor = config.color.trim();
+        const normalizedColor = rawColor.startsWith('#')
+            ? rawColor.slice(1)
+            : rawColor;
+        if (/^[0-9a-fA-F]{6}$/.test(normalizedColor)) {
+            metadata.color = normalizedColor;
+        }
+        else {
+            core.warning(`Invalid value for "color". It should be a 6-character hex color (e.g. "ff00ff").`);
+        }
+    }
+    else if (config.color !== undefined) {
+        core.warning(`Invalid value for "color". It should be a string.`);
+    }
+    return metadata;
 }
 function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
@@ -436,7 +478,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setLabels = void 0;
+exports.updateLabels = exports.setLabels = void 0;
 const github = __importStar(__nccwpck_require__(3228));
 const setLabels = (client, prNumber, labels) => __awaiter(void 0, void 0, void 0, function* () {
     yield client.rest.issues.setLabels({
@@ -447,6 +489,94 @@ const setLabels = (client, prNumber, labels) => __awaiter(void 0, void 0, void 0
     });
 });
 exports.setLabels = setLabels;
+// Function to update a list of labels
+const updateLabels = (client, labels, labelConfigs, repoLabelCache) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    const labelMetaEntries = labels
+        .map(label => {
+        var _a, _b;
+        return ({
+            label,
+            meta: (_b = (_a = labelConfigs.get(label)) === null || _a === void 0 ? void 0 : _a.find(config => config.meta)) === null || _b === void 0 ? void 0 : _b.meta
+        });
+    })
+        .filter(entry => entry.meta && (entry.meta.color || entry.meta.description));
+    if (!labelMetaEntries.length) {
+        return;
+    }
+    if (repoLabelCache.size === 0) {
+        const listLabelsOptions = client.rest.issues.listLabelsForRepo.endpoint.merge({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo
+        });
+        const repoLabels = (yield client.paginate(listLabelsOptions));
+        for (const repoLabel of repoLabels) {
+            if (typeof repoLabel.name !== 'string') {
+                continue;
+            }
+            repoLabelCache.set(repoLabel.name, {
+                name: repoLabel.name,
+                color: (_a = repoLabel.color) !== null && _a !== void 0 ? _a : undefined,
+                description: (_b = repoLabel.description) !== null && _b !== void 0 ? _b : undefined
+            });
+        }
+    }
+    for (const { label, meta: metadata } of labelMetaEntries) {
+        if (!metadata) {
+            continue;
+        }
+        const colorConfig = metadata.color;
+        const descriptionConfig = metadata.description;
+        const existingLabel = repoLabelCache.get(label);
+        if (!existingLabel) {
+            const createParams = {
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                name: label
+            };
+            if (colorConfig) {
+                createParams.color = colorConfig;
+            }
+            if (descriptionConfig) {
+                createParams.description = descriptionConfig;
+            }
+            yield client.rest.issues.createLabel(createParams);
+            repoLabelCache.set(label, {
+                name: label,
+                color: colorConfig !== null && colorConfig !== void 0 ? colorConfig : undefined,
+                description: descriptionConfig !== null && descriptionConfig !== void 0 ? descriptionConfig : undefined
+            });
+            continue;
+        }
+        const existingColor = (_c = existingLabel.color) === null || _c === void 0 ? void 0 : _c.toLowerCase();
+        const desiredColor = colorConfig === null || colorConfig === void 0 ? void 0 : colorConfig.toLowerCase();
+        const colorMatches = desiredColor ? desiredColor === existingColor : true;
+        const descriptionMatches = descriptionConfig
+            ? descriptionConfig === ((_d = existingLabel.description) !== null && _d !== void 0 ? _d : undefined)
+            : true;
+        if (colorMatches && descriptionMatches) {
+            continue;
+        }
+        const updateParams = {
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            name: label
+        };
+        if (colorConfig) {
+            updateParams.color = colorConfig;
+        }
+        if (descriptionConfig) {
+            updateParams.description = descriptionConfig;
+        }
+        yield client.rest.issues.updateLabel(updateParams);
+        repoLabelCache.set(label, {
+            name: label,
+            color: (_e = colorConfig !== null && colorConfig !== void 0 ? colorConfig : existingLabel.color) !== null && _e !== void 0 ? _e : undefined,
+            description: (_f = descriptionConfig !== null && descriptionConfig !== void 0 ? descriptionConfig : existingLabel.description) !== null && _f !== void 0 ? _f : undefined
+        });
+    }
+});
+exports.updateLabels = updateLabels;
 
 
 /***/ }),
@@ -1050,25 +1180,30 @@ exports.run = run;
 function labeler() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, e_1, _b, _c;
+        var _d, _e;
         const { token, configPath, syncLabels, dot, prNumbers } = (0, get_inputs_1.getInputs)();
         if (!prNumbers.length) {
             core.warning('Could not get pull request number(s), exiting');
             return;
         }
         const client = github.getOctokit(token, {}, pluginRetry.retry);
+        const repoLabelCache = new Map();
         const pullRequests = api.getPullRequests(client, prNumbers);
         try {
-            for (var _d = true, pullRequests_1 = __asyncValues(pullRequests), pullRequests_1_1; pullRequests_1_1 = yield pullRequests_1.next(), _a = pullRequests_1_1.done, !_a; _d = true) {
+            for (var _f = true, pullRequests_1 = __asyncValues(pullRequests), pullRequests_1_1; pullRequests_1_1 = yield pullRequests_1.next(), _a = pullRequests_1_1.done, !_a; _f = true) {
                 _c = pullRequests_1_1.value;
-                _d = false;
+                _f = false;
                 const pullRequest = _c;
                 const labelConfigs = yield api.getLabelConfigs(client, configPath);
-                const preexistingLabels = pullRequest.data.labels.map(l => l.name);
-                const allLabels = new Set(preexistingLabels);
+                const preexistingLabels = pullRequest.data.labels.map((l) => { var _a; return [l.name, (_a = l.color) !== null && _a !== void 0 ? _a : '']; });
+                const preexistingLabelNames = new Set(preexistingLabels.map(([label]) => label));
+                const allLabels = new Map();
+                preexistingLabels.forEach(([label, color]) => allLabels.set(label, color));
                 for (const [label, configs] of labelConfigs.entries()) {
                     core.debug(`processing ${label}`);
                     if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
-                        allLabels.add(label);
+                        const labelColor = (_e = (_d = configs.find(config => config.meta)) === null || _d === void 0 ? void 0 : _d.meta) === null || _e === void 0 ? void 0 : _e.color;
+                        allLabels.set(label, labelColor !== null && labelColor !== void 0 ? labelColor : '');
                     }
                     else if (syncLabels) {
                         allLabels.delete(label);
@@ -1085,16 +1220,33 @@ function labeler() {
                         // Skip fetching real labels when running tests (uses mock data instead)
                         if (process.env.NODE_ENV !== 'test') {
                             const pr = yield client.rest.pulls.get(Object.assign(Object.assign({}, github.context.repo), { pull_number: pullRequest.number }));
-                            latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
+                            latestLabels.push(...pr.data.labels
+                                .map(l => { var _a; return [l.name, (_a = l.color) !== null && _a !== void 0 ? _a : '']; })
+                                .filter(([label]) => Boolean(label)));
                         }
                         // Labels added manually during the run (not in first snapshot)
-                        const manualAddedDuringRun = latestLabels.filter(l => !preexistingLabels.includes(l));
+                        const manualAddedDuringRun = latestLabels.filter(([label]) => !preexistingLabelNames.has(label));
                         // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
-                        finalLabels = [
-                            ...new Set([...manualAddedDuringRun, ...labelsToApply])
-                        ].slice(0, GITHUB_MAX_LABELS);
-                        yield api.setLabels(client, pullRequest.number, finalLabels);
-                        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
+                        const mergedLabels = new Map();
+                        for (const [label, color] of manualAddedDuringRun) {
+                            mergedLabels.set(label, color);
+                        }
+                        for (const [label, color] of labelsToApply) {
+                            if (!mergedLabels.has(label)) {
+                                mergedLabels.set(label, color);
+                            }
+                            else if (!mergedLabels.get(label) && color) {
+                                mergedLabels.set(label, color);
+                            }
+                        }
+                        finalLabels = [...mergedLabels].slice(0, GITHUB_MAX_LABELS);
+                        yield api.setLabels(client, pullRequest.number, finalLabels.map(([label]) => label));
+                        newLabels = finalLabels
+                            .filter(([label]) => !preexistingLabelNames.has(label))
+                            .map(([label]) => label);
+                    }
+                    if (newLabels.length > 0) {
+                        yield api.updateLabels(client, newLabels, labelConfigs, repoLabelCache);
                     }
                 }
                 catch (error) {
@@ -1116,16 +1268,18 @@ function labeler() {
                     return;
                 }
                 core.setOutput('new-labels', newLabels.join(','));
-                core.setOutput('all-labels', finalLabels.join(','));
+                core.setOutput('all-labels', finalLabels.map(([label]) => label).join(','));
                 if (excessLabels.length) {
-                    core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
+                    core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels
+                        .map(([label]) => label)
+                        .join(', ')}`, { title: 'Label limit for a PR exceeded' });
                 }
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (!_d && !_a && (_b = pullRequests_1.return)) yield _b.call(pullRequests_1);
+                if (!_f && !_a && (_b = pullRequests_1.return)) yield _b.call(pullRequests_1);
             }
             finally { if (e_1) throw e_1.error; }
         }

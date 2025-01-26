@@ -44,6 +44,8 @@ The base match object is defined as:
   - all-globs-to-all-files: ['list', 'of', 'globs']
 - base-branch: ['list', 'of', 'regexps']
 - head-branch: ['list', 'of', 'regexps']
+- description: 'Description of label'
+- color: 'Color of label'
 ```
 
 There are two top-level keys, `any` and `all`, which both accept the same configuration options:
@@ -79,6 +81,8 @@ The fields are defined as follows:
     - `any-glob-to-all-files`: ANY glob must match against ALL changed files
     - `all-globs-to-any-file`: ALL globs must match against ANY changed file
     - `all-globs-to-all-files`: ALL globs must match against ALL changed files
+- `description`: The description of the label if creating it
+- `color`: The color of the label if creating it (6-character hex, with or without `#`)
 
 If a base option is provided without a top-level key, then it will default to `any`. More specifically, the following two configurations are equivalent:
 ```yml
@@ -151,6 +155,13 @@ feature:
 # Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
+
+ # Define label properties
+ created-label:
+  - changed-files:
+    - any-glob-to-any-file: '*'
+  - description: "This label was created if it didn't already exist"
+  - color: "abcdef"
 ```
 
 ### Create Workflow
