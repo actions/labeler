@@ -139,18 +139,20 @@ source:
 
 # Add 'source' label with color #F3F3F3 to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
+- color: '#F3F3F3'
 - all:
-  - color: '#F3F3F3'
   - changed-files:
     - any-glob-to-any-file: 'src/**/*'
     - all-globs-to-all-files: '!src/docs/*'
 
 # Add 'feature' label to any PR where the head branch name starts with `feature` or has a `feature` section in the name
 feature:
+ - color: '#F3F3F3'
  - head-branch: ['^feature', 'feature']
 
 # Add 'release' label to any PR that is opened against the `main` branch
 release:
+ - color: '#F3F3F3'
  - base-branch: 'main'
 ```
 
