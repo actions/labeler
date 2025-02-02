@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {getChangedFiles} from './get-changed-files';
-import {ClientType} from './types';
+import {ClientType, PullRequest} from './types';
 
 export async function* getPullRequests(
   client: ClientType,
@@ -9,7 +9,7 @@ export async function* getPullRequests(
 ) {
   for (const prNumber of prNumbers) {
     core.debug(`looking for pr #${prNumber}`);
-    let prData: any;
+    let prData: PullRequest;
     try {
       const result = await client.rest.pulls.get({
         owner: github.context.repo.owner,

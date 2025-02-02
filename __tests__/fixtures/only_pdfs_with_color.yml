@@ -1,0 +1,4 @@
+touched-a-pdf-file:
+  - color: '#FF0011'
+  - changed-files:
+      - any-glob-to-any-file: ['*.pdf']
