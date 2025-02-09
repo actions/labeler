@@ -13,14 +13,16 @@ export const setLabels = async (
     labels: labels.map(([label]) => label)
   });
 
-  for (const [label, color] of labels) {
-    if (color) {
-      await client.rest.issues.updateLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        name: label,
-        color: color?.replace('#', '')
-      });
-    }
-  }
+  await Promise.all(
+    labels.map(async ([label, color]) => {
+      if (color) {
+        client.rest.issues.updateLabel({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          name: label,
+          color: color.replace('#', '')
+        });
+      }
+    })
+  );
 };
