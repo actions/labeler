@@ -37,7 +37,10 @@ const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
-  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
+  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml'),
+  'default_any_and_all.yml': fs.readFileSync(
+    '__tests__/fixtures/default_any_and_all.yml'
+  )
 };
 
 const configureInput = (
