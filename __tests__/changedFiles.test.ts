@@ -100,12 +100,11 @@ describe('toChangedFilesMatchConfig', () => {
     describe('but the glob pattern config key is not provided', () => {
       const config = {'changed-files': ['bar']};
 
-      it('throws the error', () => {
-        expect(() => {
-          toChangedFilesMatchConfig(config);
-        }).toThrow(
-          `The "changed-files" section must have a valid config structure. Please read the action documentation for more information`
-        );
+      it('defaults to anyGlobToAnyFile', () => {
+        const result = toChangedFilesMatchConfig(config);
+        expect(result).toEqual<ChangedFilesMatchConfig>({
+          changedFiles: [{anyGlobToAnyFile: ['bar']}]
+        });
       });
     });
 
