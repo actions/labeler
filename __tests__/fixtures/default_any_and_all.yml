@@ -3,4 +3,4 @@ default_any:
 
 default_all:
   - all:
-    - changed-files: ['glob']
+      - changed-files: ['glob']
