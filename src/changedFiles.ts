@@ -57,6 +57,19 @@ export function toChangedFilesMatchConfig(
   const validChangedFilesConfigs: ChangedFilesGlobPatternsConfig[] = [];
 
   changedFilesConfigs.forEach(changedFilesConfig => {
+    if (
+      typeof changedFilesConfig === 'string' ||
+      (Array.isArray(changedFilesConfig) &&
+        changedFilesConfig.every(config => typeof config === 'string'))
+    ) {
+      const value =
+        typeof changedFilesConfig === 'string'
+          ? [changedFilesConfig]
+          : changedFilesConfig;
+      validChangedFilesConfigs.push({anyGlobToAnyFile: value});
+      return;
+    }
+
     if (!isObject(changedFilesConfig)) {
       throw new Error(
         `The "changed-files" section must have a valid config structure. Please read the action documentation for more information`
