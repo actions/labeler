@@ -45,7 +45,8 @@ export async function getChangedFiles(
 }
 
 export function toChangedFilesMatchConfig(
-  config: any
+  config: any,
+  defaultToAll = false
 ): ChangedFilesMatchConfig {
   if (!config['changed-files'] || !config['changed-files'].length) {
     return {};
@@ -62,11 +63,12 @@ export function toChangedFilesMatchConfig(
       (Array.isArray(changedFilesConfig) &&
         changedFilesConfig.every(config => typeof config === 'string'))
     ) {
+      const key = defaultToAll ? 'allGlobsToAllFiles' : 'anyGlobToAnyFile';
       const value =
         typeof changedFilesConfig === 'string'
           ? [changedFilesConfig]
           : changedFilesConfig;
-      validChangedFilesConfigs.push({anyGlobToAnyFile: value});
+      validChangedFilesConfigs.push({[key]: value});
       return;
     }
 
