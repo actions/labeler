@@ -98,7 +98,35 @@ Documentation:
     - any-glob-to-any-file: 'docs/*'
 ```
 
- If path globs are combined with `!` negation, you can write complex matching rules. See the examples below for more information.
+If path globs are combined with `!` negation, you can write complex matching rules. See the examples below for more information.
+
+Furthermore, if a top-level key is omitted, or is `any` then a `changed-files` key without any further options will default to `any-glob-to-any-file`, though if an `all` key is provided it will default to `all-globs-to-all-files`.
+
+For example the following would be the same:
+```yml
+Documentation:
+- changed-files: 'docs/*'
+```
+and
+```yml
+Documentation:
+- any
+  - changed-files:
+    - any-glob-to-any-file: 'docs/*'
+```
+along with
+```yml
+Documentation:
+- all:
+  - changed-files: 'docs/*'
+```
+and
+```yml
+Documentation:
+- all:
+  - changed-files:
+    - all-globs-to-all-files: 'docs/*'
+```
 
 #### Basic Examples
 
