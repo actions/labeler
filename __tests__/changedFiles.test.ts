@@ -106,6 +106,15 @@ describe('toChangedFilesMatchConfig', () => {
           changedFiles: [{anyGlobToAnyFile: ['bar']}]
         });
       });
+
+      describe('and the defaultToAll option is passed', () => {
+        it('defaults to allGlobToAllFiles', () => {
+          const result = toChangedFilesMatchConfig(config, true);
+          expect(result).toEqual<ChangedFilesMatchConfig>({
+            changedFiles: [{allGlobsToAllFiles: ['bar']}]
+          });
+        });
+      });
     });
 
     describe('but the glob pattern config key is not valid', () => {
