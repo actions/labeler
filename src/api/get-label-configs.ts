@@ -11,14 +11,23 @@ import {
 
 import {toBranchMatchConfig, BranchMatchConfig} from '../branch';
 
+import {toTitleMatchConfig, TitleMatchConfig} from '../title';
+
 export interface MatchConfig {
   all?: BaseMatchConfig[];
   any?: BaseMatchConfig[];
 }
 
-export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
+export type BaseMatchConfig = BranchMatchConfig &
+  ChangedFilesMatchConfig &
+  TitleMatchConfig;
 
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const ALLOWED_CONFIG_KEYS = [
+  'changed-files',
+  'head-branch',
+  'base-branch',
+  'title'
+];
 
 export const getLabelConfigs = (
   client: ClientType,
@@ -118,9 +127,11 @@ export function getLabelConfigMapFromObject(
 export function toMatchConfig(config: any): BaseMatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
+  const titleConfig = toTitleMatchConfig(config);
 
   return {
     ...changedFilesConfig,
-    ...branchConfig
+    ...branchConfig,
+    ...titleConfig
   };
 }

@@ -11,6 +11,8 @@ import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles';
 
 import {checkAnyBranch, checkAllBranch} from './branch';
 
+import {checkAnyTitle, checkAllTitle} from './title';
+
 type ClientType = ReturnType<typeof github.getOctokit>;
 
 // GitHub Issues cannot have more than 100 labels
@@ -173,6 +175,13 @@ export function checkAny(
         return true;
       }
     }
+
+    if (matchConfig.title) {
+      if (checkAnyTitle(matchConfig.title)) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
   }
 
   core.debug(`  "any" patterns did not match any configs`);
@@ -216,6 +225,13 @@ export function checkAll(
 
     if (matchConfig.headBranch) {
       if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
+
+    if (matchConfig.title) {
+      if (!checkAllTitle(matchConfig.title)) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
