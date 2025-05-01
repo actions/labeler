@@ -30,7 +30,7 @@ The match object allows control over the matching options. You can specify the l
 
 The base match object is defined as:
 ```yml
-- changed-files: 
+- changed-files:
   - any-glob-to-any-file: ['list', 'of', 'globs']
   - any-glob-to-all-files: ['list', 'of', 'globs']
   - all-globs-to-any-file: ['list', 'of', 'globs']
@@ -125,7 +125,7 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: ['docs/*', 'guides/*']
 
-# Add 'Documentation' label to any change to .md files within the entire repository 
+# Add 'Documentation' label to any change to .md files within the entire repository
 Documentation:
 - changed-files:
   - any-glob-to-any-file: '**/*.md'
@@ -160,6 +160,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v5
@@ -204,12 +205,13 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
-    
+
     # Label PRs 1, 2, and 3
     - uses: actions/labeler@v5
-      with:        
+      with:
         pr-number: |
           1
           2
@@ -218,9 +220,9 @@ jobs:
 
 **Note:** in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
 
-#### Outputs 
+#### Outputs
 
-Labeler provides the following outputs:  
+Labeler provides the following outputs:
 
 | Name         | Description                                               |
 |--------------|-----------------------------------------------------------|
@@ -238,17 +240,18 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
     - id: label-the-PR
       uses: actions/labeler@v5
-      
+
     - id: run-frontend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
       run: |
         echo "Running frontend tests..."
         # Put your commands for running frontend tests here
-  
+
     - id: run-backend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'backend')
       run: |
@@ -265,6 +268,7 @@ In order to add labels to pull requests, the GitHub labeler action requires writ
     permissions:
       contents: read
       pull-requests: write
+      issues: write
 ```
 
 ## Notes regarding `pull_request_target` event
