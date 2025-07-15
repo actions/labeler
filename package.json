@@ -37,7 +37,7 @@
     "@types/lodash.isequal": "^4.5.8",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^20.11.30",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vercel/ncc": "^0.38.3",
     "eslint": "^8.57.0",
