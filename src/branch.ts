@@ -36,7 +36,7 @@ export function getBranchName(branchBase: BranchBase): string | undefined {
   if (branchBase === 'base') {
     return pullRequest.base?.ref;
   } else {
-    return pullRequest.head?.ref;
+    return pullRequest.head?.ref.toLowerCase();
   }
 }
 
