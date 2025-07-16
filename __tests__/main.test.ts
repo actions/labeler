@@ -3,12 +3,14 @@ import * as github from '@actions/github';
 import * as core from '@actions/core';
 import path from 'path';
 import fs from 'fs';
+import {PullRequest} from '../src/api/types';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
 const gh = github.getOctokit('_');
 const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
+const updateLabelMock = jest.spyOn(gh.rest.issues, 'updateLabel');
 const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
 const paginateMock = jest.spyOn(gh, 'paginate');
 const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
@@ -36,6 +38,9 @@ class NotFound extends Error {
 const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
+  'only_pdfs_with_color.yml': fs.readFileSync(
+    '__tests__/fixtures/only_pdfs_with_color.yml'
+  ),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
   'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
 };
@@ -469,6 +474,37 @@ describe('run', () => {
     expect(existsSyncMock).toHaveBeenCalledWith(configFilePath);
     expect(readFileSyncMock).not.toHaveBeenCalled();
     expect(reposMock).toHaveBeenCalled();
+  });
+
+  it('does update label color when defined in the configuration', async () => {
+    setLabelsMock.mockClear();
+
+    usingLabelerConfigYaml('only_pdfs_with_color.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    getPullMock.mockResolvedValueOnce(<any>{
+      data: {
+        labels: [{name: 'manually-added'}]
+      }
+    });
+
+    await run();
+
+    console.log(setLabelsMock.mock.calls);
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['manually-added', 'touched-a-pdf-file']
+    });
+    expect(updateLabelMock).toHaveBeenCalledTimes(1);
+    expect(updateLabelMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      name: 'touched-a-pdf-file',
+      color: 'FF0011'
+    });
   });
 
   test.each([
