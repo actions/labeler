@@ -277,7 +277,13 @@ const fs_1 = __importDefault(__nccwpck_require__(9896));
 const get_content_1 = __nccwpck_require__(6519);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const title_1 = __nccwpck_require__(9798);
+const ALLOWED_CONFIG_KEYS = [
+    'changed-files',
+    'head-branch',
+    'base-branch',
+    'title'
+];
 const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(() => {
     if (!fs_1.default.existsSync(configurationPath)) {
@@ -352,7 +358,8 @@ function getLabelConfigMapFromObject(configObject) {
 function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
-    return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
+    const titleConfig = (0, title_1.toTitleMatchConfig)(config);
+    return Object.assign(Object.assign(Object.assign({}, changedFilesConfig), branchConfig), titleConfig);
 }
 
 
@@ -1039,6 +1046,7 @@ const lodash_isequal_1 = __importDefault(__nccwpck_require__(9471));
 const get_inputs_1 = __nccwpck_require__(1219);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
+const title_1 = __nccwpck_require__(9798);
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
 const run = () => labeler().catch(error => {
@@ -1162,6 +1170,12 @@ function checkAny(matchConfigs, changedFiles, dot) {
                 return true;
             }
         }
+        if (matchConfig.title) {
+            if ((0, title_1.checkAnyTitle)(matchConfig.title)) {
+                core.debug(`  "any" patterns matched`);
+                return true;
+            }
+        }
     }
     core.debug(`  "any" patterns did not match any configs`);
     return false;
@@ -1197,9 +1211,126 @@ function checkAll(matchConfigs, changedFiles, dot) {
                 return false;
             }
         }
+        if (matchConfig.title) {
+            if (!(0, title_1.checkAllTitle)(matchConfig.title)) {
+                core.debug(`  "all" patterns did not match`);
+                return false;
+            }
+        }
     }
     core.debug(`  "all" patterns matched all configs`);
     return true;
+}
+
+
+/***/ }),
+
+/***/ 9798:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.toTitleMatchConfig = toTitleMatchConfig;
+exports.getTitle = getTitle;
+exports.checkAnyTitle = checkAnyTitle;
+exports.checkAllTitle = checkAllTitle;
+const core = __importStar(__nccwpck_require__(7484));
+const github = __importStar(__nccwpck_require__(3228));
+function toTitleMatchConfig(config) {
+    if (!config['title']) {
+        return {};
+    }
+    const titleConfig = {
+        title: config['title']
+    };
+    if (typeof titleConfig.title === 'string') {
+        titleConfig.title = [titleConfig.title];
+    }
+    return titleConfig;
+}
+function getTitle() {
+    const pullRequest = github.context.payload.pull_request;
+    if (!pullRequest) {
+        return undefined;
+    }
+    return pullRequest.title;
+}
+function checkAnyTitle(regexps) {
+    const title = getTitle();
+    if (!title) {
+        core.debug(`    cannot fetch title from the pull request`);
+        return false;
+    }
+    core.debug(`    checking "title" pattern against ${title}`);
+    const matchers = regexps.map(regexp => new RegExp(regexp));
+    for (const matcher of matchers) {
+        if (matchTitlePattern(matcher, title)) {
+            core.debug(`    "title" patterns matched against ${title}`);
+            return true;
+        }
+    }
+    core.debug(`  "title" patterns did not match against ${title}`);
+    return false;
+}
+function checkAllTitle(regexps) {
+    const title = getTitle();
+    if (!title) {
+        core.debug(`   cannot fetch title from the pull request`);
+        return false;
+    }
+    core.debug(`   checking "title" pattern against ${title}`);
+    const matchers = regexps.map(regexp => new RegExp(regexp));
+    for (const matcher of matchers) {
+        if (!matchTitlePattern(matcher, title)) {
+            core.debug(`   "title" patterns did not match against ${title}`);
+            return false;
+        }
+    }
+    core.debug(`   "title" patterns matched against ${title}`);
+    return true;
+}
+function matchTitlePattern(matcher, title) {
+    core.debug(`    - ${matcher}`);
+    if (matcher.test(title)) {
+        core.debug(`    "title" pattern matched`);
+        return true;
+    }
+    core.debug(`    ${matcher} did not match`);
+    return false;
 }
 
 
