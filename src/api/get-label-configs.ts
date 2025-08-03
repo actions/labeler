@@ -12,6 +12,7 @@ import {
 import {toBranchMatchConfig, BranchMatchConfig} from '../branch';
 
 export interface MatchConfig {
+  color?: string;
   all?: BaseMatchConfig[];
   any?: BaseMatchConfig[];
 }
@@ -63,7 +64,13 @@ export function getLabelConfigMapFromObject(
 ): Map<string, MatchConfig[]> {
   const labelMap: Map<string, MatchConfig[]> = new Map();
   for (const label in configObject) {
-    const configOptions = configObject[label];
+    const configOptions: [] = configObject[label];
+
+    // Get the color from the label if it exists.
+    const color = configOptions.find(x => Object.keys(x).includes('color'))?.[
+      'color'
+    ];
+
     if (
       !Array.isArray(configOptions) ||
       !configOptions.every(opts => typeof opts === 'object')
@@ -84,17 +91,26 @@ export function getLabelConfigMapFromObject(
           if (key === 'any' || key === 'all') {
             if (Array.isArray(value)) {
               const newConfigs = value.map(toMatchConfig);
-              updatedConfig.push({[key]: newConfigs});
+              updatedConfig.push({
+                color,
+                [key]: newConfigs
+              });
             }
           } else if (ALLOWED_CONFIG_KEYS.includes(key)) {
-            const newMatchConfig = toMatchConfig({[key]: value});
+            const newMatchConfig = toMatchConfig({
+              color,
+              [key]: value
+            });
             // Find or set the `any` key so that we can add these properties to that rule,
             // Or create a new `any` key and add that to our array of configs.
             const indexOfAny = updatedConfig.findIndex(mc => !!mc['any']);
             if (indexOfAny >= 0) {
               updatedConfig[indexOfAny].any?.push(newMatchConfig);
             } else {
-              updatedConfig.push({any: [newMatchConfig]});
+              updatedConfig.push({
+                color,
+                any: [newMatchConfig]
+              });
             }
           } else {
             // Log the key that we don't know what to do with.
