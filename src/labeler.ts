@@ -65,6 +65,15 @@ async function labeler() {
       }
     } catch (error: any) {
       if (
+        error.name === 'HttpError' &&
+        error.status === 403 &&
+        error.message.includes('unauthorized')
+      ) {
+        core.error(
+          `Failed to set labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +
+            `Ensure the 'issues: write' permission is granted in the workflow file or manually create the missing labels in the repository before running the action.`
+        );
+      } else if (
         error.name !== 'HttpError' ||
         error.message !== 'Resource not accessible by integration'
       ) {
@@ -72,7 +81,8 @@ async function labeler() {
       }
 
       core.warning(
-        `The action requires write permission to add labels to pull requests. For more information please refer to the action documentation: https://github.com/actions/labeler#recommended-permissions`,
+        `The action requires 'issues: write' permission to create new labels or 'pull-requests: write' permission to add existing labels to pull requests. ` +
+          `For more information, refer to the action documentation: https://github.com/actions/labeler#recommended-permissions`,
         {
           title: `${process.env['GITHUB_ACTION_REPOSITORY']} running under '${github.context.eventName}' is misconfigured`
         }
