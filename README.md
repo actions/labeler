@@ -258,14 +258,35 @@ jobs:
 
 ## Recommended Permissions
 
-In order to add labels to pull requests, the GitHub labeler action requires write permissions on the pull-request. However, when the action runs on a pull request from a forked repository, GitHub only grants read access tokens for `pull_request` events, at most. If you encounter an `Error: HttpError: Resource not accessible by integration`, it's likely due to these permission constraints. To resolve this issue, you can modify the `on:` section of your workflow to use
-[`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) instead of `pull_request` (see example [above](#create-workflow)). This change allows the action to have write access, because `pull_request_target` alters the [context of the action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) and safely grants additional permissions. There exists a potentially dangerous misuse of the pull_request_target workflow trigger that may lead to malicious PR authors (i.e. attackers) being able to obtain repository write permissions or stealing repository secrets, Hence it is advisible that pull_request_target should only be used in workflows that are carefully designed to avoid executing untrusted code and to also ensure that workflows using pull_request_target limit access to sensitive resources. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
+To successfully add labels to pull requests using the GitHub Labeler Action, specific permissions must be granted based on your use case:
+
+1. **Adding Existing Labels**:
+   - Requires: `pull-requests: write`
+   - Use this if all labels already exist in the repository (i.e., pre-defined in `.github/labeler.yml`).
+
+2. **Creating New Labels**:
+   - Requires: `issues: write`
+   - This is necessary if the action needs to create labels that do not already exist in the repository.
+
+However, when the action runs on a pull request from a forked repository, GitHub only grants read access tokens for `pull_request` events, at most. If you encounter an `Error: HttpError: Resource not accessible by integration`, it's likely due to these permission constraints. To resolve this issue, you can modify the `on:` section of your workflow to use
+[`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) instead of `pull_request` (see example [above](#create-workflow)). This change allows the action to have write access, because `pull_request_target` alters the [context of the action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) and safely grants additional permissions.
+
+There exists a potentially dangerous misuse of the `pull_request_target` workflow trigger that may lead to malicious PR authors (i.e. attackers) being able to obtain repository write permissions or stealing repository secrets. Hence, it is advisable that `pull_request_target` should only be used in workflows that are carefully designed to avoid executing untrusted code and to also ensure that workflows using `pull_request_target` limit access to sensitive resources. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
+
+### Example Workflow Permissions
+
+To ensure the action works correctly, include the following permissions in your workflow file:
 
 ```yml
     permissions:
       contents: read
       pull-requests: write
+      issues: write
 ```
+
+### Manual label creation (Alternative to Granting `issues: write` Permission) 
+
+If you prefer not to grant the `issues: write` permission in your workflow, you can manually create all required labels in the repository before the action runs.
 
 ## Notes regarding `pull_request_target` event
 
