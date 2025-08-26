@@ -284,7 +284,7 @@ To ensure the action works correctly, include the following permissions in your 
       issues: write
 ```
 
-### Manual label creation (Alternative to Granting `issues: write` Permission) 
+### Manual Label Creation as an Alternative to Granting issues write Permission 
 
 If you prefer not to grant the `issues: write` permission in your workflow, you can manually create all required labels in the repository before the action runs.
 
