@@ -67,7 +67,7 @@ async function labeler() {
       if (
         error.name === 'HttpError' &&
         error.status === 403 &&
-        error.message.includes('unauthorized')
+        error.message.toLowerCase().includes('unauthorized')
       ) {
         core.error(
           `Failed to set labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +

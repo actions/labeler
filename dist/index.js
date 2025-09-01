@@ -1085,7 +1085,7 @@ function labeler() {
                 catch (error) {
                     if (error.name === 'HttpError' &&
                         error.status === 403 &&
-                        error.message.includes('unauthorized')) {
+                        error.message.toLowerCase().includes('unauthorized')) {
                         core.error(`Failed to set labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +
                             `Ensure the 'issues: write' permission is granted in the workflow file or manually create the missing labels in the repository before running the action.`);
                     }
