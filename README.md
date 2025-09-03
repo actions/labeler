@@ -162,7 +162,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
 ```
 
 #### Inputs
@@ -182,10 +182,10 @@ You might want to use action called [@actions/checkout](https://github.com/actio
 
 ```yml
     steps:
-    - uses: actions/checkout@v4 # Uploads repository content to the runner
+    - uses: actions/checkout@v5 # Uploads repository content to the runner
       with:
         repository: "owner/repositoryName" # The one of the available inputs, visit https://github.com/actions/checkout#readme to find more
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
       with:
         configuration-path: 'path/to/the/uploaded/configuration/file'
 
@@ -208,7 +208,7 @@ jobs:
     steps:
     
     # Label PRs 1, 2, and 3
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
       with:        
         pr-number: |
           1
@@ -241,7 +241,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: label-the-PR
-      uses: actions/labeler@v5
+      uses: actions/labeler@v6
       
     - id: run-frontend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
