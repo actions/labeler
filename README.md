@@ -190,7 +190,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
 ```
 
 #### Inputs
@@ -210,10 +210,10 @@ You might want to use action called [@actions/checkout](https://github.com/actio
 
 ```yml
     steps:
-    - uses: actions/checkout@v4 # Uploads repository content to the runner
+    - uses: actions/checkout@v5 # Uploads repository content to the runner
       with:
         repository: "owner/repositoryName" # The one of the available inputs, visit https://github.com/actions/checkout#readme to find more
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
       with:
         configuration-path: 'path/to/the/uploaded/configuration/file'
 
@@ -236,8 +236,8 @@ jobs:
     steps:
 
     # Label PRs 1, 2, and 3
-    - uses: actions/labeler@v5
-      with:
+    - uses: actions/labeler@v6
+      with:        
         pr-number: |
           1
           2
@@ -269,8 +269,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: label-the-PR
-      uses: actions/labeler@v5
-
+      uses: actions/labeler@v6
+      
     - id: run-frontend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
       run: |
@@ -287,7 +287,7 @@ jobs:
 ## Recommended Permissions
 
 In order to add labels to pull requests, the GitHub labeler action requires write permissions on the pull-request. However, when the action runs on a pull request from a forked repository, GitHub only grants read access tokens for `pull_request` events, at most. If you encounter an `Error: HttpError: Resource not accessible by integration`, it's likely due to these permission constraints. To resolve this issue, you can modify the `on:` section of your workflow to use
-[`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) instead of `pull_request` (see example [above](#create-workflow)). This change allows the action to have write access, because `pull_request_target` alters the [context of the action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) and safely grants additional permissions. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
+[`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) instead of `pull_request` (see example [above](#create-workflow)). This change allows the action to have write access, because `pull_request_target` alters the [context of the action](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) and safely grants additional permissions. There exists a potentially dangerous misuse of the pull_request_target workflow trigger that may lead to malicious PR authors (i.e. attackers) being able to obtain repository write permissions or stealing repository secrets, Hence it is advisible that pull_request_target should only be used in workflows that are carefully designed to avoid executing untrusted code and to also ensure that workflows using pull_request_target limit access to sensitive resources. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
 
 ```yml
     permissions:
