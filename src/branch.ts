@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 
 export interface BranchMatchConfig {
   headBranch?: string[];
@@ -27,24 +26,23 @@ export function toBranchMatchConfig(config: any): BranchMatchConfig {
   return branchConfig;
 }
 
-export function getBranchName(branchBase: BranchBase): string | undefined {
-  const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
-  }
-
+export function getBranchName(
+  prData: any,
+  branchBase: BranchBase
+): string | undefined {
   if (branchBase === 'base') {
-    return pullRequest.base?.ref;
+    return prData.base?.ref;
   } else {
-    return pullRequest.head?.ref;
+    return prData.head?.ref;
   }
 }
 
 export function checkAnyBranch(
+  prData: any,
   regexps: string[],
   branchBase: BranchBase
 ): boolean {
-  const branchName = getBranchName(branchBase);
+  const branchName = getBranchName(prData, branchBase);
   if (!branchName) {
     core.debug(`   no branch name`);
     return false;
@@ -64,10 +62,11 @@ export function checkAnyBranch(
 }
 
 export function checkAllBranch(
+  prData: any,
   regexps: string[],
   branchBase: BranchBase
 ): boolean {
-  const branchName = getBranchName(branchBase);
+  const branchName = getBranchName(prData, branchBase);
   if (!branchName) {
     core.debug(`   cannot fetch branch name from the pull request`);
     return false;
