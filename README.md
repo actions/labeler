@@ -4,6 +4,14 @@
 
 Automatically label new pull requests based on the paths of files being changed or the branch name.
 
+## Breaking changes in V6
+
+- Upgrade Node.js version to 24 in action and dependencies @salmanmkc in [#891](https://github.com/actions/labeler/pull/891)
+
+Make sure your runner is on version v2.327.1 or later to ensure compatibility with this release. [Release Notes](https://github.com/actions/runner/releases/tag/v2.327.1)
+
+For more detailed release notes with documntation updates and dependency upgrades, please track [release notes](https://github.com/actions/labeler/releases/v6.0.0)
+
 ## Breaking changes in V5
 1) The ability to apply labels based on the names of base and/or head branches was added ([#186](https://github.com/actions/labeler/issues/186) and [#54](https://github.com/actions/labeler/issues/54)). The match object for changed files was expanded with new combinations in order to make it more intuitive and flexible ([#423](https://github.com/actions/labeler/issues/423) and [#101](https://github.com/actions/labeler/issues/101)). As a result, the configuration file structure was significantly redesigned and is not compatible with the structure of the previous version. Please read the documentation below to find out how to adapt your configuration files for use with the new action version.
 
