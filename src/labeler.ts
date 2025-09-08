@@ -22,7 +22,7 @@ export const run = () =>
     core.setFailed(error.message);
   });
 
-async function labeler() {
+export async function labeler() {
   const {token, configPath, syncLabels, dot, prNumbers} = getInputs();
 
   if (!prNumbers.length) {

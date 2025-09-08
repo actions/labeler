@@ -1,5 +1,8 @@
 import * as yaml from 'js-yaml';
 import * as core from '@actions/core';
+import * as api from '../src/api';
+import {labeler} from '../src/labeler';
+import * as github from '@actions/github';
 import * as fs from 'fs';
 import {checkMatchConfigs} from '../src/labeler';
 import {
@@ -10,6 +13,7 @@ import {
 } from '../src/api/get-label-configs';
 
 jest.mock('@actions/core');
+jest.mock('../src/api');
 
 beforeAll(() => {
   jest.spyOn(core, 'getInput').mockImplementation((name, options) => {
@@ -157,5 +161,75 @@ describe('checkMatchConfigs', () => {
       const result = checkMatchConfigs(changedFiles, matchConfig, false);
       expect(result).toBe(true);
     });
+  });
+});
+
+describe('labeler error handling', () => {
+  const mockClient = {} as any;
+  const mockPullRequest = {
+    number: 123,
+    data: {labels: []},
+    changedFiles: []
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+
+    (github.getOctokit as jest.Mock).mockReturnValue(mockClient);
+    (api.getPullRequests as jest.Mock).mockReturnValue([
+      {
+        ...mockPullRequest,
+        data: {labels: [{name: 'old-label'}]}
+      }
+    ]);
+
+    (api.getLabelConfigs as jest.Mock).mockResolvedValue(
+      new Map([['new-label', ['dummy-config']]])
+    );
+
+    // Force match so "new-label" is always added
+    jest.spyOn({checkMatchConfigs}, 'checkMatchConfigs').mockReturnValue(true);
+  });
+
+  it('throws a custom error for HttpError 403 with "unauthorized" message', async () => {
+    (api.setLabels as jest.Mock).mockRejectedValue({
+      name: 'HttpError',
+      status: 403,
+      message: 'Request failed with status code 403: Unauthorized'
+    });
+
+    await expect(labeler()).rejects.toThrow(
+      /does not have permission to create labels/
+    );
+  });
+
+  it('rethrows unexpected HttpError', async () => {
+    const unexpectedError = {
+      name: 'HttpError',
+      status: 404,
+      message: 'Not Found'
+    };
+    (api.setLabels as jest.Mock).mockRejectedValue(unexpectedError);
+
+    // NOTE: In the current implementation, labeler rethrows the raw error object (not an Error instance).
+    // `rejects.toThrow` only works with real Error objects, so here we must use `rejects.toEqual`.
+    // If labeler is updated to always wrap errors in `Error`, this test can be changed to use `rejects.toThrow`.
+    await expect(labeler()).rejects.toEqual(unexpectedError);
+  });
+
+  it('handles "Resource not accessible by integration" gracefully', async () => {
+    const error = {
+      name: 'HttpError',
+      message: 'Resource not accessible by integration'
+    };
+    (api.setLabels as jest.Mock).mockRejectedValue(error);
+
+    await labeler();
+
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining("requires 'issues: write'"),
+      expect.any(Object)
+    );
+    expect(core.setFailed).toHaveBeenCalledWith(error.message);
   });
 });

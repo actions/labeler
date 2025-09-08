@@ -1028,6 +1028,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
+exports.labeler = labeler;
 exports.checkMatchConfigs = checkMatchConfigs;
 exports.checkAny = checkAny;
 exports.checkAll = checkAll;
