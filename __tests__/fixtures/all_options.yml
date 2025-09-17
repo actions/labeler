@@ -13,7 +13,7 @@ label1:
       - changed-files:
           - all-globs-to-all-files: ['notthisglob']
       - head-branch: ['notthisone']
-      - base-branch: ['notthisone']      
+      - base-branch: ['notthisone']
 
 label2:
   - changed-files:
