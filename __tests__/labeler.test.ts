@@ -158,7 +158,7 @@ describe('checkMatchConfigs', () => {
       expect(result).toBe(true);
     });
 
-    it('returns false when when files match the "none" config', () => {
+    it('returns false when files match the "none" config', () => {
       const matchConfig: MatchConfig[] = [
         {
           none: [
