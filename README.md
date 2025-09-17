@@ -46,7 +46,7 @@ The base match object is defined as:
 - head-branch: ['list', 'of', 'regexps']
 ```
 
-There are three top-level keys, `any`, `all` and `none`, which both accept the same configuration options:
+There are three top-level keys, `any`, `all` and `none`, which all accept the same configuration options:
 ```yml
 - any:
   - changed-files:
