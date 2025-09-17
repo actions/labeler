@@ -9,6 +9,11 @@ label1:
           - all-globs-to-all-files: ['glob']
       - head-branch: ['regexp']
       - base-branch: ['regexp']
+  - none:
+      - changed-files:
+          - all-globs-to-all-files: ['notthisglob']
+      - head-branch: ['notthisone']
+      - base-branch: ['notthisone']      
 
 label2:
   - changed-files:

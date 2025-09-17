@@ -46,7 +46,7 @@ The base match object is defined as:
 - head-branch: ['list', 'of', 'regexps']
 ```
 
-There are two top-level keys, `any` and `all`, which both accept the same configuration options:
+There are three top-level keys, `any`, `all` and `none`, which both accept the same configuration options:
 ```yml
 - any:
   - changed-files:
@@ -66,12 +66,13 @@ There are two top-level keys, `any` and `all`, which both accept the same config
   - head-branch: ['list', 'of', 'regexps']
 ```
 
-From a boolean logic perspective, top-level match objects, and options within `all` are `AND`-ed together and individual match rules within the `any` object are `OR`-ed.
+From a boolean logic perspective, top-level match objects, and options within `all` are `AND`-ed together and individual match rules within the `any` object are `OR`-ed. `none` is the inverse of `any`.
 
 One or all fields can be provided for fine-grained matching.
 The fields are defined as follows:
 - `all`: ALL of the provided options must match for the label to be applied
 - `any`: if ANY of the provided options match then the label will be applied
+- `none`: will assign the label if none of the provided options match - e.g. missing changes to documentation or unit tests
   - `base-branch`: match regexps against the base branch name
   - `head-branch`: match regexps against the head branch name
   - `changed-files`: match glob patterns against the changed paths
@@ -137,6 +138,12 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: '**/*.md'
 
+# Add `Missing Documentation` label to any code change which doesn't include doc changes
+Missing Documentation:
+- none:
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
+    
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
 - all:
