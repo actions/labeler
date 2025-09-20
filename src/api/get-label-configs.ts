@@ -14,6 +14,7 @@ import {toBranchMatchConfig, BranchMatchConfig} from '../branch';
 export interface MatchConfig {
   all?: BaseMatchConfig[];
   any?: BaseMatchConfig[];
+  none?: BaseMatchConfig[];
 }
 
 export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
@@ -79,9 +80,9 @@ export function getLabelConfigMapFromObject(
         }
 
         Object.entries(configValue).forEach(([key, value]) => {
-          // If the top level `any` or `all` keys are provided then set them, and convert their values to
+          // If the top level `any`, `all` or `none` keys are provided then set them, and convert their values to
           // our config objects.
-          if (key === 'any' || key === 'all') {
+          if (key === 'any' || key === 'all' || key === 'none') { 
             if (Array.isArray(value)) {
               const newConfigs = value.map(toMatchConfig);
               updatedConfig.push({[key]: newConfigs});

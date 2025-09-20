@@ -44,6 +44,13 @@ describe('getLabelConfigMapFromObject', () => {
         {baseBranch: undefined, headBranch: ['regexp']},
         {baseBranch: ['regexp'], headBranch: undefined}
       ]
+    },
+    {
+      none: [
+        {changedFiles: [{allGlobsToAllFiles: ['notthisglob']}]},
+        {baseBranch: undefined, headBranch: ['notthisone']},
+        {baseBranch: ['notthisone'], headBranch: undefined}
+      ]
     }
   ]);
   expected.set('label2', [
@@ -138,6 +145,36 @@ describe('checkMatchConfigs', () => {
       const result = checkMatchConfigs(changedFiles, matchConfig, true);
 
       expect(result).toBeTruthy();
+    });
+
+    it('returns true when no files match the "none" config', () => {
+      const matchConfig: MatchConfig[] = [
+        {
+          none: [
+            {changedFiles: [{anyGlobToAnyFile: ['*.md']}]},
+            {headBranch: ['some-branch']}
+          ]
+        }
+      ];
+      const changedFiles = ['foo.txt', 'bar.txt'];
+
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when files match the "none" config', () => {
+      const matchConfig: MatchConfig[] = [
+        {
+          none: [
+            {changedFiles: [{anyGlobToAnyFile: ['*.md']}]},
+            {headBranch: ['some-branch']}
+          ]
+        }
+      ];
+      const changedFiles = ['foo.md', 'bar.md'];
+
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      expect(result).toBe(false);
     });
   });
 
