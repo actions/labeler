@@ -7,7 +7,8 @@ export const context = {
       },
       base: {
         ref: 'base-branch-name'
-      }
+      },
+      title: 'pr-title'
     }
   },
   repo: {
