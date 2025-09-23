@@ -505,7 +505,6 @@ exports.getBranchName = getBranchName;
 exports.checkAnyBranch = checkAnyBranch;
 exports.checkAllBranch = checkAllBranch;
 const core = __importStar(__nccwpck_require__(7484));
-const github = __importStar(__nccwpck_require__(3228));
 function toBranchMatchConfig(config) {
     if (!config['head-branch'] && !config['base-branch']) {
         return {};
@@ -521,21 +520,17 @@ function toBranchMatchConfig(config) {
     }
     return branchConfig;
 }
-function getBranchName(branchBase) {
+function getBranchName(prData, branchBase) {
     var _a, _b;
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
     if (branchBase === 'base') {
-        return (_a = pullRequest.base) === null || _a === void 0 ? void 0 : _a.ref;
+        return (_a = prData.base) === null || _a === void 0 ? void 0 : _a.ref;
     }
     else {
-        return (_b = pullRequest.head) === null || _b === void 0 ? void 0 : _b.ref;
+        return (_b = prData.head) === null || _b === void 0 ? void 0 : _b.ref;
     }
 }
-function checkAnyBranch(regexps, branchBase) {
-    const branchName = getBranchName(branchBase);
+function checkAnyBranch(prData, regexps, branchBase) {
+    const branchName = getBranchName(prData, branchBase);
     if (!branchName) {
         core.debug(`   no branch name`);
         return false;
@@ -551,8 +546,8 @@ function checkAnyBranch(regexps, branchBase) {
     core.debug(`   "branch" patterns did not match against ${branchName}`);
     return false;
 }
-function checkAllBranch(regexps, branchBase) {
-    const branchName = getBranchName(branchBase);
+function checkAllBranch(prData, regexps, branchBase) {
+    const branchName = getBranchName(prData, branchBase);
     if (!branchName) {
         core.debug(`   cannot fetch branch name from the pull request`);
         return false;
@@ -1067,7 +1062,7 @@ function labeler() {
                 const allLabels = new Set(preexistingLabels);
                 for (const [label, configs] of labelConfigs.entries()) {
                     core.debug(`processing ${label}`);
-                    if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+                    if (checkMatchConfigs(pullRequest.data, pullRequest.changedFiles, configs, dot)) {
                         allLabels.add(label);
                     }
                     else if (syncLabels) {
@@ -1117,34 +1112,34 @@ function labeler() {
         }
     });
 }
-function checkMatchConfigs(changedFiles, matchConfigs, dot) {
+function checkMatchConfigs(prData, changedFiles, matchConfigs, dot) {
     for (const config of matchConfigs) {
         core.debug(` checking config ${JSON.stringify(config)}`);
-        if (!checkMatch(changedFiles, config, dot)) {
+        if (!checkMatch(prData, changedFiles, config, dot)) {
             return false;
         }
     }
     return true;
 }
-function checkMatch(changedFiles, matchConfig, dot) {
+function checkMatch(prData, changedFiles, matchConfig, dot) {
     if (!Object.keys(matchConfig).length) {
         core.debug(`  no "any" or "all" patterns to check`);
         return false;
     }
     if (matchConfig.all) {
-        if (!checkAll(matchConfig.all, changedFiles, dot)) {
+        if (!checkAll(matchConfig.all, prData, changedFiles, dot)) {
             return false;
         }
     }
     if (matchConfig.any) {
-        if (!checkAny(matchConfig.any, changedFiles, dot)) {
+        if (!checkAny(matchConfig.any, prData, changedFiles, dot)) {
             return false;
         }
     }
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(matchConfigs, changedFiles, dot) {
+function checkAny(matchConfigs, prData, changedFiles, dot) {
     core.debug(`  checking "any" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -1153,7 +1148,7 @@ function checkAny(matchConfigs, changedFiles, dot) {
     }
     for (const matchConfig of matchConfigs) {
         if (matchConfig.baseBranch) {
-            if ((0, branch_1.checkAnyBranch)(matchConfig.baseBranch, 'base')) {
+            if ((0, branch_1.checkAnyBranch)(prData, matchConfig.baseBranch, 'base')) {
                 core.debug(`  "any" patterns matched`);
                 return true;
             }
@@ -1165,7 +1160,7 @@ function checkAny(matchConfigs, changedFiles, dot) {
             }
         }
         if (matchConfig.headBranch) {
-            if ((0, branch_1.checkAnyBranch)(matchConfig.headBranch, 'head')) {
+            if ((0, branch_1.checkAnyBranch)(prData, matchConfig.headBranch, 'head')) {
                 core.debug(`  "any" patterns matched`);
                 return true;
             }
@@ -1175,7 +1170,7 @@ function checkAny(matchConfigs, changedFiles, dot) {
     return false;
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(matchConfigs, changedFiles, dot) {
+function checkAll(matchConfigs, prData, changedFiles, dot) {
     core.debug(`  checking "all" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -1184,7 +1179,7 @@ function checkAll(matchConfigs, changedFiles, dot) {
     }
     for (const matchConfig of matchConfigs) {
         if (matchConfig.baseBranch) {
-            if (!(0, branch_1.checkAllBranch)(matchConfig.baseBranch, 'base')) {
+            if (!(0, branch_1.checkAllBranch)(prData, matchConfig.baseBranch, 'base')) {
                 core.debug(`  "all" patterns did not match`);
                 return false;
             }
@@ -1200,7 +1195,7 @@ function checkAll(matchConfigs, changedFiles, dot) {
             }
         }
         if (matchConfig.headBranch) {
-            if (!(0, branch_1.checkAllBranch)(matchConfig.headBranch, 'head')) {
+            if (!(0, branch_1.checkAllBranch)(prData, matchConfig.headBranch, 'head')) {
                 core.debug(`  "all" patterns did not match`);
                 return false;
             }

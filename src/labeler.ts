@@ -44,7 +44,14 @@ export async function labeler() {
 
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
-      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+      if (
+        checkMatchConfigs(
+          pullRequest.data,
+          pullRequest.changedFiles,
+          configs,
+          dot
+        )
+      ) {
         allLabels.add(label);
       } else if (syncLabels) {
         allLabels.delete(label);
@@ -108,13 +115,14 @@ export async function labeler() {
 }
 
 export function checkMatchConfigs(
+  prData: any,
   changedFiles: string[],
   matchConfigs: MatchConfig[],
   dot: boolean
 ): boolean {
   for (const config of matchConfigs) {
     core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config, dot)) {
+    if (!checkMatch(prData, changedFiles, config, dot)) {
       return false;
     }
   }
@@ -123,6 +131,7 @@ export function checkMatchConfigs(
 }
 
 function checkMatch(
+  prData: any,
   changedFiles: string[],
   matchConfig: MatchConfig,
   dot: boolean
@@ -133,13 +142,13 @@ function checkMatch(
   }
 
   if (matchConfig.all) {
-    if (!checkAll(matchConfig.all, changedFiles, dot)) {
+    if (!checkAll(matchConfig.all, prData, changedFiles, dot)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    if (!checkAny(matchConfig.any, changedFiles, dot)) {
+    if (!checkAny(matchConfig.any, prData, changedFiles, dot)) {
       return false;
     }
   }
@@ -150,6 +159,7 @@ function checkMatch(
 // equivalent to "Array.some()" but expanded for debugging and clarity
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
+  prData: any,
   changedFiles: string[],
   dot: boolean
 ): boolean {
@@ -164,7 +174,7 @@ export function checkAny(
 
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
+      if (checkAnyBranch(prData, matchConfig.baseBranch, 'base')) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -178,7 +188,7 @@ export function checkAny(
     }
 
     if (matchConfig.headBranch) {
-      if (checkAnyBranch(matchConfig.headBranch, 'head')) {
+      if (checkAnyBranch(prData, matchConfig.headBranch, 'head')) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -192,6 +202,7 @@ export function checkAny(
 // equivalent to "Array.every()" but expanded for debugging and clarity
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
+  prData: any,
   changedFiles: string[],
   dot: boolean
 ): boolean {
@@ -206,7 +217,7 @@ export function checkAll(
 
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
+      if (!checkAllBranch(prData, matchConfig.baseBranch, 'base')) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
@@ -225,7 +236,7 @@ export function checkAll(
     }
 
     if (matchConfig.headBranch) {
-      if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+      if (!checkAllBranch(prData, matchConfig.headBranch, 'head')) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
