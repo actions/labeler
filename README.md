@@ -76,7 +76,7 @@ The fields are defined as follows:
   - `head-branch`: match regexps against the head branch name
   - `changed-files`: match glob patterns against the changed paths
     - `any-glob-to-any-file`: ANY glob must match against ANY changed file
-    - `any-glob-to-all-files`: ANY glob must match against ALL changed files
+    - `any-glob-to-all-files`: ANY SINGLE glob must match against ALL changed files
     - `all-globs-to-any-file`: ALL globs must match against ANY changed file
     - `all-globs-to-all-files`: ALL globs must match against ALL changed files
 
@@ -135,7 +135,19 @@ Documentation:
 # Add 'Documentation' label to any change to .md files within the entire repository 
 Documentation:
 - changed-files:
-  - any-glob-to-any-file: '**/*.md'
+  - any-glob-to-any-file:
+    - '*.md'
+    - '**/*.md'
+
+# Add 'one-resolution' label to any change touching only files in a single directory
+one-resolution:
+- changed-files:
+  - any-glob-to-all-files: ['default/*', 'hicolor/*', 'large/*', 'locolor/*', 'mini/*']
+
+# Add 'Audio' label to any change touching only audio files in subdirectories
+Audio:
+- changed-files:
+  - any-glob-to-all-files: '{**/*.mp3,**/*.wav,**/*.ogg,**/*.flac}'
 
 # Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
 source:
