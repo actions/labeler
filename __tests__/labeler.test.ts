@@ -28,37 +28,55 @@ const loadYaml = (filepath: string) => {
 };
 
 describe('getLabelConfigMapFromObject', () => {
-  const yamlObject = loadYaml('__tests__/fixtures/all_options.yml');
-  const expected = new Map<string, MatchConfig[]>();
-  expected.set('label1', [
-    {
-      any: [
-        {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
-        {baseBranch: undefined, headBranch: ['regexp']},
-        {baseBranch: ['regexp'], headBranch: undefined}
-      ]
-    },
-    {
-      all: [
-        {changedFiles: [{allGlobsToAllFiles: ['glob']}]},
-        {baseBranch: undefined, headBranch: ['regexp']},
-        {baseBranch: ['regexp'], headBranch: undefined}
-      ]
-    }
-  ]);
-  expected.set('label2', [
-    {
-      any: [
-        {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
-        {baseBranch: undefined, headBranch: ['regexp']},
-        {baseBranch: ['regexp'], headBranch: undefined}
-      ]
-    }
-  ]);
+  describe('when all options are present', () => {
+    const yamlObject = loadYaml('__tests__/fixtures/all_options.yml');
+    const expected = new Map<string, MatchConfig[]>();
+    expected.set('label1', [
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
+        ]
+      },
+      {
+        all: [
+          {changedFiles: [{allGlobsToAllFiles: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
+        ]
+      }
+    ]);
+    expected.set('label2', [
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
+        ]
+      }
+    ]);
 
-  it('returns a MatchConfig', () => {
-    const result = getLabelConfigMapFromObject(yamlObject);
-    expect(result).toEqual(expected);
+    it('returns a MatchConfig', () => {
+      const result = getLabelConfigMapFromObject(yamlObject);
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe('when no any or all key are present', () => {
+    const yamlObject = loadYaml('__tests__/fixtures/default_any_and_all.yml');
+    const expected = new Map<string, MatchConfig[]>();
+    expected.set('default_any', [
+      {any: [{changedFiles: [{anyGlobToAnyFile: ['glob']}]}]}
+    ]);
+    expected.set('default_all', [
+      {all: [{changedFiles: [{allGlobsToAllFiles: ['glob']}]}]}
+    ]);
+
+    it('returns a MatchConfig', () => {
+      const result = getLabelConfigMapFromObject(yamlObject);
+      expect(result).toEqual(expected);
+    });
   });
 });
 
