@@ -140,7 +140,7 @@ function getPullRequests(client, prNumbers) {
                 }));
                 prData = result.data;
             }
-            catch (error) {
+            catch (_a) {
                 core.warning(`Could not find pull request #${prNumber}, skipping`);
                 continue;
             }
