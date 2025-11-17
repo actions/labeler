@@ -1,9 +1,9 @@
 ---
 name: js-yaml
-version: 4.1.0
+version: 4.1.1
 type: npm
 summary: YAML 1.2 parser and serializer
-homepage: https://github.com/nodeca/js-yaml
+homepage:
 license: mit
 licenses:
 - sources: LICENSE
