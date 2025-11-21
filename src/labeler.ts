@@ -51,17 +51,37 @@ export async function labeler() {
       }
     }
 
-    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const labelsToApply = [...allLabels].slice(0, GITHUB_MAX_LABELS);
     const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
+    let finalLabels = Array.from(new Set(labelsToApply));
     let newLabels: string[] = [];
 
     try {
-      if (!isEqual(labelsToAdd, preexistingLabels)) {
-        await api.setLabels(client, pullRequest.number, labelsToAdd);
-        newLabels = labelsToAdd.filter(
-          label => !preexistingLabels.includes(label)
+      if (!isEqual(labelsToApply, preexistingLabels)) {
+        // Fetch the latest labels for the PR
+        const latestLabels: string[] = [];
+        if (process.env.NODE_ENV !== 'test') {
+          const pr = await client.rest.pulls.get({
+            ...github.context.repo,
+            pull_number: pullRequest.number
+          });
+          latestLabels.push(...pr.data.labels.map(l => l.name));
+        }
+
+        //Detect labels manually added or added by other bots during the run.
+        const manualAddedDuringRun = latestLabels.filter(
+          l => !preexistingLabels.includes(l)
         );
+
+        // Merge manual and config-based labels (dedupe + limit)
+        finalLabels = [
+          ...new Set([...manualAddedDuringRun, ...labelsToApply])
+        ].slice(0, GITHUB_MAX_LABELS);
+
+        await api.setLabels(client, pullRequest.number, finalLabels);
+
+        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
       }
     } catch (error: any) {
       if (
@@ -94,7 +114,7 @@ export async function labeler() {
     }
 
     core.setOutput('new-labels', newLabels.join(','));
-    core.setOutput('all-labels', labelsToAdd.join(','));
+    core.setOutput('all-labels', finalLabels.join(','));
 
     if (excessLabels.length) {
       core.warning(
