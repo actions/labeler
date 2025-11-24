@@ -54,27 +54,28 @@ export async function labeler() {
     const labelsToApply = [...allLabels].slice(0, GITHUB_MAX_LABELS);
     const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
-    let finalLabels = Array.from(new Set(labelsToApply));
+    let finalLabels = labelsToApply;
     let newLabels: string[] = [];
 
     try {
       if (!isEqual(labelsToApply, preexistingLabels)) {
         // Fetch the latest labels for the PR
         const latestLabels: string[] = [];
+        // Skip fetching real labels when running tests (uses mock data instead)
         if (process.env.NODE_ENV !== 'test') {
           const pr = await client.rest.pulls.get({
             ...github.context.repo,
             pull_number: pullRequest.number
           });
-          latestLabels.push(...pr.data.labels.map(l => l.name));
+          latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
         }
 
-        //Detect labels manually added or added by other bots during the run.
+        // Labels added manually during the run (not in first snapshot)
         const manualAddedDuringRun = latestLabels.filter(
           l => !preexistingLabels.includes(l)
         );
 
-        // Merge manual and config-based labels (dedupe + limit)
+        // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
         finalLabels = [
           ...new Set([...manualAddedDuringRun, ...labelsToApply])
         ].slice(0, GITHUB_MAX_LABELS);
