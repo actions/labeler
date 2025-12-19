@@ -1122,13 +1122,6 @@ function labeler() {
         }
     });
 }
-function getPrAuthor() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
-    return pullRequest.user.login;
-}
 function checkMatchConfigs(changedFiles, matchConfigs, dot) {
     for (const config of matchConfigs) {
         core.debug(` checking config ${JSON.stringify(config)}`);
@@ -1234,7 +1227,8 @@ function checkAll(matchConfigs, changedFiles, dot) {
     return true;
 }
 function checkAuthors(authors) {
-    const prAuthor = getPrAuthor();
+    var _a, _b;
+    const prAuthor = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.login;
     if (!prAuthor) {
         core.info('Could not get pull request author from context, exiting');
         return false;

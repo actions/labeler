@@ -107,14 +107,6 @@ export async function labeler() {
   }
 }
 
-function getPrAuthor(): string | undefined {
-  const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
-  }
-  return pullRequest.user.login;
-}
-
 export function checkMatchConfigs(
   changedFiles: string[],
   matchConfigs: MatchConfig[],
@@ -259,7 +251,7 @@ export function checkAll(
 }
 
 function checkAuthors(authors: string[]): boolean {
-  const prAuthor = getPrAuthor();
+  const prAuthor = github.context.payload.pull_request?.user?.login;
   if (!prAuthor) {
     core.info('Could not get pull request author from context, exiting');
     return false;
