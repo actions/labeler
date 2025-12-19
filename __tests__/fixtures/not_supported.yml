@@ -1,0 +1,3 @@
+label:
+  - all:
+      - unknown: 'this-is-not-supported'

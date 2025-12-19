@@ -4,6 +4,12 @@ export const context = {
       number: 123,
       user: {
         login: 'monalisa'
+      },
+      head: {
+        ref: 'head-branch-name'
+      },
+      base: {
+        ref: 'base-branch-name'
       }
     }
   },
@@ -16,11 +22,14 @@ export const context = {
 const mockApi = {
   rest: {
     issues: {
-      addLabels: jest.fn(),
-      removeLabel: jest.fn()
+      setLabels: jest.fn()
     },
     pulls: {
-      get: jest.fn().mockResolvedValue({}),
+      get: jest.fn().mockResolvedValue({
+        data: {
+          labels: []
+        }
+      }),
       listFiles: {
         endpoint: {
           merge: jest.fn().mockReturnValue({})

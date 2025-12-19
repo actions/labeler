@@ -14,7 +14,19 @@ inputs:
     description: 'Whether or not to remove labels when matching files are reverted'
     default: false
     required: false
+  dot:
+    description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
+    default: true
+    required: false
+  pr-number:
+    description: 'The pull request number(s)'
+    required: false
 
+outputs:
+  new-labels:
+    description: 'A comma-separated list of all new labels'
+  all-labels:
+    description: 'A comma-separated list of all labels that the PR contains'
 runs:
-  using: 'node16'
+  using: 'node24'
   main: 'dist/index.js'

@@ -1,0 +1,8 @@
+tests:
+  - any:
+      - head-branch: ['^tests/', '^test/']
+      - changed-files:
+          - any-glob-to-any-file: ['tests/**/*']
+  - all:
+      - changed-files:
+          - all-globs-to-all-files: ['!tests/requirements.txt']
