@@ -235,21 +235,39 @@ describe('labeler error handling', () => {
 
   it('returns true when PR author is in the list of authors', () => {
     const matchConfigWithAuthor: MatchConfig[] = [
-      {any: ['*.txt'], authors: ['monalisa', 'hubot']}
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
+          {authors: ['monalisa', 'hubot']}
+        ]
+      }
     ];
-    const changedFiles = ['foo.txt'];
+    const changedFiles = ['not_match.pdf'];
 
-    const result = checkGlobs(changedFiles, matchConfigWithAuthor);
+    const result = checkMatchConfigs(
+      changedFiles,
+      matchConfigWithAuthor,
+      false
+    );
     expect(result).toBeTruthy();
   });
 
   it('returns false when PR author is not in the list of authors', () => {
     const matchConfigWithAuthor: MatchConfig[] = [
-      {any: ['*.txt'], authors: ['foo', 'bar']}
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
+          {authors: ['foo', 'bar']}
+        ]
+      }
     ];
-    const changedFiles = ['foo.txt'];
+    const changedFiles = ['not_match.pdf'];
 
-    const result = checkGlobs(changedFiles, matchConfigWithAuthor);
+    const result = checkMatchConfigs(
+      changedFiles,
+      matchConfigWithAuthor,
+      false
+    );
     expect(result).toBeFalsy();
   });
 });

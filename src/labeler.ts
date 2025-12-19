@@ -191,6 +191,13 @@ export function checkAny(
         return true;
       }
     }
+
+    if (matchConfig.authors) {
+      if (checkAuthors(matchConfig.authors)) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
   }
 
   core.debug(`  "any" patterns did not match any configs`);
@@ -238,12 +245,18 @@ export function checkAll(
         return false;
       }
     }
+
+    if (matchConfig.authors) {
+      if (!checkAuthors(matchConfig.authors)) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
   }
 
   core.debug(`  "all" patterns matched all configs`);
   return true;
 }
-
 
 function checkAuthors(authors: string[]): boolean {
   const prAuthor = getPrAuthor();
