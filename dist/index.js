@@ -357,7 +357,8 @@ function getLabelConfigMapFromObject(configObject) {
 function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
-    return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
+    const authorsConfig = config['authors'] ? { authors: config['authors'] } : {};
+    return Object.assign(Object.assign(Object.assign({}, changedFilesConfig), branchConfig), authorsConfig);
 }
 
 

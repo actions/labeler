@@ -129,9 +129,11 @@ export function getLabelConfigMapFromObject(
 export function toMatchConfig(config: any): BaseMatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
+  const authorsConfig = config['authors'] ? {authors: config['authors']} : {};
 
   return {
     ...changedFilesConfig,
-    ...branchConfig
+    ...branchConfig,
+    ...authorsConfig
   };
 }
