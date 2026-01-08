@@ -167,9 +167,22 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
     - uses: actions/labeler@v6
+```
+
+## Choosing a runner
+
+If your job is only running the label step, It's recommended to use [the lightweight `ubuntu-slim` image](https://github.blog/changelog/2025-10-28-1-vcpu-linux-runner-now-available-in-github-actions-in-public-preview/). It has only one vCPU and 5 GBs of RAM, but that doesn't significantly impact the performance of the action. It does however decrease resource consumption (and is significantly cheaper than the default `ubuntu-latest` image if you're paying for Github Actions minutes).
+
+```yaml
+    runs-on: ubuntu-slim
+```
+
+If you are running other steps after the label step that use multiple cores or are running for more than 15 minutes, you should use the default image or an image of your own choosing;
+```yaml
+    runs-on: ubuntu-latest
 ```
 
 #### Inputs
@@ -211,7 +224,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
     
     # Label PRs 1, 2, and 3
