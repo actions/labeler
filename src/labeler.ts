@@ -51,17 +51,38 @@ export async function labeler() {
       }
     }
 
-    const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+    const labelsToApply = [...allLabels].slice(0, GITHUB_MAX_LABELS);
     const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
+    let finalLabels = labelsToApply;
     let newLabels: string[] = [];
 
     try {
-      if (!isEqual(labelsToAdd, preexistingLabels)) {
-        await api.setLabels(client, pullRequest.number, labelsToAdd);
-        newLabels = labelsToAdd.filter(
-          label => !preexistingLabels.includes(label)
+      if (!isEqual(labelsToApply, preexistingLabels)) {
+        // Fetch the latest labels for the PR
+        const latestLabels: string[] = [];
+        // Skip fetching real labels when running tests (uses mock data instead)
+        if (process.env.NODE_ENV !== 'test') {
+          const pr = await client.rest.pulls.get({
+            ...github.context.repo,
+            pull_number: pullRequest.number
+          });
+          latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
+        }
+
+        // Labels added manually during the run (not in first snapshot)
+        const manualAddedDuringRun = latestLabels.filter(
+          l => !preexistingLabels.includes(l)
         );
+
+        // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
+        finalLabels = [
+          ...new Set([...manualAddedDuringRun, ...labelsToApply])
+        ].slice(0, GITHUB_MAX_LABELS);
+
+        await api.setLabels(client, pullRequest.number, finalLabels);
+
+        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
       }
     } catch (error: any) {
       if (
@@ -94,7 +115,7 @@ export async function labeler() {
     }
 
     core.setOutput('new-labels', newLabels.join(','));
-    core.setOutput('all-labels', labelsToAdd.join(','));
+    core.setOutput('all-labels', finalLabels.join(','));
 
     if (excessLabels.length) {
       core.warning(

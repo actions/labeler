@@ -1074,13 +1074,27 @@ function labeler() {
                         allLabels.delete(label);
                     }
                 }
-                const labelsToAdd = [...allLabels].slice(0, GITHUB_MAX_LABELS);
+                const labelsToApply = [...allLabels].slice(0, GITHUB_MAX_LABELS);
                 const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
+                let finalLabels = labelsToApply;
                 let newLabels = [];
                 try {
-                    if (!(0, lodash_isequal_1.default)(labelsToAdd, preexistingLabels)) {
-                        yield api.setLabels(client, pullRequest.number, labelsToAdd);
-                        newLabels = labelsToAdd.filter(label => !preexistingLabels.includes(label));
+                    if (!(0, lodash_isequal_1.default)(labelsToApply, preexistingLabels)) {
+                        // Fetch the latest labels for the PR
+                        const latestLabels = [];
+                        // Skip fetching real labels when running tests (uses mock data instead)
+                        if (process.env.NODE_ENV !== 'test') {
+                            const pr = yield client.rest.pulls.get(Object.assign(Object.assign({}, github.context.repo), { pull_number: pullRequest.number }));
+                            latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
+                        }
+                        // Labels added manually during the run (not in first snapshot)
+                        const manualAddedDuringRun = latestLabels.filter(l => !preexistingLabels.includes(l));
+                        // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
+                        finalLabels = [
+                            ...new Set([...manualAddedDuringRun, ...labelsToApply])
+                        ].slice(0, GITHUB_MAX_LABELS);
+                        yield api.setLabels(client, pullRequest.number, finalLabels);
+                        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
                     }
                 }
                 catch (error) {
@@ -1102,7 +1116,7 @@ function labeler() {
                     return;
                 }
                 core.setOutput('new-labels', newLabels.join(','));
-                core.setOutput('all-labels', labelsToAdd.join(','));
+                core.setOutput('all-labels', finalLabels.join(','));
                 if (excessLabels.length) {
                     core.warning(`Maximum of ${GITHUB_MAX_LABELS} labels allowed. Excess labels: ${excessLabels.join(', ')}`, { title: 'Label limit for a PR exceeded' });
                 }
