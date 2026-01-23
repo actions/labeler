@@ -29,7 +29,7 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
-    "@octokit/plugin-retry": "^6.0.0",
+    "@octokit/plugin-retry": "^8.0.2",
     "js-yaml": "^4.1.0",
     "lodash.isequal": "^4.5.0",
     "minimatch": "^10.0.1"
