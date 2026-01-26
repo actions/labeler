@@ -204,6 +204,13 @@ export function checkAny(
         return true;
       }
     }
+
+    if (matchConfig.authors) {
+      if (checkAuthors(matchConfig.authors)) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
   }
 
   core.debug(`  "any" patterns did not match any configs`);
@@ -251,8 +258,31 @@ export function checkAll(
         return false;
       }
     }
+
+    if (matchConfig.authors) {
+      if (!checkAuthors(matchConfig.authors)) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
   }
 
   core.debug(`  "all" patterns matched all configs`);
   return true;
+}
+
+function checkAuthors(authors: string[]): boolean {
+  const prAuthor = github.context.payload.pull_request?.user?.login;
+  if (!prAuthor) {
+    core.info('Could not get pull request author from context, exiting');
+    return false;
+  }
+
+  if (authors.includes(prAuthor)) {
+    core.debug(`  author ${prAuthor} is on the list`);
+    return true;
+  }
+
+  core.debug(`  author ${prAuthor} is not on the list`);
+  return false;
 }
