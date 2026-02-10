@@ -37,7 +37,13 @@ const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
-  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml')
+  'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml'),
+  'mixed_labels.yml': fs.readFileSync('__tests__/fixtures/mixed_labels.yml'),
+  'limit_0.yml': fs.readFileSync('__tests__/fixtures/limit_0.yml'),
+  'limit_1.yml': fs.readFileSync('__tests__/fixtures/limit_1.yml'),
+  'limit_2.yml': fs.readFileSync('__tests__/fixtures/limit_2.yml'),
+  'limit_3.yml': fs.readFileSync('__tests__/fixtures/limit_3.yml'),
+  'mixed_rules.yml': fs.readFileSync('__tests__/fixtures/mixed_rules.yml')
 };
 
 const configureInput = (
@@ -438,6 +444,218 @@ describe('run', () => {
     await run();
 
     expect(setLabelsMock).toHaveBeenCalledTimes(0);
+  });
+
+  describe('changed-files-labels-limit', () => {
+    it('applies all labels when count is within limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('limit_3.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b']
+      });
+    });
+
+    it('skips changed-files labels when count exceeds limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('limit_2.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // No labels should be applied since changed-files labels exceed limit
+      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('still applies branch-based labels when changed-files limit is exceeded', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      usingLabelerConfigYaml('limit_1.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // Only the branch-based label should be applied
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['test-branch']
+      });
+    });
+
+    it('applies all labels when no limit is set', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('mixed_labels.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts',
+        'components/d/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b', 'component-c', 'component-d']
+      });
+    });
+
+    it('does not count preexisting labels toward the limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('limit_2.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts',
+        'components/d/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: [{name: 'component-a'}, {name: 'component-b'}]}
+      });
+
+      await run();
+
+      // component-a and component-b are preexisting, so only 2 new labels (c, d) would be added
+      // which equals the limit of 2, so labels should be applied
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b', 'component-c', 'component-d']
+      });
+    });
+
+    it('skips new labels when new count exceeds limit even with preexisting', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('limit_2.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts',
+        'components/d/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: [{name: 'component-a'}]}
+      });
+
+      await run();
+
+      // component-a is preexisting, so 3 new labels (b, c, d) would be added
+      // which exceeds the limit of 2, so no new changed-files labels are applied
+      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('applies labels when new count equals the limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('limit_2.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b']
+      });
+    });
+
+    it('skips all changed-files labels when limit is 0', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      usingLabelerConfigYaml('limit_0.yml');
+      mockGitHubResponseChangedFiles('components/a/file.ts');
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // With limit 0, only branch-based labels should be applied
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['test-branch']
+      });
+    });
+
+    it('treats labels with mixed rules as changed-files labels', async () => {
+      // A label that has both branch and changed-files rules is considered
+      // a "changed-files label" and subject to the limit, even if it matches
+      // via the branch rule
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      usingLabelerConfigYaml('mixed_rules.yml');
+      mockGitHubResponseChangedFiles('unrelated/file.ts');
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // The mixed-label matches via branch rule but is still subject to limit
+      // because it contains a changed-files rule in its definition.
+      // Only pure-branch-label should be applied.
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['pure-branch-label']
+      });
+    });
   });
 
   it('should use local configuration file if it exists', async () => {

@@ -9,7 +9,9 @@ import {
   MatchConfig,
   toMatchConfig,
   getLabelConfigMapFromObject,
-  BaseMatchConfig
+  getLabelConfigResultFromObject,
+  BaseMatchConfig,
+  configUsesChangedFiles
 } from '../src/api/get-label-configs';
 
 jest.mock('@actions/core');
@@ -59,6 +61,104 @@ describe('getLabelConfigMapFromObject', () => {
   it('returns a MatchConfig', () => {
     const result = getLabelConfigMapFromObject(yamlObject);
     expect(result).toEqual(expected);
+  });
+
+  it('ignores top-level options like changed-files-labels-limit', () => {
+    const configWithLimit = {
+      'changed-files-labels-limit': 5,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigMapFromObject(configWithLimit);
+    expect(result.has('changed-files-labels-limit')).toBe(false);
+    expect(result.has('label1')).toBe(true);
+  });
+});
+
+describe('getLabelConfigResultFromObject', () => {
+  it('extracts changed-files-labels-limit as a number', () => {
+    const config = {
+      'changed-files-labels-limit': 5,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBe(5);
+    expect(result.labelConfigs.has('label1')).toBe(true);
+  });
+
+  it('parses changed-files-labels-limit from string', () => {
+    const config = {
+      'changed-files-labels-limit': '10',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBe(10);
+  });
+
+  it('returns undefined changedFilesLimit when not set', () => {
+    const config = {
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBeUndefined();
+  });
+
+  it('throws error for invalid changed-files-labels-limit value', () => {
+    const config = {
+      'changed-files-labels-limit': 'invalid',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /Invalid value for 'changed-files-labels-limit'/
+    );
+  });
+
+  it('throws error for negative changed-files-labels-limit value', () => {
+    const config = {
+      'changed-files-labels-limit': -1,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /must be a non-negative integer/
+    );
+  });
+
+  it('throws error for string with trailing characters', () => {
+    const config = {
+      'changed-files-labels-limit': '10abc',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /must be a non-negative integer/
+    );
+  });
+
+  it('throws error for decimal string', () => {
+    const config = {
+      'changed-files-labels-limit': '3.2',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /must be a non-negative integer/
+    );
+  });
+
+  it('throws error for float number', () => {
+    const config = {
+      'changed-files-labels-limit': 3.2,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /must be a non-negative integer/
+    );
+  });
+
+  it('accepts zero as a valid changed-files-labels-limit', () => {
+    const config = {
+      'changed-files-labels-limit': 0,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBe(0);
   });
 });
 
@@ -164,6 +264,52 @@ describe('checkMatchConfigs', () => {
   });
 });
 
+describe('configUsesChangedFiles', () => {
+  it('returns true when config has changed-files in any block', () => {
+    const matchConfig: MatchConfig[] = [
+      {any: [{changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]}
+    ];
+    expect(configUsesChangedFiles(matchConfig)).toBe(true);
+  });
+
+  it('returns true when config has changed-files in all block', () => {
+    const matchConfig: MatchConfig[] = [
+      {all: [{changedFiles: [{allGlobsToAllFiles: ['*.txt']}]}]}
+    ];
+    expect(configUsesChangedFiles(matchConfig)).toBe(true);
+  });
+
+  it('returns false when config only has branch patterns', () => {
+    const matchConfig: MatchConfig[] = [
+      {any: [{headBranch: ['^test/']}]},
+      {any: [{baseBranch: ['main']}]}
+    ];
+    expect(configUsesChangedFiles(matchConfig)).toBe(false);
+  });
+
+  it('returns false when config has empty changed-files array', () => {
+    const matchConfig: MatchConfig[] = [{any: [{changedFiles: []}]}];
+    expect(configUsesChangedFiles(matchConfig)).toBe(false);
+  });
+
+  it('returns false when config has changed-files with empty objects', () => {
+    const matchConfig: MatchConfig[] = [{any: [{changedFiles: [{}]}]}];
+    expect(configUsesChangedFiles(matchConfig)).toBe(false);
+  });
+
+  it('returns true when config has mixed branch and changed-files patterns', () => {
+    const matchConfig: MatchConfig[] = [
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
+          {headBranch: ['^feature/']}
+        ]
+      }
+    ];
+    expect(configUsesChangedFiles(matchConfig)).toBe(true);
+  });
+});
+
 describe('labeler error handling', () => {
   const mockClient = {} as any;
   const mockPullRequest = {
@@ -183,9 +329,10 @@ describe('labeler error handling', () => {
       }
     ]);
 
-    (api.getLabelConfigs as jest.Mock).mockResolvedValue(
-      new Map([['new-label', ['dummy-config']]])
-    );
+    (api.getLabelConfigs as jest.Mock).mockResolvedValue({
+      labelConfigs: new Map([['new-label', ['dummy-config']]]),
+      changedFilesLimit: undefined
+    });
 
     // Force match so "new-label" is always added
     jest.spyOn({checkMatchConfigs}, 'checkMatchConfigs').mockReturnValue(true);

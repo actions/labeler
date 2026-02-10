@@ -1,0 +1,16 @@
+# Test fixture for mixed rules behavior
+# A label with both branch and changed-files rules is considered a "changed-files label"
+# and is subject to the limit, even if it matches via the branch rule
+changed-files-labels-limit: 0
+
+# This label has both branch and changed-files rules
+# It should be subject to the limit even if matched via branch
+mixed-label:
+  - any:
+      - head-branch: '^test/'
+      - changed-files:
+          - any-glob-to-any-file: ['components/a/**']
+
+# Pure branch-based label - not subject to limit
+pure-branch-label:
+  - head-branch: '^test/'

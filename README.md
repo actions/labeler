@@ -153,6 +153,60 @@ release:
  - base-branch: 'main'
 ```
 
+#### Configuration Options
+
+The labeler configuration file (`.github/labeler.yml`) supports the following top-level options:
+
+| Name                         | Description                                                                                                                                                   |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `changed-files-labels-limit` | Maximum number of new labels to apply based on changed files (must be a non-negative integer). If exceeded, no changed-files labels are applied for that run. |
+
+##### Limiting changed-files labels
+
+When working with large PRs (e.g., tree-wide refactors) that touch many components, you may want to prevent the labeler from adding too many labels. Set `changed-files-labels-limit` in your `.github/labeler.yml` configuration file to limit the number of labels that can be applied based on changed files patterns.
+
+**Important behaviors:**
+
+- The limit counts only **new** labels that would be added by changed-files rules. Labels already present on the PR are not counted toward the limit.
+- If the number of new changed-files labels **exceeds** the limit, **all** new changed-files labels are skipped for that run.
+- If the number of new changed-files labels **equals** the limit, labels are still applied normally.
+- Labels based on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- **Any label definition that includes a `changed-files` rule is considered a changed-files label** and is subject to the limit, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be subject to the limit even if it matches via the branch rule.
+
+##### Example
+
+```yml
+# .github/labeler.yml
+
+# Limit changed-files based labels to 5
+changed-files-labels-limit: 5
+
+# Label definitions - these are subject to the limit
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/frontend/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/backend/**'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+
+# This label has both branch and changed-files rules.
+# It is still subject to the limit because it includes changed-files.
+mixed:
+  - any:
+    - head-branch: '^feature/'
+    - changed-files:
+      - any-glob-to-any-file: 'src/mixed/**'
+
+# Branch-based labels are NOT affected by the limit
+feature:
+  - head-branch: '^feature/'
+```
+
 ### Create Workflow
 
 Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow file](https://docs.github.com/en/actions/writing-workflows/quickstart#creating-your-first-workflow)) to utilize the labeler action with content:

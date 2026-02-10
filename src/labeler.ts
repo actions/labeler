@@ -5,7 +5,11 @@ import * as api from './api';
 import isEqual from 'lodash.isequal';
 import {getInputs} from './get-inputs';
 
-import {BaseMatchConfig, MatchConfig} from './api/get-label-configs';
+import {
+  BaseMatchConfig,
+  MatchConfig,
+  configUsesChangedFiles
+} from './api/get-label-configs';
 
 import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles';
 
@@ -35,18 +39,43 @@ export async function labeler() {
   const pullRequests = api.getPullRequests(client, prNumbers);
 
   for await (const pullRequest of pullRequests) {
-    const labelConfigs: Map<string, MatchConfig[]> = await api.getLabelConfigs(
+    const {labelConfigs, changedFilesLimit} = await api.getLabelConfigs(
       client,
       configPath
     );
     const preexistingLabels = pullRequest.data.labels.map(l => l.name);
     const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
+    // Track labels that would be added based on changed-files patterns
+    const changedFilesLabels: Set<string> = new Set<string>();
+
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
       if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
         allLabels.add(label);
+        // Track if this label uses changed-files patterns
+        if (configUsesChangedFiles(configs)) {
+          changedFilesLabels.add(label);
+        }
       } else if (syncLabels) {
+        allLabels.delete(label);
+      }
+    }
+
+    // Check if changed-files labels exceed the limit
+    const newChangedFilesLabels = [...changedFilesLabels].filter(
+      l => !preexistingLabels.includes(l)
+    );
+
+    if (
+      changedFilesLimit !== undefined &&
+      newChangedFilesLabels.length > changedFilesLimit
+    ) {
+      core.info(
+        `Changed-files labels (${newChangedFilesLabels.length}) exceed limit (${changedFilesLimit}), skipping: ${newChangedFilesLabels.join(', ')}`
+      );
+      // Remove all new changed-files labels
+      for (const label of newChangedFilesLabels) {
         allLabels.delete(label);
       }
     }
