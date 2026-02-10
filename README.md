@@ -37,7 +37,7 @@ The match object allows control over the matching options. You can specify the l
 
 The base match object is defined as:
 ```yml
-- changed-files: 
+- changed-files:
   - any-glob-to-any-file: ['list', 'of', 'globs']
   - any-glob-to-all-files: ['list', 'of', 'globs']
   - all-globs-to-any-file: ['list', 'of', 'globs']
@@ -132,7 +132,7 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: ['docs/*', 'guides/*']
 
-# Add 'Documentation' label to any change to .md files within the entire repository 
+# Add 'Documentation' label to any change to .md files within the entire repository
 Documentation:
 - changed-files:
   - any-glob-to-any-file: '**/*.md'
@@ -213,10 +213,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    
+
     # Label PRs 1, 2, and 3
     - uses: actions/labeler@v6
-      with:        
+      with:
         pr-number: |
           1
           2
@@ -225,9 +225,9 @@ jobs:
 
 **Note:** in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
 
-#### Outputs 
+#### Outputs
 
-Labeler provides the following outputs:  
+Labeler provides the following outputs:
 
 | Name         | Description                                               |
 |--------------|-----------------------------------------------------------|
@@ -249,13 +249,13 @@ jobs:
     steps:
     - id: label-the-PR
       uses: actions/labeler@v6
-      
+
     - id: run-frontend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
       run: |
         echo "Running frontend tests..."
         # Put your commands for running frontend tests here
-  
+
     - id: run-backend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'backend')
       run: |
@@ -291,7 +291,7 @@ To ensure the action works correctly, include the following permissions in your 
       issues: write
 ```
 
-### Manual Label Creation as an Alternative to Granting issues write Permission 
+### Manual Label Creation as an Alternative to Granting issues write Permission
 
 If you prefer not to grant the `issues: write` permission in your workflow, you can manually create all required labels in the repository before the action runs.
 
