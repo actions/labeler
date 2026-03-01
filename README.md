@@ -1,4 +1,4 @@
-# Pull Request Labeler
+#  Pull Request Labeler
 
 [![Basic validation](https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg?branch=main)](https://github.com/actions/labeler/actions/workflows/basic-validation.yml)
 
