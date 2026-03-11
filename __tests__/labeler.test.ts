@@ -63,13 +63,15 @@ describe('getLabelConfigMapFromObject', () => {
     expect(result).toEqual(expected);
   });
 
-  it('ignores top-level options like changed-files-labels-limit', () => {
+  it('ignores top-level options like changed-files-labels-limit and max-files-changed', () => {
     const configWithLimit = {
       'changed-files-labels-limit': 5,
+      'max-files-changed': 100,
       label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
     };
     const result = getLabelConfigMapFromObject(configWithLimit);
     expect(result.has('changed-files-labels-limit')).toBe(false);
+    expect(result.has('max-files-changed')).toBe(false);
     expect(result.has('label1')).toBe(true);
   });
 });
@@ -92,6 +94,15 @@ describe('getLabelConfigResultFromObject', () => {
     };
     const result = getLabelConfigResultFromObject(config);
     expect(result.changedFilesLimit).toBe(10);
+  });
+
+  it('trims whitespace when parsing string values', () => {
+    const config = {
+      'changed-files-labels-limit': ' 5 ',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBe(5);
   });
 
   it('returns undefined changedFilesLimit when not set', () => {
@@ -159,6 +170,95 @@ describe('getLabelConfigResultFromObject', () => {
     };
     const result = getLabelConfigResultFromObject(config);
     expect(result.changedFilesLimit).toBe(0);
+  });
+
+  it('extracts max-files-changed as a number', () => {
+    const config = {
+      'max-files-changed': 100,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.maxFilesChanged).toBe(100);
+    expect(result.labelConfigs.has('label1')).toBe(true);
+  });
+
+  it('parses max-files-changed from string', () => {
+    const config = {
+      'max-files-changed': '50',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.maxFilesChanged).toBe(50);
+  });
+
+  it('returns undefined maxFilesChanged when not set', () => {
+    const config = {
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.maxFilesChanged).toBeUndefined();
+  });
+
+  it('throws error for invalid max-files-changed value', () => {
+    const config = {
+      'max-files-changed': 'invalid',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /Invalid value for 'max-files-changed'/
+    );
+  });
+
+  it('throws error for negative max-files-changed value', () => {
+    const config = {
+      'max-files-changed': -1,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /must be a non-negative integer/
+    );
+  });
+
+  it('accepts zero as a valid max-files-changed', () => {
+    const config = {
+      'max-files-changed': 0,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.maxFilesChanged).toBe(0);
+  });
+
+  it('supports both options together', () => {
+    const config = {
+      'changed-files-labels-limit': 5,
+      'max-files-changed': 100,
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.changedFilesLimit).toBe(5);
+    expect(result.maxFilesChanged).toBe(100);
+  });
+
+  it('throws a clear error when max-files-changed is used as a label', () => {
+    const config = {
+      'max-files-changed': [
+        {'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}
+      ]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /reserved top-level option and cannot be used as a label name/
+    );
+  });
+
+  it('throws a clear error when changed-files-labels-limit is used as a label', () => {
+    const config = {
+      'changed-files-labels-limit': [
+        {'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}
+      ]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /reserved top-level option and cannot be used as a label name/
+    );
   });
 });
 

@@ -43,7 +43,11 @@ const yamlFixtures = {
   'limit_1.yml': fs.readFileSync('__tests__/fixtures/limit_1.yml'),
   'limit_2.yml': fs.readFileSync('__tests__/fixtures/limit_2.yml'),
   'limit_3.yml': fs.readFileSync('__tests__/fixtures/limit_3.yml'),
-  'mixed_rules.yml': fs.readFileSync('__tests__/fixtures/mixed_rules.yml')
+  'mixed_rules.yml': fs.readFileSync('__tests__/fixtures/mixed_rules.yml'),
+  'max_files_5.yml': fs.readFileSync('__tests__/fixtures/max_files_5.yml'),
+  'max_files_with_branch.yml': fs.readFileSync(
+    '__tests__/fixtures/max_files_with_branch.yml'
+  )
 };
 
 const configureInput = (
@@ -655,6 +659,129 @@ describe('run', () => {
         issue_number: 123,
         labels: ['pure-branch-label']
       });
+    });
+  });
+
+  describe('max-files-changed', () => {
+    it('applies labels when changed files count is within limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('max_files_5.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file.ts',
+        'components/b/file.ts',
+        'components/c/file.ts'
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b', 'component-c']
+      });
+    });
+
+    it('skips file-based labels when changed files exceed limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('max_files_5.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file1.ts',
+        'components/a/file2.ts',
+        'components/b/file1.ts',
+        'components/b/file2.ts',
+        'components/c/file1.ts',
+        'components/c/file2.ts' // 6 files > limit of 5
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // No labels should be applied since changed files exceed limit
+      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('applies labels when changed files count equals limit', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('max_files_5.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file1.ts',
+        'components/a/file2.ts',
+        'components/b/file1.ts',
+        'components/b/file2.ts',
+        'components/c/file.ts' // exactly 5 files = limit
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a', 'component-b', 'component-c']
+      });
+    });
+
+    it('still applies branch-based labels when max-files-changed is exceeded', async () => {
+      configureInput({});
+      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      usingLabelerConfigYaml('max_files_with_branch.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/file1.ts',
+        'components/a/file2.ts',
+        'components/b/file1.ts',
+        'components/b/file2.ts' // 4 files > limit of 3
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: []}
+      });
+
+      await run();
+
+      // Only the branch-based label should be applied
+      expect(setLabelsMock).toHaveBeenCalledTimes(1);
+      expect(setLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['test-branch']
+      });
+    });
+
+    it('preserves preexisting changed-files labels with sync-labels when max-files-changed is exceeded', async () => {
+      configureInput({'sync-labels': true});
+      github.context.payload.pull_request!.head = {ref: 'main'};
+      usingLabelerConfigYaml('max_files_5.yml');
+      mockGitHubResponseChangedFiles(
+        'unrelated/file1.ts',
+        'unrelated/file2.ts',
+        'unrelated/file3.ts',
+        'unrelated/file4.ts',
+        'unrelated/file5.ts',
+        'unrelated/file6.ts' // 6 files > limit of 5
+      );
+      getPullMock.mockResolvedValue(<any>{
+        data: {labels: [{name: 'component-a'}]} // preexisting label
+      });
+
+      await run();
+
+      // No setLabels call because labels should remain unchanged
+      // (component-a is preserved, not removed by sync-labels)
+      expect(setLabelsMock).toHaveBeenCalledTimes(0);
     });
   });
 

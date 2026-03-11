@@ -160,6 +160,7 @@ The labeler configuration file (`.github/labeler.yml`) supports the following to
 | Name                         | Description                                                                                                                                                   |
 |------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `changed-files-labels-limit` | Maximum number of new labels to apply based on changed files (must be a non-negative integer). If exceeded, no changed-files labels are applied for that run. |
+| `max-files-changed`          | Maximum number of total changed files (must be a non-negative integer). If exceeded, all file-based labeling is skipped.                                      |
 
 ##### Limiting changed-files labels
 
@@ -172,6 +173,7 @@ When working with large PRs (e.g., tree-wide refactors) that touch many componen
 - If the number of new changed-files labels **equals** the limit, labels are still applied normally.
 - Labels based on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
 - **Any label definition that includes a `changed-files` rule is considered a changed-files label** and is subject to the limit, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be subject to the limit even if it matches via the branch rule.
+- If both `max-files-changed` and `changed-files-labels-limit` are configured at the same time, `max-files-changed` is evaluated first, and if it triggers, `changed-files-labels-limit` is not evaluated.
 
 ##### Example
 
@@ -205,6 +207,40 @@ mixed:
 # Branch-based labels are NOT affected by the limit
 feature:
   - head-branch: '^feature/'
+```
+
+##### Skipping labeling for large PRs
+
+When a PR modifies a very large number of files (e.g., tree-wide refactors, automated code formatting), you may want to skip file-based labeling entirely. Set `max-files-changed` in your `.github/labeler.yml` configuration file to skip all file-based labeling when the total number of changed files exceeds the threshold.
+
+**Important behaviors:**
+
+- If the total number of changed files **exceeds** the limit, all file-based labeling is skipped entirely.
+- If the total number of changed files **equals** the limit, labels are still applied normally.
+- Labels based **only** on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- **Any label definition that includes a `changed-files` rule is considered a file-based label** and will be skipped, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be skipped even if it would match via the branch rule.
+- Pre-existing labels on the PR are **preserved** — changed-files configs are not evaluated at all, so `sync-labels` will not remove them.
+
+##### Example
+
+```yml
+# .github/labeler.yml
+
+# Skip file-based labeling if more than 100 files changed
+max-files-changed: 100
+
+# These labels will be skipped if > 100 files changed
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/frontend/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/backend/**'
+
+# Branch-based labels are NOT affected
+release:
+  - base-branch: 'main'
 ```
 
 ### Create Workflow

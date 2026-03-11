@@ -39,10 +39,20 @@ export async function labeler() {
   const pullRequests = api.getPullRequests(client, prNumbers);
 
   for await (const pullRequest of pullRequests) {
-    const {labelConfigs, changedFilesLimit} = await api.getLabelConfigs(
-      client,
-      configPath
-    );
+    const {labelConfigs, changedFilesLimit, maxFilesChanged} =
+      await api.getLabelConfigs(client, configPath);
+
+    // Check if total changed files exceeds the max-files-changed threshold
+    const skipChangedFilesLabeling =
+      maxFilesChanged !== undefined &&
+      pullRequest.changedFiles.length > maxFilesChanged;
+
+    if (skipChangedFilesLabeling) {
+      core.info(
+        `Total changed files (${pullRequest.changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`
+      );
+    }
+
     const preexistingLabels = pullRequest.data.labels.map(l => l.name);
     const allLabels: Set<string> = new Set<string>(preexistingLabels);
 
@@ -51,10 +61,21 @@ export async function labeler() {
 
     for (const [label, configs] of labelConfigs.entries()) {
       core.debug(`processing ${label}`);
+
+      // If this config uses changed-files and we're skipping file-based labeling,
+      // don't evaluate it at all (skip add/remove) to preserve preexisting labels
+      const usesChangedFiles = configUsesChangedFiles(configs);
+      if (skipChangedFilesLabeling && usesChangedFiles) {
+        core.debug(
+          `skipping ${label} (uses changed-files and max-files-changed exceeded)`
+        );
+        continue;
+      }
+
       if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
         allLabels.add(label);
         // Track if this label uses changed-files patterns
-        if (configUsesChangedFiles(configs)) {
+        if (usesChangedFiles) {
           changedFilesLabels.add(label);
         }
       } else if (syncLabels) {
@@ -62,7 +83,7 @@ export async function labeler() {
       }
     }
 
-    // Check if changed-files labels exceed the limit
+    // Check if changed-files labels should be skipped due to labels limit
     const newChangedFilesLabels = [...changedFilesLabels].filter(
       l => !preexistingLabels.includes(l)
     );
