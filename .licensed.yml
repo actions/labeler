@@ -12,3 +12,6 @@ allowed:
 
 reviewed:
   npm:
+    - balanced-match
+    - brace-expansion
+    - minimatch
