@@ -14,11 +14,18 @@ import {toBranchMatchConfig, BranchMatchConfig} from '../branch';
 export interface MatchConfig {
   all?: BaseMatchConfig[];
   any?: BaseMatchConfig[];
+  meta?: LabelMetadata;
+}
+
+export interface LabelMetadata {
+  description?: string;
+  color?: string;
 }
 
 export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
 
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const META_CONFIG_KEYS = ['description', 'color'];
 
 export const getLabelConfigs = (
   client: ClientType,
@@ -96,6 +103,19 @@ export function getLabelConfigMapFromObject(
             } else {
               updatedConfig.push({any: [newMatchConfig]});
             }
+          } else if (META_CONFIG_KEYS.includes(key)) {
+            // Convert scalar config entries into the object shape expected by toLabelConfig.
+            const metadata = toLabelConfig({[key]: value});
+            // Find or set the `meta` key so that we can add these properties to that rule,
+            // Or create a new `meta` key and add that to our array of configs.
+            const indexOfMeta = updatedConfig.findIndex(mc => !!mc['meta']);
+            if (indexOfMeta >= 0) {
+              const existingMeta = updatedConfig[indexOfMeta].meta || {};
+              Object.assign(existingMeta, metadata);
+              updatedConfig[indexOfMeta].meta = existingMeta;
+            } else {
+              updatedConfig.push({meta: metadata});
+            }
           } else {
             // Log the key that we don't know what to do with.
             core.info(`An unknown config option was under ${label}: ${key}`);
@@ -113,6 +133,34 @@ export function getLabelConfigMapFromObject(
   }
 
   return labelMap;
+}
+
+export function toLabelConfig(config: any): LabelMetadata {
+  const metadata: LabelMetadata = {};
+
+  if (typeof config.description === 'string') {
+    metadata.description = config.description;
+  } else if (config.description !== undefined) {
+    core.warning(`Invalid value for "description". It should be a string.`);
+  }
+
+  if (typeof config.color === 'string') {
+    const rawColor = config.color.trim();
+    const normalizedColor = rawColor.startsWith('#')
+      ? rawColor.slice(1)
+      : rawColor;
+    if (/^[0-9a-fA-F]{6}$/.test(normalizedColor)) {
+      metadata.color = normalizedColor;
+    } else {
+      core.warning(
+        `Invalid value for "color". It should be a 6-character hex color (e.g. "ff00ff").`
+      );
+    }
+  } else if (config.color !== undefined) {
+    core.warning(`Invalid value for "color". It should be a string.`);
+  }
+
+  return metadata;
 }
 
 export function toMatchConfig(config: any): BaseMatchConfig {

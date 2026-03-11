@@ -1,0 +1,20 @@
+label1:
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: ['tests/**/*']
+
+label2:
+  - changed-files:
+      - any-glob-to-any-file: ['tests/**/*']
+  - description: 'Label2 description'
+  - color: 'ff00ff'
+
+label3:
+  - changed-files:
+      - any-glob-to-any-file: ['tests/**/*']
+  - description: 'Label3 description'
+
+label4:
+  - changed-files:
+      - any-glob-to-any-file: ['tests/**/*']
+  - color: '#000000'

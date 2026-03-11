@@ -19,7 +19,16 @@ export const context = {
 const mockApi = {
   rest: {
     issues: {
-      setLabels: jest.fn()
+      setLabels: jest.fn(),
+      updateLabel: jest.fn(),
+      createLabel: jest.fn(),
+      listLabelsForRepo: {
+        endpoint: {
+          merge: jest.fn().mockReturnValue({
+            __labelerMock: 'listLabelsForRepo'
+          })
+        }
+      }
     },
     pulls: {
       get: jest.fn().mockResolvedValue({
@@ -29,7 +38,9 @@ const mockApi = {
       }),
       listFiles: {
         endpoint: {
-          merge: jest.fn().mockReturnValue({})
+          merge: jest.fn().mockReturnValue({
+            __labelerMock: 'listFiles'
+          })
         }
       }
     },

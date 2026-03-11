@@ -9,9 +9,13 @@ label1:
           - all-globs-to-all-files: ['glob']
       - head-branch: ['regexp']
       - base-branch: ['regexp']
+  - description: 'Label1 description'
+  - color: 'ff00ff'
 
 label2:
   - changed-files:
       - any-glob-to-any-file: ['glob']
   - head-branch: ['regexp']
   - base-branch: ['regexp']
+  - description: 'Label2 description'
+  - color: 'ffff00'
