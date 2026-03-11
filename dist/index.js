@@ -277,7 +277,12 @@ const fs_1 = __importDefault(__nccwpck_require__(9896));
 const get_content_1 = __nccwpck_require__(6519);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const ALLOWED_CONFIG_KEYS = [
+    'changed-files',
+    'head-branch',
+    'base-branch',
+    'authors'
+];
 const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(() => {
     if (!fs_1.default.existsSync(configurationPath)) {
@@ -352,7 +357,8 @@ function getLabelConfigMapFromObject(configObject) {
 function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
-    return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
+    const authorsConfig = config['authors'] ? { authors: config['authors'] } : {};
+    return Object.assign(Object.assign(Object.assign({}, changedFilesConfig), branchConfig), authorsConfig);
 }
 
 
@@ -1184,6 +1190,12 @@ function checkAny(matchConfigs, changedFiles, dot) {
                 return true;
             }
         }
+        if (matchConfig.authors) {
+            if (checkAuthors(matchConfig.authors)) {
+                core.debug(`  "any" patterns matched`);
+                return true;
+            }
+        }
     }
     core.debug(`  "any" patterns did not match any configs`);
     return false;
@@ -1219,9 +1231,29 @@ function checkAll(matchConfigs, changedFiles, dot) {
                 return false;
             }
         }
+        if (matchConfig.authors) {
+            if (!checkAuthors(matchConfig.authors)) {
+                core.debug(`  "all" patterns did not match`);
+                return false;
+            }
+        }
     }
     core.debug(`  "all" patterns matched all configs`);
     return true;
+}
+function checkAuthors(authors) {
+    var _a, _b;
+    const prAuthor = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.login;
+    if (!prAuthor) {
+        core.info('Could not get pull request author from context, exiting');
+        return false;
+    }
+    if (authors.includes(prAuthor)) {
+        core.debug(`  author ${prAuthor} is on the list`);
+        return true;
+    }
+    core.debug(`  author ${prAuthor} is not on the list`);
+    return false;
 }
 
 

@@ -2,6 +2,9 @@ export const context = {
   payload: {
     pull_request: {
       number: 123,
+      user: {
+        login: 'monalisa'
+      },
       head: {
         ref: 'head-branch-name'
       },

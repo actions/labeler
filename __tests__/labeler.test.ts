@@ -67,12 +67,14 @@ describe('toMatchConfig', () => {
     const config = {
       'changed-files': [{'any-glob-to-any-file': ['testing-files']}],
       'head-branch': ['testing-head'],
-      'base-branch': ['testing-base']
+      'base-branch': ['testing-base'],
+      authors: ['testing-author']
     };
     const expected: BaseMatchConfig = {
       changedFiles: [{anyGlobToAnyFile: ['testing-files']}],
       headBranch: ['testing-head'],
-      baseBranch: ['testing-base']
+      baseBranch: ['testing-base'],
+      authors: ['testing-author']
     };
 
     it('returns a MatchConfig object with all options', () => {
@@ -231,5 +233,43 @@ describe('labeler error handling', () => {
       expect.any(Object)
     );
     expect(core.setFailed).toHaveBeenCalledWith(error.message);
+  });
+
+  it('returns true when PR author is in the list of authors', () => {
+    const matchConfigWithAuthor: MatchConfig[] = [
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
+          {authors: ['monalisa', 'hubot']}
+        ]
+      }
+    ];
+    const changedFiles = ['not_match.pdf'];
+
+    const result = checkMatchConfigs(
+      changedFiles,
+      matchConfigWithAuthor,
+      false
+    );
+    expect(result).toBeTruthy();
+  });
+
+  it('returns false when PR author is not in the list of authors', () => {
+    const matchConfigWithAuthor: MatchConfig[] = [
+      {
+        any: [
+          {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]},
+          {authors: ['foo', 'bar']}
+        ]
+      }
+    ];
+    const changedFiles = ['not_match.pdf'];
+
+    const result = checkMatchConfigs(
+      changedFiles,
+      matchConfigWithAuthor,
+      false
+    );
+    expect(result).toBeFalsy();
   });
 });

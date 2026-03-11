@@ -44,6 +44,7 @@ The base match object is defined as:
   - all-globs-to-all-files: ['list', 'of', 'globs']
 - base-branch: ['list', 'of', 'regexps']
 - head-branch: ['list', 'of', 'regexps']
+- authors: ['list', 'of', 'authors'] # github users
 ```
 
 There are two top-level keys, `any` and `all`, which both accept the same configuration options:
