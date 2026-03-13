@@ -320,7 +320,7 @@ function getLabelConfigMapFromObject(configObject) {
                 // our config objects.
                 if (key === 'any' || key === 'all') {
                     if (Array.isArray(value)) {
-                        const newConfigs = value.map(toMatchConfig);
+                        const newConfigs = value.map(config => toMatchConfig(config, key === 'all'));
                         updatedConfig.push({ [key]: newConfigs });
                     }
                 }
@@ -349,8 +349,8 @@ function getLabelConfigMapFromObject(configObject) {
     }
     return labelMap;
 }
-function toMatchConfig(config) {
-    const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
+function toMatchConfig(config, defaultToAll = false) {
+    const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config, defaultToAll);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
     return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
 }
@@ -663,7 +663,7 @@ function getChangedFiles(client, prNumber) {
         return changedFiles;
     });
 }
-function toChangedFilesMatchConfig(config) {
+function toChangedFilesMatchConfig(config, defaultToAll = false) {
     if (!config['changed-files'] || !config['changed-files'].length) {
         return {};
     }
@@ -672,6 +672,16 @@ function toChangedFilesMatchConfig(config) {
         : [config['changed-files']];
     const validChangedFilesConfigs = [];
     changedFilesConfigs.forEach(changedFilesConfig => {
+        if (typeof changedFilesConfig === 'string' ||
+            (Array.isArray(changedFilesConfig) &&
+                changedFilesConfig.every(config => typeof config === 'string'))) {
+            const key = defaultToAll ? 'allGlobsToAllFiles' : 'anyGlobToAnyFile';
+            const value = typeof changedFilesConfig === 'string'
+                ? [changedFilesConfig]
+                : changedFilesConfig;
+            validChangedFilesConfigs.push({ [key]: value });
+            return;
+        }
         if (!(0, utils_1.isObject)(changedFilesConfig)) {
             throw new Error(`The "changed-files" section must have a valid config structure. Please read the action documentation for more information`);
         }
