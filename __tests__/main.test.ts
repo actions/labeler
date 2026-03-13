@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs';
 
 jest.mock('@actions/core');
-jest.mock('@actions/github');
 
 const gh = github.getOctokit('_');
 const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
@@ -69,7 +68,13 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.pdf');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: []
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -99,7 +104,13 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('.foo.pdf');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: []
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -128,7 +139,13 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('.foo.pdf');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: []
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -159,7 +176,17 @@ describe('run', () => {
 
   it('adds labels based on the branch names that match the regexp pattern', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'test/testing-time'};
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'test/testing-time'
+        }
+      }
+    });
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -177,9 +204,17 @@ describe('run', () => {
 
   it('adds multiple labels based on branch names that match different regexp patterns', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {
-      ref: 'test/feature/123'
-    };
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'test/feature/123'
+        }
+      }
+    });
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -203,7 +238,17 @@ describe('run', () => {
 
   it('can support multiple branches by batching', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'fix/123'};
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'fix/123'
+        }
+      }
+    });
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -221,7 +266,17 @@ describe('run', () => {
 
   it('can support multiple branches by providing an array', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'array/123'};
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'array/123'
+        }
+      }
+    });
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -275,7 +330,13 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.txt');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}]
+        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -304,7 +365,13 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.txt');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}]
+        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -333,7 +400,13 @@ describe('run', () => {
     }));
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: existingLabels
+        labels: existingLabels,
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -363,7 +436,13 @@ describe('run', () => {
 
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'manually-added'}]
+        labels: [{name: 'manually-added'}],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
@@ -397,13 +476,25 @@ describe('run', () => {
 
     getPullMock.mockResolvedValueOnce(<any>{
       data: {
-        labels: [{name: 'manually-added'}]
+        labels: [{name: 'manually-added'}],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
     getPullMock.mockResolvedValueOnce(<any>{
       data: {
-        labels: []
+        labels: [],
+        base: {
+          ref: 'base-branch-name'
+        },
+        head: {
+          ref: 'head-branch-name'
+        }
       }
     });
 
