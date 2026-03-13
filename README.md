@@ -44,6 +44,7 @@ The base match object is defined as:
   - all-globs-to-all-files: ['list', 'of', 'globs']
 - base-branch: ['list', 'of', 'regexps']
 - head-branch: ['list', 'of', 'regexps']
+- title: ['list', 'of', 'regexps']
 ```
 
 There are two top-level keys, `any` and `all`, which both accept the same configuration options:
@@ -56,6 +57,7 @@ There are two top-level keys, `any` and `all`, which both accept the same config
     - all-globs-to-all-files: ['list', 'of', 'globs']
   - base-branch: ['list', 'of', 'regexps']
   - head-branch: ['list', 'of', 'regexps']
+  - title: ['list', 'of', 'regexps']
 - all:
   - changed-files:
     - any-glob-to-any-file: ['list', 'of', 'globs']
@@ -64,6 +66,7 @@ There are two top-level keys, `any` and `all`, which both accept the same config
     - all-globs-to-all-files: ['list', 'of', 'globs']
   - base-branch: ['list', 'of', 'regexps']
   - head-branch: ['list', 'of', 'regexps']
+  - title: ['list', 'of', 'regexps']
 ```
 
 From a boolean logic perspective, top-level match objects, and options within `all` are `AND`-ed together and individual match rules within the `any` object are `OR`-ed.
@@ -72,13 +75,14 @@ One or all fields can be provided for fine-grained matching.
 The fields are defined as follows:
 - `all`: ALL of the provided options must match for the label to be applied
 - `any`: if ANY of the provided options match then the label will be applied
-  - `base-branch`: match regexps against the base branch name
-  - `head-branch`: match regexps against the head branch name
   - `changed-files`: match glob patterns against the changed paths
     - `any-glob-to-any-file`: ANY glob must match against ANY changed file
     - `any-glob-to-all-files`: ANY glob must match against ALL changed files
     - `all-globs-to-any-file`: ALL globs must match against ANY changed file
     - `all-globs-to-all-files`: ALL globs must match against ALL changed files
+  - `base-branch`: match regexps against the base branch name
+  - `head-branch`: match regexps against the head branch name
+  - `title`: match regexps against the pull request title
 
 If a base option is provided without a top-level key, then it will default to `any`. More specifically, the following two configurations are equivalent:
 ```yml
@@ -151,6 +155,19 @@ feature:
 # Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
+
+# Add 'chore' label to any PR where the title starts with `chore`
+chore:
+ - title: '^chore'
+
+# Add 'ci' label to any PR where the title starts with `ci` or `build`:
+ci:
+ - title: ['^ci', '^build']
+
+# Add 'web' label to any PR where the title includes conventional commits optional scope
+web:
+ - title: '^\w+\(web\):'
+
 ```
 
 ### Create Workflow
