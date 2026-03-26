@@ -269,8 +269,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLabelConfigs = void 0;
+exports.getLabelConfigResultFromObject = getLabelConfigResultFromObject;
 exports.getLabelConfigMapFromObject = getLabelConfigMapFromObject;
 exports.toMatchConfig = toMatchConfig;
+exports.configUsesChangedFiles = configUsesChangedFiles;
 const core = __importStar(__nccwpck_require__(7484));
 const yaml = __importStar(__nccwpck_require__(4281));
 const fs_1 = __importDefault(__nccwpck_require__(9896));
@@ -278,6 +280,29 @@ const get_content_1 = __nccwpck_require__(6519);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const TOP_LEVEL_OPTIONS = ['changed-files-labels-limit', 'max-files-changed'];
+/**
+ * Parses and validates a non-negative integer value from the configuration.
+ */
+function parseNonNegativeInteger(value, optionName) {
+    if (typeof value === 'number') {
+        if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+            throw new Error(`Invalid value for '${optionName}': must be a non-negative integer (got ${value})`);
+        }
+        return value;
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!/^\d+$/.test(trimmed)) {
+            throw new Error(`Invalid value for '${optionName}': must be a non-negative integer (got '${value}')`);
+        }
+        return Number(trimmed);
+    }
+    if (Array.isArray(value)) {
+        throw new Error(`'${optionName}' is a reserved top-level option and cannot be used as a label name. Please rename it.`);
+    }
+    throw new Error(`Invalid value for '${optionName}': expected a non-negative integer`);
+}
 const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(() => {
     if (!fs_1.default.existsSync(configurationPath)) {
@@ -298,13 +323,35 @@ const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(configuration => {
     // loads (hopefully) a `{[label:string]: MatchConfig[]}`, but is `any`:
     const configObject = yaml.load(configuration);
-    // transform `any` => `Map<string,MatchConfig[]>` or throw if yaml is malformed:
-    return getLabelConfigMapFromObject(configObject);
+    // transform `any` => `LabelConfigResult` or throw if yaml is malformed:
+    return getLabelConfigResultFromObject(configObject);
 });
 exports.getLabelConfigs = getLabelConfigs;
+function getLabelConfigResultFromObject(configObject) {
+    // Extract top-level options
+    let changedFilesLimit;
+    let maxFilesChanged;
+    const limitValue = configObject === null || configObject === void 0 ? void 0 : configObject['changed-files-labels-limit'];
+    if (limitValue !== undefined) {
+        changedFilesLimit = parseNonNegativeInteger(limitValue, 'changed-files-labels-limit');
+    }
+    const maxFilesValue = configObject === null || configObject === void 0 ? void 0 : configObject['max-files-changed'];
+    if (maxFilesValue !== undefined) {
+        maxFilesChanged = parseNonNegativeInteger(maxFilesValue, 'max-files-changed');
+    }
+    return {
+        labelConfigs: getLabelConfigMapFromObject(configObject),
+        changedFilesLimit,
+        maxFilesChanged
+    };
+}
 function getLabelConfigMapFromObject(configObject) {
     const labelMap = new Map();
     for (const label in configObject) {
+        // Skip top-level options
+        if (TOP_LEVEL_OPTIONS.includes(label)) {
+            continue;
+        }
         const configOptions = configObject[label];
         if (!Array.isArray(configOptions) ||
             !configOptions.every(opts => typeof opts === 'object')) {
@@ -353,6 +400,31 @@ function toMatchConfig(config) {
     const changedFilesConfig = (0, changedFiles_1.toChangedFilesMatchConfig)(config);
     const branchConfig = (0, branch_1.toBranchMatchConfig)(config);
     return Object.assign(Object.assign({}, changedFilesConfig), branchConfig);
+}
+/**
+ * Checks if any of the match configs for a label use changed-files patterns.
+ * This is used to determine if a label should be counted toward the changed-files limit.
+ */
+function configUsesChangedFiles(matchConfigs) {
+    for (const config of matchConfigs) {
+        if (config.all) {
+            for (const baseConfig of config.all) {
+                if (baseConfig.changedFiles &&
+                    baseConfig.changedFiles.some(cf => Object.keys(cf).length > 0)) {
+                    return true;
+                }
+            }
+        }
+        if (config.any) {
+            for (const baseConfig of config.any) {
+                if (baseConfig.changedFiles &&
+                    baseConfig.changedFiles.some(cf => Object.keys(cf).length > 0)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -1038,6 +1110,7 @@ const pluginRetry = __importStar(__nccwpck_require__(3450));
 const api = __importStar(__nccwpck_require__(6063));
 const lodash_isequal_1 = __importDefault(__nccwpck_require__(9471));
 const get_inputs_1 = __nccwpck_require__(1219);
+const get_label_configs_1 = __nccwpck_require__(8554);
 const changedFiles_1 = __nccwpck_require__(5145);
 const branch_1 = __nccwpck_require__(2234);
 // GitHub Issues cannot have more than 100 labels
@@ -1062,15 +1135,44 @@ function labeler() {
                 _c = pullRequests_1_1.value;
                 _d = false;
                 const pullRequest = _c;
-                const labelConfigs = yield api.getLabelConfigs(client, configPath);
+                const { labelConfigs, changedFilesLimit, maxFilesChanged } = yield api.getLabelConfigs(client, configPath);
+                // Check if total changed files exceeds the max-files-changed threshold
+                const skipChangedFilesLabeling = maxFilesChanged !== undefined &&
+                    pullRequest.changedFiles.length > maxFilesChanged;
+                if (skipChangedFilesLabeling) {
+                    core.info(`Total changed files (${pullRequest.changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`);
+                }
                 const preexistingLabels = pullRequest.data.labels.map(l => l.name);
                 const allLabels = new Set(preexistingLabels);
+                // Track labels that would be added based on changed-files patterns
+                const changedFilesLabels = new Set();
                 for (const [label, configs] of labelConfigs.entries()) {
                     core.debug(`processing ${label}`);
+                    // If this config uses changed-files and we're skipping file-based labeling,
+                    // don't evaluate it at all (skip add/remove) to preserve preexisting labels
+                    const usesChangedFiles = (0, get_label_configs_1.configUsesChangedFiles)(configs);
+                    if (skipChangedFilesLabeling && usesChangedFiles) {
+                        core.debug(`skipping ${label} (uses changed-files and max-files-changed exceeded)`);
+                        continue;
+                    }
                     if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
                         allLabels.add(label);
+                        // Track if this label uses changed-files patterns
+                        if (usesChangedFiles) {
+                            changedFilesLabels.add(label);
+                        }
                     }
                     else if (syncLabels) {
+                        allLabels.delete(label);
+                    }
+                }
+                // Check if changed-files labels should be skipped due to labels limit
+                const newChangedFilesLabels = [...changedFilesLabels].filter(l => !preexistingLabels.includes(l));
+                if (changedFilesLimit !== undefined &&
+                    newChangedFilesLabels.length > changedFilesLimit) {
+                    core.info(`Changed-files labels (${newChangedFilesLabels.length}) exceed limit (${changedFilesLimit}), skipping: ${newChangedFilesLabels.join(', ')}`);
+                    // Remove all new changed-files labels
+                    for (const label of newChangedFilesLabels) {
                         allLabels.delete(label);
                     }
                 }

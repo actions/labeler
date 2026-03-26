@@ -1,0 +1,26 @@
+# Limit to 2 changed-files labels
+changed-files-labels-limit: 2
+
+# Labels based on changed files
+component-a:
+  - changed-files:
+      - any-glob-to-any-file: ['components/a/**']
+
+component-b:
+  - changed-files:
+      - any-glob-to-any-file: ['components/b/**']
+
+component-c:
+  - changed-files:
+      - any-glob-to-any-file: ['components/c/**']
+
+component-d:
+  - changed-files:
+      - any-glob-to-any-file: ['components/d/**']
+
+# Labels based on branch patterns only
+test-branch:
+  - head-branch: '^test/'
+
+feature-branch:
+  - head-branch: '/feature/'

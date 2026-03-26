@@ -37,7 +37,7 @@ The match object allows control over the matching options. You can specify the l
 
 The base match object is defined as:
 ```yml
-- changed-files: 
+- changed-files:
   - any-glob-to-any-file: ['list', 'of', 'globs']
   - any-glob-to-all-files: ['list', 'of', 'globs']
   - all-globs-to-any-file: ['list', 'of', 'globs']
@@ -132,7 +132,7 @@ Documentation:
 - changed-files:
   - any-glob-to-any-file: ['docs/*', 'guides/*']
 
-# Add 'Documentation' label to any change to .md files within the entire repository 
+# Add 'Documentation' label to any change to .md files within the entire repository
 Documentation:
 - changed-files:
   - any-glob-to-any-file: '**/*.md'
@@ -151,6 +151,96 @@ feature:
 # Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
+```
+
+#### Configuration Options
+
+The labeler configuration file (`.github/labeler.yml`) supports the following top-level options:
+
+| Name                         | Description                                                                                                                                                   |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `changed-files-labels-limit` | Maximum number of new labels to apply based on changed files (must be a non-negative integer). If exceeded, no changed-files labels are applied for that run. |
+| `max-files-changed`          | Maximum number of total changed files (must be a non-negative integer). If exceeded, all file-based labeling is skipped.                                      |
+
+##### Limiting changed-files labels
+
+When working with large PRs (e.g., tree-wide refactors) that touch many components, you may want to prevent the labeler from adding too many labels. Set `changed-files-labels-limit` in your `.github/labeler.yml` configuration file to limit the number of labels that can be applied based on changed files patterns.
+
+**Important behaviors:**
+
+- The limit counts only **new** labels that would be added by changed-files rules. Labels already present on the PR are not counted toward the limit.
+- If the number of new changed-files labels **exceeds** the limit, **all** new changed-files labels are skipped for that run.
+- If the number of new changed-files labels **equals** the limit, labels are still applied normally.
+- Labels based on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- **Any label definition that includes a `changed-files` rule is considered a changed-files label** and is subject to the limit, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be subject to the limit even if it matches via the branch rule.
+- If both `max-files-changed` and `changed-files-labels-limit` are configured at the same time, `max-files-changed` is evaluated first, and if it triggers, `changed-files-labels-limit` is not evaluated.
+
+##### Example
+
+```yml
+# .github/labeler.yml
+
+# Limit changed-files based labels to 5
+changed-files-labels-limit: 5
+
+# Label definitions - these are subject to the limit
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/frontend/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/backend/**'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+
+# This label has both branch and changed-files rules.
+# It is still subject to the limit because it includes changed-files.
+mixed:
+  - any:
+    - head-branch: '^feature/'
+    - changed-files:
+      - any-glob-to-any-file: 'src/mixed/**'
+
+# Branch-based labels are NOT affected by the limit
+feature:
+  - head-branch: '^feature/'
+```
+
+##### Skipping labeling for large PRs
+
+When a PR modifies a very large number of files (e.g., tree-wide refactors, automated code formatting), you may want to skip file-based labeling entirely. Set `max-files-changed` in your `.github/labeler.yml` configuration file to skip all file-based labeling when the total number of changed files exceeds the threshold.
+
+**Important behaviors:**
+
+- If the total number of changed files **exceeds** the limit, all file-based labeling is skipped entirely.
+- If the total number of changed files **equals** the limit, labels are still applied normally.
+- Labels based **only** on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- **Any label definition that includes a `changed-files` rule is considered a file-based label** and will be skipped, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be skipped even if it would match via the branch rule.
+- Pre-existing labels on the PR are **preserved** — changed-files configs are not evaluated at all, so `sync-labels` will not remove them.
+
+##### Example
+
+```yml
+# .github/labeler.yml
+
+# Skip file-based labeling if more than 100 files changed
+max-files-changed: 100
+
+# These labels will be skipped if > 100 files changed
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/frontend/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'src/backend/**'
+
+# Branch-based labels are NOT affected
+release:
+  - base-branch: 'main'
 ```
 
 ### Create Workflow
@@ -213,10 +303,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    
+
     # Label PRs 1, 2, and 3
     - uses: actions/labeler@v6
-      with:        
+      with:
         pr-number: |
           1
           2
@@ -225,9 +315,9 @@ jobs:
 
 **Note:** in normal usage the `pr-number` input is not required as the action will detect the PR number from the workflow context.
 
-#### Outputs 
+#### Outputs
 
-Labeler provides the following outputs:  
+Labeler provides the following outputs:
 
 | Name         | Description                                               |
 |--------------|-----------------------------------------------------------|
@@ -249,13 +339,13 @@ jobs:
     steps:
     - id: label-the-PR
       uses: actions/labeler@v6
-      
+
     - id: run-frontend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'frontend')
       run: |
         echo "Running frontend tests..."
         # Put your commands for running frontend tests here
-  
+
     - id: run-backend-tests
       if: contains(steps.label-the-PR.outputs.all-labels, 'backend')
       run: |
@@ -291,7 +381,7 @@ To ensure the action works correctly, include the following permissions in your 
       issues: write
 ```
 
-### Manual Label Creation as an Alternative to Granting issues write Permission 
+### Manual Label Creation as an Alternative to Granting issues write Permission
 
 If you prefer not to grant the `issues: write` permission in your workflow, you can manually create all required labels in the repository before the action runs.
 

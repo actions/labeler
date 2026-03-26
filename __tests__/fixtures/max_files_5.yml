@@ -1,0 +1,15 @@
+# Skip file-based labeling if more than 5 files changed
+max-files-changed: 5
+
+# Labels based on changed files
+component-a:
+  - changed-files:
+      - any-glob-to-any-file: ['components/a/**']
+
+component-b:
+  - changed-files:
+      - any-glob-to-any-file: ['components/b/**']
+
+component-c:
+  - changed-files:
+      - any-glob-to-any-file: ['components/c/**']

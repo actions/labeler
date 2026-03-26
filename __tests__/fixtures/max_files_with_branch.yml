@@ -1,0 +1,15 @@
+# Skip file-based labeling if more than 3 files changed
+max-files-changed: 3
+
+# Labels based on changed files
+component-a:
+  - changed-files:
+      - any-glob-to-any-file: ['components/a/**']
+
+component-b:
+  - changed-files:
+      - any-glob-to-any-file: ['components/b/**']
+
+# Branch-based label (should not be affected)
+test-branch:
+  - head-branch: ['^test/']
