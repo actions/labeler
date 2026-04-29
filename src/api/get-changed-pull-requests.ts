@@ -17,7 +17,7 @@ export async function* getPullRequests(
         pull_number: prNumber
       });
       prData = result.data;
-    } catch (error: any) {
+    } catch {
       core.warning(`Could not find pull request #${prNumber}, skipping`);
       continue;
     }
