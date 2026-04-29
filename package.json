@@ -3,7 +3,7 @@
   "version": "6.0.0",
   "description": "Labels pull requests by files altered",
   "main": "lib/main.js",
-    "engines": {
+  "engines": {
     "node": ">=24"
   },
   "scripts": {
@@ -27,12 +27,12 @@
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.0",
+    "@actions/core": "^2.0.3",
+    "@actions/github": "^6.0.1",
     "@octokit/plugin-retry": "^6.0.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "lodash.isequal": "^4.5.0",
-    "minimatch": "^10.2.3"
+    "minimatch": "^10.2.5"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -40,8 +40,8 @@
     "@types/lodash.isequal": "^4.5.8",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
-    "@typescript-eslint/parser": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.0",
+    "@typescript-eslint/parser": "^8.59.0",
     "@vercel/ncc": "^0.38.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -51,6 +51,5 @@
     "prettier": "^3.4.2",
     "ts-jest": "^29.2.5",
     "typescript": "^5.7.3"
-
   }
 }
