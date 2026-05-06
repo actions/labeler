@@ -211,13 +211,27 @@ describe('checkIfAllGlobsMatchAnyFile', () => {
 
 describe('checkIfAnyGlobMatchesAllFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
+  const changedFiles2 = ['foo.txt', 'bar.txt', 'baz.md'];
 
-  describe('when any given glob pattern matched all files', () => {
+  describe('when any single glob pattern matched all files', () => {
     const globPatterns = ['*.md', '*.txt'];
 
     it('returns true', () => {
       const result = checkIfAnyGlobMatchesAllFiles(
         changedFiles,
+        globPatterns,
+        false
+      );
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('when any of the given glob patterns in braces match all files', () => {
+    const globPatterns = ['{*.md,*.txt}', '*.mp3'];
+
+    it('returns true', () => {
+      const result = checkIfAnyGlobMatchesAllFiles(
+        changedFiles2,
         globPatterns,
         false
       );
