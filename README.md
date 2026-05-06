@@ -72,13 +72,13 @@ One or all fields can be provided for fine-grained matching.
 The fields are defined as follows:
 - `all`: ALL of the provided options must match for the label to be applied
 - `any`: if ANY of the provided options match then the label will be applied
-  - `base-branch`: match regexps against the base branch name
-  - `head-branch`: match regexps against the head branch name
-  - `changed-files`: match glob patterns against the changed paths
-    - `any-glob-to-any-file`: ANY glob must match against ANY changed file
-    - `any-glob-to-all-files`: ANY glob must match against ALL changed files
-    - `all-globs-to-any-file`: ALL globs must match against ANY changed file
-    - `all-globs-to-all-files`: ALL globs must match against ALL changed files
+- `base-branch`: match regexps against the base branch name
+- `head-branch`: match regexps against the head branch name
+- `changed-files`: match glob patterns against the changed paths
+  - `any-glob-to-any-file`: ANY glob must match against ANY changed file
+  - `any-glob-to-all-files`: ANY glob must match against ALL changed files
+  - `all-globs-to-any-file`: ALL globs must match against ANY changed file
+  - `all-globs-to-all-files`: ALL globs must match against ALL changed files
 
 If a base option is provided without a top-level key, then it will default to `any`. More specifically, the following two configurations are equivalent:
 ```yml
