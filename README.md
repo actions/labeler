@@ -142,7 +142,7 @@ source:
 - all:
   - changed-files:
     - any-glob-to-any-file: 'src/**/*'
-    - all-globs-to-all-files: '!src/docs/*'
+    - all-globs-to-all-files: '!src/docs/**/*'
 
 # Add 'feature' label to any PR where the head branch name starts with `feature` or has a `feature` section in the name
 feature:
