@@ -24,6 +24,34 @@ describe('getBranchName', () => {
       expect(result).toEqual('head-branch-name');
     });
   });
+
+  describe('Branch name matching', () => {
+    describe('when checking for case-insensitive match', () => {
+      // Test case 1: with mixed case in the branch name
+      beforeEach(() => {
+        github.context.payload.pull_request!.head = {
+          ref: 'feature-123-Refactor'
+        };
+      });
+
+      it('returns the head branch name in lowercase', () => {
+        const result = getBranchName('head');
+        expect(result).toEqual('feature-123-refactor');
+      });
+
+      // Test case 2: with uppercase in the branch name
+      beforeEach(() => {
+        github.context.payload.pull_request!.head = {
+          ref: 'feature-123-REFACTOR'
+        };
+      });
+
+      it('returns the head branch name in lowercase', () => {
+        const result = getBranchName('head');
+        expect(result).toEqual('feature-123-refactor');
+      });
+    });
+  });
 });
 
 describe('checkAllBranch', () => {
