@@ -441,6 +441,42 @@ describe('run', () => {
     );
   });
 
+  it('(with pr-number: non-numeric value) warns and skips invalid PR numbers', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['not-a-number']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      `'NaN' is not a valid pull request number`
+    );
+  });
+
+  it('(with pr-number: negative value) warns and skips negative PR numbers', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['-5']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    await run();
+
+    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      `'-5' is not a valid pull request number`
+    );
+  });
+
   it('does not add labels to PRs that have no changed files', async () => {
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles();
