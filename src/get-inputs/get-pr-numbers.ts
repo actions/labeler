@@ -16,8 +16,8 @@ export const getPrNumbers = (): number[] => {
   for (const line of prInput) {
     const prNumber = parseInt(line, 10);
 
-    if (isNaN(prNumber) && prNumber <= 0) {
-      core.warning(`'${prNumber}' is not a valid pull request number`);
+    if (isNaN(prNumber) || prNumber <= 0) {
+      core.warning(`'${line}' is not a valid pull request number`);
       continue;
     }
 
