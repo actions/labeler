@@ -4,7 +4,7 @@ import * as github from '@actions/github';
 const getPrNumberFromContext = () =>
   github.context.payload.pull_request?.number;
 
-export const sanitizeForWarning = (value: string): string => {
+const sanitizeForWarning = (value: string): string => {
   return value.replace(
     /[\x00-\x1F\x7F-\x9F]/g,
     c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`

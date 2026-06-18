@@ -991,14 +991,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPrNumbers = exports.sanitizeForWarning = void 0;
+exports.getPrNumbers = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const getPrNumberFromContext = () => { var _a; return (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number; };
 const sanitizeForWarning = (value) => {
     return value.replace(/[\x00-\x1F\x7F-\x9F]/g, c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`);
 };
-exports.sanitizeForWarning = sanitizeForWarning;
 const getPrNumbers = () => {
     const prInput = core.getMultilineInput('pr-number');
     if (!(prInput === null || prInput === void 0 ? void 0 : prInput.length)) {
@@ -1009,7 +1008,7 @@ const getPrNumbers = () => {
         const trimmed = line.trim();
         const prNumber = parseInt(trimmed, 10);
         if (isNaN(prNumber) || prNumber <= 0 || String(prNumber) !== trimmed) {
-            const sanitized = (0, exports.sanitizeForWarning)(line);
+            const sanitized = sanitizeForWarning(line);
             const hint = sanitized !== line
                 ? ' (non-printable characters were escaped as \\xNN)'
                 : '';
