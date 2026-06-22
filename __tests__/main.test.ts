@@ -441,6 +441,197 @@ describe('run', () => {
     );
   });
 
+  it('(with pr-number: non-numeric string) warns and makes no API call', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['abc']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'abc' is not a valid pull request number"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: negative number) warns and makes no API call', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['-1']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'-1' is not a valid pull request number"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: zero) warns and makes no API call', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['0']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'0' is not a valid pull request number"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: number with internal space) warns and makes no API call', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['10 4']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'10 4' is not a valid pull request number"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: number with trailing non-numeric chars) warns and makes no API call', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['104abc']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'104abc' is not a valid pull request number"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: valid number with surrounding whitespace) trims and processes correctly', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': [' 104 ']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+    getPullMock.mockResolvedValue(<any>{data: {labels: []}});
+
+    await run();
+
+    expect(getPullMock).toHaveBeenCalled();
+    expect(coreWarningMock).not.toHaveBeenCalledWith(
+      expect.stringContaining('is not a valid pull request number')
+    );
+  });
+
+  it('(with pr-number: string with carriage return) sanitizes CR as \\x0d in warning', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['abc\rdef']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'abc\\x0ddef' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: string with tab) sanitizes tab as \\x09 in warning', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['abc\tdef']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'abc\\x09def' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: string with ANSI escape sequence) sanitizes ESC byte as \\x1b in warning', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['abc\x1b[31mINJECTED\x1b[0m']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'abc\\x1b[31mINJECTED\\x1b[0m' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
+    );
+    expect(getPullMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with pr-number: mix of valid and invalid) processes valid, skips invalid with warning', async () => {
+    configureInput({
+      'repo-token': 'foo',
+      'configuration-path': 'bar',
+      'pr-number': ['104', 'abc']
+    });
+
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    getPullMock.mockResolvedValue(<any>{
+      data: {labels: []}
+    });
+
+    await run();
+
+    expect(coreWarningMock).toHaveBeenCalledWith(
+      "'abc' is not a valid pull request number"
+    );
+    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 104,
+      labels: ['touched-a-pdf-file']
+    });
+  });
+
   it('does not add labels to PRs that have no changed files', async () => {
     usingLabelerConfigYaml('only_pdfs.yml');
     mockGitHubResponseChangedFiles();
