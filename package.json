@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^2.0.3",
-    "@actions/github": "^6.0.1",
+    "@actions/github": "^9.1.1",
     "@octokit/plugin-retry": "^6.0.0",
     "js-yaml": "^4.1.1",
     "lodash.isequal": "^4.5.0",
