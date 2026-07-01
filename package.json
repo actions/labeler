@@ -34,6 +34,9 @@
     "lodash.isequal": "^4.5.0",
     "minimatch": "^10.2.5"
   },
+  "overrides": {
+    "undici": "6.27.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
