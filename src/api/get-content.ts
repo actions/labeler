@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import {ClientType} from './types';
+import {ClientType} from './types.js';
 
 export const getContent = async (
   client: ClientType,

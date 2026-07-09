@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import {getPrNumbers} from './get-pr-numbers';
+import {getPrNumbers} from './get-pr-numbers.js';
 
 export const getInputs = () => ({
   token: core.getInput('repo-token'),

@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import {ClientType} from './types';
+import {ClientType} from './types.js';
 
 export const getChangedFiles = async (
   client: ClientType,

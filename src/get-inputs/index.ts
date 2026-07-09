@@ -1,1 +1,1 @@
-export * from './get-inputs';
+export * from './get-inputs.js';

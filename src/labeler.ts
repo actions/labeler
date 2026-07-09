@@ -1,19 +1,19 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
-import * as api from './api';
+import * as api from './api/index.js';
 import isEqual from 'lodash.isequal';
-import {getInputs} from './get-inputs';
+import {getInputs} from './get-inputs/index.js';
 
 import {
   BaseMatchConfig,
   MatchConfig,
   configUsesChangedFiles
-} from './api/get-label-configs';
+} from './api/get-label-configs.js';
 
-import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles';
+import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles.js';
 
-import {checkAnyBranch, checkAllBranch} from './branch';
+import {checkAnyBranch, checkAllBranch} from './branch.js';
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
@@ -142,7 +142,8 @@ export async function labeler() {
       ) {
         throw new Error(
           `Failed to set labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +
-            `Ensure the 'issues: write' permission is granted in the workflow file or manually create the missing labels in the repository before running the action.`
+            `Ensure the 'issues: write' permission is granted in the workflow file or manually create the missing labels in the repository before running the action.`,
+          {cause: error}
         );
       } else if (
         error.name !== 'HttpError' ||

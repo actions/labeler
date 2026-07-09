@@ -1,9 +1,9 @@
 ---
 name: "@octokit/core"
-version: 5.0.1
+version: 7.0.6
 type: npm
 summary: Extendable client for GitHub's REST & GraphQL APIs
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

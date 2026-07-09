@@ -1,14 +1,31 @@
-import {
-  getBranchName,
-  checkAnyBranch,
-  checkAllBranch,
-  toBranchMatchConfig,
-  BranchMatchConfig
-} from '../src/branch';
-import * as github from '@actions/github';
+import {jest, describe, beforeEach, it, expect} from '@jest/globals';
+import type {BranchMatchConfig} from '../src/branch.js';
 
-jest.mock('@actions/core');
-jest.mock('@actions/github');
+jest.unstable_mockModule('@actions/core', () => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warning: jest.fn(),
+  error: jest.fn()
+}));
+
+const mockGithubContext = {
+  payload: {
+    pull_request: {
+      number: 123,
+      head: {ref: 'head-branch-name'},
+      base: {ref: 'base-branch-name'}
+    }
+  },
+  repo: {owner: 'monalisa', repo: 'helloworld'}
+} as any;
+
+jest.unstable_mockModule('@actions/github', () => ({
+  context: mockGithubContext,
+  getOctokit: jest.fn()
+}));
+
+const {getBranchName, checkAnyBranch, checkAllBranch, toBranchMatchConfig} =
+  await import('../src/branch.js');
 
 describe('getBranchName', () => {
   describe('when the pull requests base branch is requested', () => {
@@ -28,10 +45,10 @@ describe('getBranchName', () => {
 
 describe('checkAllBranch', () => {
   beforeEach(() => {
-    github.context.payload.pull_request!.head = {
+    mockGithubContext.payload.pull_request.head = {
       ref: 'test/feature/123'
     };
-    github.context.payload.pull_request!.base = {
+    mockGithubContext.payload.pull_request.base = {
       ref: 'main'
     };
   });
@@ -87,10 +104,10 @@ describe('checkAllBranch', () => {
 
 describe('checkAnyBranch', () => {
   beforeEach(() => {
-    github.context.payload.pull_request!.head = {
+    mockGithubContext.payload.pull_request.head = {
       ref: 'test/feature/123'
     };
-    github.context.payload.pull_request!.base = {
+    mockGithubContext.payload.pull_request.base = {
       ref: 'main'
     };
   });
@@ -159,7 +176,7 @@ describe('toBranchMatchConfig', () => {
 
     it('sets headBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toEqual<BranchMatchConfig>({
+      expect(result).toEqual({
         headBranch: ['testing']
       });
     });
@@ -169,7 +186,7 @@ describe('toBranchMatchConfig', () => {
 
       it('sets headBranch in the matchConfig', () => {
         const result = toBranchMatchConfig(stringConfig);
-        expect(result).toEqual<BranchMatchConfig>({
+        expect(result).toEqual({
           headBranch: ['testing']
         });
       });
@@ -180,7 +197,7 @@ describe('toBranchMatchConfig', () => {
     const config = {'base-branch': ['testing']};
     it('sets baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toEqual<BranchMatchConfig>({
+      expect(result).toEqual({
         baseBranch: ['testing']
       });
     });
@@ -190,7 +207,7 @@ describe('toBranchMatchConfig', () => {
 
       it('sets baseBranch in the matchConfig', () => {
         const result = toBranchMatchConfig(stringConfig);
-        expect(result).toEqual<BranchMatchConfig>({
+        expect(result).toEqual({
           baseBranch: ['testing']
         });
       });
@@ -201,7 +218,7 @@ describe('toBranchMatchConfig', () => {
     const config = {'base-branch': ['testing'], 'head-branch': ['testing']};
     it('sets headBranch and baseBranch in the matchConfig', () => {
       const result = toBranchMatchConfig(config);
-      expect(result).toEqual<BranchMatchConfig>({
+      expect(result).toEqual({
         baseBranch: ['testing'],
         headBranch: ['testing']
       });
