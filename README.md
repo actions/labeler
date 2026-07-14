@@ -4,9 +4,9 @@
 
 Automatically label new pull requests based on the paths of files being changed or the branch name.
 
-## Breaking changes in V7
+## What's changed in V7
 
-- **Migrated to ESM** to support the latest `@actions/*` package versions.
+- **Migrated to ESM** internally to support the latest `@actions/*` package versions. No changes to action inputs, outputs, or behavior.
 
 ## Breaking changes in V6
 
