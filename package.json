@@ -31,7 +31,7 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@octokit/plugin-retry": "^8.1.0",
-    "js-yaml": "^5.1.0",
+    "js-yaml": "^5.2.1",
     "lodash.isequal": "^4.5.0",
     "minimatch": "^10.2.5"
   },
