@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {Minimatch} from 'minimatch';
-import {printPattern, isObject, kebabToCamel} from './utils';
+import {printPattern, isObject, kebabToCamel} from './utils.js';
 
 export interface ChangedFilesMatchConfig {
   changedFiles?: ChangedFilesGlobPatternsConfig[];

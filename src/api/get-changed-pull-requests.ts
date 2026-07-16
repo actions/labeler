@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import {getChangedFiles} from './get-changed-files';
-import {ClientType} from './types';
+import {getChangedFiles} from './get-changed-files.js';
+import {ClientType} from './types.js';
 
 export async function* getPullRequests(
   client: ClientType,

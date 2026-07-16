@@ -1,9 +1,9 @@
 ---
 name: "@octokit/graphql"
-version: 7.0.2
+version: 9.0.3
 type: npm
 summary: GitHub GraphQL API client for browsers and Node
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

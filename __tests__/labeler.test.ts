@@ -1,26 +1,65 @@
+import {jest, describe, it, expect, beforeEach, beforeAll} from '@jest/globals';
 import * as yaml from 'js-yaml';
-import * as core from '@actions/core';
-import * as api from '../src/api';
-import {labeler} from '../src/labeler';
-import * as github from '@actions/github';
 import * as fs from 'fs';
-import {checkMatchConfigs} from '../src/labeler';
-import {
+import type {
   MatchConfig,
+  BaseMatchConfig
+} from '../src/api/get-label-configs.js';
+
+// Define API mock functions at module level
+const getPullRequestsMock = jest.fn<any>();
+const getLabelConfigsMock = jest.fn<any>();
+const setLabelsMock = jest.fn<any>();
+const getChangedFilesMock = jest.fn<any>();
+const getContentMock = jest.fn<any>();
+
+jest.unstable_mockModule('@actions/core', () => ({
+  getInput: jest.fn(),
+  getMultilineInput: jest.fn(),
+  getBooleanInput: jest.fn(),
+  setOutput: jest.fn(),
+  setFailed: jest.fn(),
+  error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn()
+}));
+
+jest.unstable_mockModule('@actions/github', () => ({
+  context: {
+    payload: {
+      pull_request: {
+        number: 123,
+        head: {ref: 'head-branch'},
+        base: {ref: 'base-branch'}
+      }
+    },
+    repo: {owner: 'monalisa', repo: 'helloworld'}
+  },
+  getOctokit: jest.fn()
+}));
+
+jest.unstable_mockModule('../src/api/index.js', () => ({
+  getPullRequests: getPullRequestsMock,
+  getLabelConfigs: getLabelConfigsMock,
+  setLabels: setLabelsMock,
+  getChangedFiles: getChangedFilesMock,
+  getContent: getContentMock
+}));
+
+const core = await import('@actions/core');
+const github = await import('@actions/github');
+const api = await import('../src/api/index.js');
+const {labeler, checkMatchConfigs} = await import('../src/labeler.js');
+const {
   toMatchConfig,
   getLabelConfigMapFromObject,
   getLabelConfigResultFromObject,
-  BaseMatchConfig,
   configUsesChangedFiles
-} from '../src/api/get-label-configs';
-
-jest.mock('@actions/core');
-jest.mock('../src/api');
+} = await import('../src/api/get-label-configs.js');
 
 beforeAll(() => {
-  jest.spyOn(core, 'getInput').mockImplementation((name, options) => {
-    return jest.requireActual('@actions/core').getInput(name, options);
-  });
+  (core.getInput as jest.Mock).mockImplementation(() => undefined);
 });
 
 const loadYaml = (filepath: string) => {
@@ -422,14 +461,14 @@ describe('labeler error handling', () => {
     jest.resetAllMocks();
 
     (github.getOctokit as jest.Mock).mockReturnValue(mockClient);
-    (api.getPullRequests as jest.Mock).mockReturnValue([
+    getPullRequestsMock.mockReturnValue([
       {
         ...mockPullRequest,
         data: {labels: [{name: 'old-label'}]}
       }
     ]);
 
-    (api.getLabelConfigs as jest.Mock).mockResolvedValue({
+    getLabelConfigsMock.mockResolvedValue({
       labelConfigs: new Map([['new-label', ['dummy-config']]]),
       changedFilesLimit: undefined
     });
@@ -439,7 +478,7 @@ describe('labeler error handling', () => {
   });
 
   it('throws a custom error for HttpError 403 with "unauthorized" message', async () => {
-    (api.setLabels as jest.Mock).mockRejectedValue({
+    setLabelsMock.mockRejectedValue({
       name: 'HttpError',
       status: 403,
       message: 'Request failed with status code 403: Unauthorized'
@@ -456,7 +495,7 @@ describe('labeler error handling', () => {
       status: 404,
       message: 'Not Found'
     };
-    (api.setLabels as jest.Mock).mockRejectedValue(unexpectedError);
+    setLabelsMock.mockRejectedValue(unexpectedError);
 
     // NOTE: In the current implementation, labeler rethrows the raw error object (not an Error instance).
     // `rejects.toThrow` only works with real Error objects, so here we must use `rejects.toEqual`.
@@ -469,7 +508,7 @@ describe('labeler error handling', () => {
       name: 'HttpError',
       message: 'Resource not accessible by integration'
     };
-    (api.setLabels as jest.Mock).mockRejectedValue(error);
+    setLabelsMock.mockRejectedValue(error);
 
     await labeler();
 

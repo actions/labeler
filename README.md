@@ -4,6 +4,10 @@
 
 Automatically label new pull requests based on the paths of files being changed or the branch name.
 
+## What's changed in V7
+
+- **Migrated to ESM** internally to support the latest `@actions/*` package versions. No changes to action inputs, outputs, or behavior.
+
 ## Breaking changes in V6
 
 - Upgraded action from node20 to node24.

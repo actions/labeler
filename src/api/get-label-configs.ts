@@ -1,15 +1,15 @@
 import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
 import fs from 'fs';
-import {ClientType} from './types';
-import {getContent} from './get-content';
+import {ClientType} from './types.js';
+import {getContent} from './get-content.js';
 
 import {
   ChangedFilesMatchConfig,
   toChangedFilesMatchConfig
-} from '../changedFiles';
+} from '../changedFiles.js';
 
-import {toBranchMatchConfig, BranchMatchConfig} from '../branch';
+import {toBranchMatchConfig, BranchMatchConfig} from '../branch.js';
 
 export interface MatchConfig {
   all?: BaseMatchConfig[];

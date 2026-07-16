@@ -1,23 +1,75 @@
-import {run} from '../src/labeler';
-import * as github from '@actions/github';
-import * as core from '@actions/core';
+import {
+  jest,
+  describe,
+  it,
+  test,
+  expect,
+  afterAll,
+  beforeEach
+} from '@jest/globals';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import fs from 'fs';
 
-jest.mock('@actions/core');
-jest.mock('@actions/github');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const gh = github.getOctokit('_');
-const setLabelsMock = jest.spyOn(gh.rest.issues, 'setLabels');
-const reposMock = jest.spyOn(gh.rest.repos, 'getContent');
-const paginateMock = jest.spyOn(gh, 'paginate');
-const getPullMock = jest.spyOn(gh.rest.pulls, 'get');
+// Define mock functions before mocking modules
+const setLabelsMock = jest.fn<any>();
+const reposMock = jest.fn<any>();
+const paginateMock = jest.fn<any>();
+const getPullMock = jest.fn<any>().mockResolvedValue({data: {labels: []}});
+const listFilesMergeMock = jest.fn<any>().mockReturnValue({});
+
+const coreGetInputMock = jest.fn<any>();
+const coreGetMultilineInputMock = jest.fn<any>();
+const coreGetBooleanInputMock = jest.fn<any>();
+const coreErrorMock = jest.fn<any>();
+const coreWarningMock = jest.fn<any>();
+const coreSetFailedMock = jest.fn<any>();
+const setOutputSpy = jest.fn<any>();
+
+const mockGithubContext: any = {
+  payload: {
+    pull_request: {
+      number: 123,
+      head: {ref: 'head-branch-name'},
+      base: {ref: 'base-branch-name'}
+    }
+  },
+  repo: {owner: 'monalisa', repo: 'helloworld'}
+};
+
+jest.unstable_mockModule('@actions/core', () => ({
+  getInput: coreGetInputMock,
+  getMultilineInput: coreGetMultilineInputMock,
+  getBooleanInput: coreGetBooleanInputMock,
+  setOutput: setOutputSpy,
+  setFailed: coreSetFailedMock,
+  error: coreErrorMock,
+  warning: coreWarningMock,
+  info: jest.fn(),
+  debug: jest.fn()
+}));
+
+jest.unstable_mockModule('@actions/github', () => ({
+  context: mockGithubContext,
+  getOctokit: jest.fn(() => ({
+    rest: {
+      issues: {setLabels: setLabelsMock},
+      repos: {getContent: reposMock},
+      pulls: {
+        get: getPullMock,
+        listFiles: {endpoint: {merge: listFilesMergeMock}}
+      }
+    },
+    paginate: paginateMock
+  }))
+}));
+
+const {run} = await import('../src/labeler.js');
+
 const readFileSyncMock = jest.spyOn(fs, 'readFileSync');
 const existsSyncMock = jest.spyOn(fs, 'existsSync');
-const coreErrorMock = jest.spyOn(core, 'error');
-const coreWarningMock = jest.spyOn(core, 'warning');
-const coreSetFailedMock = jest.spyOn(core, 'setFailed');
-const setOutputSpy = jest.spyOn(core, 'setOutput');
 
 class HttpError extends Error {
   constructor(message: string) {
@@ -59,20 +111,27 @@ const configureInput = (
     'pr-number': string[];
   }>
 ) => {
-  jest
-    .spyOn(core, 'getInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
-  jest
-    .spyOn(core, 'getMultilineInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
-  jest
-    .spyOn(core, 'getBooleanInput')
-    .mockImplementation((name: string, ...opts) => mockInput[name]);
+  coreGetInputMock.mockImplementation(
+    (name: unknown) => mockInput[name as keyof typeof mockInput]
+  );
+  coreGetMultilineInputMock.mockImplementation(
+    (name: unknown) => mockInput[name as keyof typeof mockInput]
+  );
+  coreGetBooleanInputMock.mockImplementation(
+    (name: unknown) => mockInput[name as keyof typeof mockInput]
+  );
 };
 
-afterAll(() => jest.restoreAllMocks());
+afterAll(async () => {
+  jest.restoreAllMocks();
+});
 
 describe('run', () => {
+  beforeEach(() => {
+    getPullMock.mockResolvedValue({data: {labels: []}} as any);
+    mockGithubContext.payload.pull_request.head = {ref: 'head-branch-name'};
+    mockGithubContext.payload.pull_request.base = {ref: 'base-branch-name'};
+  });
   it('(with dot: false) adds labels to PRs that match our glob patterns', async () => {
     configureInput({});
     usingLabelerConfigYaml('only_pdfs.yml');
@@ -169,7 +228,7 @@ describe('run', () => {
 
   it('adds labels based on the branch names that match the regexp pattern', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'test/testing-time'};
+    mockGithubContext.payload.pull_request.head = {ref: 'test/testing-time'};
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -187,7 +246,7 @@ describe('run', () => {
 
   it('adds multiple labels based on branch names that match different regexp patterns', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {
+    mockGithubContext.payload.pull_request.head = {
       ref: 'test/feature/123'
     };
     usingLabelerConfigYaml('branches.yml');
@@ -213,7 +272,7 @@ describe('run', () => {
 
   it('can support multiple branches by batching', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'fix/123'};
+    mockGithubContext.payload.pull_request.head = {ref: 'fix/123'};
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -231,7 +290,7 @@ describe('run', () => {
 
   it('can support multiple branches by providing an array', async () => {
     configureInput({});
-    github.context.payload.pull_request!.head = {ref: 'array/123'};
+    mockGithubContext.payload.pull_request.head = {ref: 'array/123'};
     usingLabelerConfigYaml('branches.yml');
     await run();
 
@@ -644,7 +703,7 @@ describe('run', () => {
   describe('changed-files-labels-limit', () => {
     it('applies all labels when count is within limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('limit_3.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -667,7 +726,7 @@ describe('run', () => {
 
     it('skips changed-files labels when count exceeds limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('limit_2.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -686,7 +745,7 @@ describe('run', () => {
 
     it('still applies branch-based labels when changed-files limit is exceeded', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      mockGithubContext.payload.pull_request.head = {ref: 'test/some-feature'};
       usingLabelerConfigYaml('limit_1.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -711,7 +770,7 @@ describe('run', () => {
 
     it('applies all labels when no limit is set', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('mixed_labels.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -736,7 +795,7 @@ describe('run', () => {
 
     it('does not count preexisting labels toward the limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('limit_2.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -763,7 +822,7 @@ describe('run', () => {
 
     it('skips new labels when new count exceeds limit even with preexisting', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('limit_2.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -784,7 +843,7 @@ describe('run', () => {
 
     it('applies labels when new count equals the limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('limit_2.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -807,7 +866,7 @@ describe('run', () => {
 
     it('skips all changed-files labels when limit is 0', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      mockGithubContext.payload.pull_request.head = {ref: 'test/some-feature'};
       usingLabelerConfigYaml('limit_0.yml');
       mockGitHubResponseChangedFiles('components/a/file.ts');
       getPullMock.mockResolvedValue(<any>{
@@ -831,7 +890,7 @@ describe('run', () => {
       // a "changed-files label" and subject to the limit, even if it matches
       // via the branch rule
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      mockGithubContext.payload.pull_request.head = {ref: 'test/some-feature'};
       usingLabelerConfigYaml('mixed_rules.yml');
       mockGitHubResponseChangedFiles('unrelated/file.ts');
       getPullMock.mockResolvedValue(<any>{
@@ -856,7 +915,7 @@ describe('run', () => {
   describe('max-files-changed', () => {
     it('applies labels when changed files count is within limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('max_files_5.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file.ts',
@@ -880,7 +939,7 @@ describe('run', () => {
 
     it('skips file-based labels when changed files exceed limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('max_files_5.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file1.ts',
@@ -902,7 +961,7 @@ describe('run', () => {
 
     it('applies labels when changed files count equals limit', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('max_files_5.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file1.ts',
@@ -928,7 +987,7 @@ describe('run', () => {
 
     it('still applies branch-based labels when max-files-changed is exceeded', async () => {
       configureInput({});
-      github.context.payload.pull_request!.head = {ref: 'test/some-feature'};
+      mockGithubContext.payload.pull_request.head = {ref: 'test/some-feature'};
       usingLabelerConfigYaml('max_files_with_branch.yml');
       mockGitHubResponseChangedFiles(
         'components/a/file1.ts',
@@ -954,7 +1013,7 @@ describe('run', () => {
 
     it('preserves preexisting changed-files labels with sync-labels when max-files-changed is exceeded', async () => {
       configureInput({'sync-labels': true});
-      github.context.payload.pull_request!.head = {ref: 'main'};
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
       usingLabelerConfigYaml('max_files_5.yml');
       mockGitHubResponseChangedFiles(
         'unrelated/file1.ts',

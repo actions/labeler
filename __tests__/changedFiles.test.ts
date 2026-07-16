@@ -1,5 +1,24 @@
-import {
-  ChangedFilesMatchConfig,
+import {jest, describe, it, expect} from '@jest/globals';
+import type {ChangedFilesMatchConfig} from '../src/changedFiles.js';
+
+jest.unstable_mockModule('@actions/core', () => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warning: jest.fn(),
+  error: jest.fn()
+}));
+
+jest.unstable_mockModule('@actions/github', () => ({
+  context: {
+    payload: {
+      pull_request: {number: 123, head: {ref: 'head'}, base: {ref: 'base'}}
+    },
+    repo: {owner: 'monalisa', repo: 'helloworld'}
+  },
+  getOctokit: jest.fn()
+}));
+
+const {
   checkAllChangedFiles,
   checkAnyChangedFiles,
   toChangedFilesMatchConfig,
@@ -7,10 +26,7 @@ import {
   checkIfAllGlobsMatchAnyFile,
   checkIfAnyGlobMatchesAllFiles,
   checkIfAllGlobsMatchAllFiles
-} from '../src/changedFiles';
-
-jest.mock('@actions/core');
-jest.mock('@actions/github');
+} = await import('../src/changedFiles.js');
 
 describe('checkAllChangedFiles', () => {
   const changedFiles = ['foo.txt', 'bar.txt'];
@@ -92,7 +108,7 @@ describe('toChangedFilesMatchConfig', () => {
 
     it('returns an empty object', () => {
       const result = toChangedFilesMatchConfig(config);
-      expect(result).toEqual<ChangedFilesMatchConfig>({});
+      expect(result).toEqual({});
     });
   });
 
@@ -129,7 +145,7 @@ describe('toChangedFilesMatchConfig', () => {
 
         it('sets the value in the config object', () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toEqual<ChangedFilesMatchConfig>({
+          expect(result).toEqual({
             changedFiles: [{anyGlobToAnyFile: ['testing']}]
           });
         });
@@ -140,7 +156,7 @@ describe('toChangedFilesMatchConfig', () => {
 
         it(`sets the string as an array in the config object`, () => {
           const result = toChangedFilesMatchConfig(config);
-          expect(result).toEqual<ChangedFilesMatchConfig>({
+          expect(result).toEqual({
             changedFiles: [{anyGlobToAnyFile: ['testing']}]
           });
         });
