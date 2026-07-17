@@ -216,6 +216,12 @@ function checkMatch(
     }
   }
 
+  if (matchConfig.none) {
+    if (checkAny(matchConfig.none, changedFiles, dot)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
