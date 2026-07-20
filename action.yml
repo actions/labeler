@@ -11,7 +11,7 @@ inputs:
     default: '.github/labeler.yml'
     required: false
   sync-labels:
-    description: 'Whether or not to remove labels when matching files are reverted'
+    description: 'Whether to remove configured labels when they no longer match'
     default: false
     required: false
   dot:

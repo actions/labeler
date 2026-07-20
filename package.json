@@ -32,13 +32,11 @@
     "@actions/github": "^9.1.1",
     "@octokit/plugin-retry": "^8.1.0",
     "js-yaml": "^5.1.0",
-    "lodash.isequal": "^4.5.0",
     "minimatch": "^10.2.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.4.1",
-    "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^24.13.2",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.62.0",

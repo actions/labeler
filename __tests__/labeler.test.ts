@@ -9,7 +9,8 @@ import type {
 // Define API mock functions at module level
 const getPullRequestsMock = jest.fn<any>();
 const getLabelConfigsMock = jest.fn<any>();
-const setLabelsMock = jest.fn<any>();
+const addLabelsMock = jest.fn<any>();
+const removeLabelsMock = jest.fn<any>();
 const getChangedFilesMock = jest.fn<any>();
 const getContentMock = jest.fn<any>();
 
@@ -42,7 +43,8 @@ jest.unstable_mockModule('@actions/github', () => ({
 jest.unstable_mockModule('../src/api/index.js', () => ({
   getPullRequests: getPullRequestsMock,
   getLabelConfigs: getLabelConfigsMock,
-  setLabels: setLabelsMock,
+  addLabels: addLabelsMock,
+  removeLabels: removeLabelsMock,
   getChangedFiles: getChangedFilesMock,
   getContent: getContentMock
 }));
@@ -478,7 +480,7 @@ describe('labeler error handling', () => {
   });
 
   it('throws a custom error for HttpError 403 with "unauthorized" message', async () => {
-    setLabelsMock.mockRejectedValue({
+    addLabelsMock.mockRejectedValue({
       name: 'HttpError',
       status: 403,
       message: 'Request failed with status code 403: Unauthorized'
@@ -495,7 +497,7 @@ describe('labeler error handling', () => {
       status: 404,
       message: 'Not Found'
     };
-    setLabelsMock.mockRejectedValue(unexpectedError);
+    addLabelsMock.mockRejectedValue(unexpectedError);
 
     // NOTE: In the current implementation, labeler rethrows the raw error object (not an Error instance).
     // `rejects.toThrow` only works with real Error objects, so here we must use `rejects.toEqual`.
@@ -508,7 +510,7 @@ describe('labeler error handling', () => {
       name: 'HttpError',
       message: 'Resource not accessible by integration'
     };
-    setLabelsMock.mockRejectedValue(error);
+    addLabelsMock.mockRejectedValue(error);
 
     await labeler();
 
@@ -517,5 +519,34 @@ describe('labeler error handling', () => {
       expect.any(Object)
     );
     expect(core.setFailed).toHaveBeenCalledWith(error.message);
+  });
+
+  it('reports the configured labels when a bulk removal fails', async () => {
+    (core.getBooleanInput as jest.Mock).mockReturnValue(true);
+    getPullRequestsMock.mockReturnValue([
+      {
+        number: 123,
+        data: {
+          node_id: 'PR_node_id',
+          labels: [{name: 'stale-label', node_id: 'label_node_id'}]
+        },
+        changedFiles: ['file.txt']
+      }
+    ]);
+    getLabelConfigsMock.mockResolvedValue({
+      labelConfigs: new Map([
+        [
+          'stale-label',
+          [{any: [{changedFiles: [{anyGlobToAnyFile: ['*.pdf']}]}]}]
+        ]
+      ]),
+      changedFilesLimit: undefined
+    });
+    removeLabelsMock.mockRejectedValue(new Error('GraphQL request failed'));
+
+    await expect(labeler()).rejects.toThrow(
+      "Failed to remove configured labels 'stale-label' from PR #123"
+    );
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 });
