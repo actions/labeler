@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pluginRetry from '@octokit/plugin-retry';
 import * as api from './api/index.js';
-import isEqual from 'lodash.isequal';
 import {getInputs} from './get-inputs/index.js';
 
 import {
@@ -104,50 +103,56 @@ export async function labeler() {
     const labelsToApply = [...allLabels].slice(0, GITHUB_MAX_LABELS);
     const excessLabels = [...allLabels].slice(GITHUB_MAX_LABELS);
 
-    let finalLabels = labelsToApply;
-    let newLabels: string[] = [];
+    const finalLabels = labelsToApply;
+    const newLabels = labelsToApply.filter(
+      label => !preexistingLabels.includes(label)
+    );
+    const staleLabels = pullRequest.data.labels.filter(
+      label => labelConfigs.has(label.name) && !allLabels.has(label.name)
+    );
 
     try {
-      if (!isEqual(labelsToApply, preexistingLabels)) {
-        // Fetch the latest labels for the PR
-        const latestLabels: string[] = [];
-        // Skip fetching real labels when running tests (uses mock data instead)
-        if (process.env.NODE_ENV !== 'test') {
-          const pr = await client.rest.pulls.get({
-            ...github.context.repo,
-            pull_number: pullRequest.number
-          });
-          latestLabels.push(...pr.data.labels.map(l => l.name).filter(Boolean));
+      if (staleLabels.length) {
+        const labelableId = pullRequest.data.node_id;
+        const missingNodeId = staleLabels.find(label => !label.node_id);
+        if (!labelableId || missingNodeId) {
+          throw new Error(
+            `Failed to resolve node IDs while removing configured labels from PR #${pullRequest.number}`
+          );
         }
 
-        // Labels added manually during the run (not in first snapshot)
-        const manualAddedDuringRun = latestLabels.filter(
-          l => !preexistingLabels.includes(l)
-        );
+        try {
+          await api.removeLabels(
+            client,
+            labelableId,
+            staleLabels.map(label => label.node_id)
+          );
+        } catch (error: any) {
+          throw new Error(
+            `Failed to remove configured labels '${staleLabels.map(label => label.name).join("', '")}' from PR #${pullRequest.number}`,
+            {cause: error}
+          );
+        }
+      }
 
-        // Preserve manual labels first, then apply config-based labels, respecting GitHub's 100-label limit
-        finalLabels = [
-          ...new Set([...manualAddedDuringRun, ...labelsToApply])
-        ].slice(0, GITHUB_MAX_LABELS);
-
-        await api.setLabels(client, pullRequest.number, finalLabels);
-
-        newLabels = finalLabels.filter(l => !preexistingLabels.includes(l));
+      if (newLabels.length) {
+        await api.addLabels(client, pullRequest.number, newLabels);
       }
     } catch (error: any) {
+      const apiError = error.cause ?? error;
       if (
-        error.name === 'HttpError' &&
-        error.status === 403 &&
-        error.message.toLowerCase().includes('unauthorized')
+        apiError.name === 'HttpError' &&
+        apiError.status === 403 &&
+        apiError.message.toLowerCase().includes('unauthorized')
       ) {
         throw new Error(
-          `Failed to set labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +
+          `Failed to update labels for PR #${pullRequest.number}. The workflow does not have permission to create labels. ` +
             `Ensure the 'issues: write' permission is granted in the workflow file or manually create the missing labels in the repository before running the action.`,
           {cause: error}
         );
       } else if (
-        error.name !== 'HttpError' ||
-        error.message !== 'Resource not accessible by integration'
+        apiError.name !== 'HttpError' ||
+        apiError.message !== 'Resource not accessible by integration'
       ) {
         throw error;
       }
@@ -160,7 +165,7 @@ export async function labeler() {
         }
       );
 
-      core.setFailed(error.message);
+      core.setFailed(apiError.message);
 
       return;
     }

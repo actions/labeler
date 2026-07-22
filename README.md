@@ -274,9 +274,15 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
 | `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                                                                                               | `github.token`        |
 | `configuration-path` | The path to the label configuration file. If the file doesn't exist at the specified path on the runner, action will read from the source repository via the Github API. | `.github/labeler.yml` |
-| `sync-labels`        | Whether or not to remove labels when matching files are reverted or no longer changed by the PR                                                                          | `false`               |
+| `sync-labels`        | Whether to remove configured labels when they no longer match. Labels not present in the labeler configuration are never removed.                                         | `false`               |
 | `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                                                                                                  | `true`               |
 | `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context                                                                                 | N/A                   |
+
+When `sync-labels` is enabled, labeler synchronizes only labels whose names are
+present in the labeler configuration. Matching configured labels are added in
+one batch, and configured labels that no longer match are removed in one batch.
+Other labels, including labels added by users or other automation, are not
+rewritten or removed.
 
 ##### Using `configuration-path` input together with the `@actions/checkout` action
 You might want to use action called [@actions/checkout](https://github.com/actions/checkout) to upload label configuration file onto the runner from the current or any other repositories. See usage example below:
@@ -327,6 +333,11 @@ Labeler provides the following outputs:
 |--------------|-----------------------------------------------------------|
 | `new-labels` | A comma-separated list of all new labels                  |
 | `all-labels` | A comma-separated list of all labels that the PR contains |
+
+The outputs are calculated from the pull request label snapshot used by the
+action and the label changes it successfully applies. A label added
+concurrently by another actor is preserved, but may not appear in the outputs
+for that run.
 
 The following example performs steps based on the output of labeler:
 ```yml

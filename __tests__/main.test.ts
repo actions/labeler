@@ -14,6 +14,13 @@ import fs from 'fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Define mock functions before mocking modules
+const addLabelsMock = jest.fn<any>();
+const addLabelsRequestMock = jest.fn<any>(options => {
+  const params = {...options};
+  delete params.request;
+  return addLabelsMock(params);
+});
+const removeLabelsMock = jest.fn<any>();
 const setLabelsMock = jest.fn<any>();
 const reposMock = jest.fn<any>();
 const paginateMock = jest.fn<any>();
@@ -54,8 +61,12 @@ jest.unstable_mockModule('@actions/core', () => ({
 jest.unstable_mockModule('@actions/github', () => ({
   context: mockGithubContext,
   getOctokit: jest.fn(() => ({
+    graphql: removeLabelsMock,
     rest: {
-      issues: {setLabels: setLabelsMock},
+      issues: {
+        addLabels: addLabelsRequestMock,
+        setLabels: setLabelsMock
+      },
       repos: {getContent: reposMock},
       pulls: {
         get: getPullMock,
@@ -144,14 +155,17 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
 
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
       labels: ['touched-a-pdf-file']
     });
+    expect(addLabelsRequestMock).toHaveBeenCalledWith(
+      expect.objectContaining({request: {retries: 0}})
+    );
     expect(setOutputSpy).toHaveBeenCalledWith(
       'new-labels',
       'touched-a-pdf-file'
@@ -174,8 +188,8 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -191,6 +205,29 @@ describe('run', () => {
     );
   });
 
+  it('does not lose a label added concurrently with matching labels', async () => {
+    configureInput({'sync-labels': true});
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    const labelsOnPullRequest: string[] = [];
+    getPullMock.mockResolvedValue(<any>{
+      data: {node_id: 'PR_node_id', labels: []}
+    });
+    addLabelsMock.mockImplementationOnce(({labels}: {labels: string[]}) => {
+      labelsOnPullRequest.push('external-label', ...labels);
+    });
+
+    await run();
+
+    expect(labelsOnPullRequest).toEqual([
+      'external-label',
+      'touched-a-pdf-file'
+    ]);
+    expect(getPullMock).toHaveBeenCalledTimes(1);
+    expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
   it('(with dot: false) does not add labels to PRs that do not match our glob patterns', async () => {
     configureInput({});
     usingLabelerConfigYaml('only_pdfs.yml');
@@ -203,7 +240,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', '');
   });
@@ -215,7 +252,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   it('does not add a label when the match config options are not supported', async () => {
@@ -223,7 +260,7 @@ describe('run', () => {
     usingLabelerConfigYaml('not_supported.yml');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   it('adds labels based on the branch names that match the regexp pattern', async () => {
@@ -232,8 +269,8 @@ describe('run', () => {
     usingLabelerConfigYaml('branches.yml');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -252,8 +289,8 @@ describe('run', () => {
     usingLabelerConfigYaml('branches.yml');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -276,8 +313,8 @@ describe('run', () => {
     usingLabelerConfigYaml('branches.yml');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -294,8 +331,8 @@ describe('run', () => {
     usingLabelerConfigYaml('branches.yml');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -312,8 +349,8 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('tests/test.ts');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 123,
@@ -330,7 +367,7 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('tests/requirements.txt');
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   it('(with sync-labels: true) it deletes preexisting PR labels that no longer match the glob pattern', async () => {
@@ -344,19 +381,26 @@ describe('run', () => {
     mockGitHubResponseChangedFiles('foo.txt');
     getPullMock.mockResolvedValue(<any>{
       data: {
-        labels: [{name: 'touched-a-pdf-file'}, {name: 'manually-added'}]
+        node_id: 'PR_node_id',
+        labels: [
+          {name: 'touched-a-pdf-file', node_id: 'stale_label_node_id'},
+          {name: 'manually-added', node_id: 'manual_label_node_id'}
+        ]
       }
     });
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
-      owner: 'monalisa',
-      repo: 'helloworld',
-      issue_number: 123,
-      labels: ['manually-added']
-    });
+    expect(addLabelsMock).not.toHaveBeenCalled();
+    expect(removeLabelsMock).toHaveBeenCalledTimes(1);
+    expect(removeLabelsMock).toHaveBeenCalledWith(
+      expect.stringContaining('removeLabelsFromLabelable'),
+      {
+        labelableId: 'PR_node_id',
+        labelIds: ['stale_label_node_id']
+      }
+    );
+    expect(setLabelsMock).not.toHaveBeenCalled();
 
     expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'manually-added');
@@ -379,12 +423,43 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(removeLabelsMock).not.toHaveBeenCalled();
     expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
     expect(setOutputSpy).toHaveBeenCalledWith(
       'all-labels',
       'touched-a-pdf-file,manually-added'
     );
+  });
+
+  it('removes stale configured labels in one mutation', async () => {
+    configureInput({'sync-labels': true});
+    usingLabelerConfigYaml('mixed_labels.yml');
+    mockGitHubResponseChangedFiles('unrelated.txt');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        node_id: 'PR_node_id',
+        labels: [
+          {name: 'component-a', node_id: 'label_a'},
+          {name: 'component-b', node_id: 'label_b'},
+          {name: 'external-label', node_id: 'external_label'}
+        ]
+      }
+    });
+
+    await run();
+
+    expect(removeLabelsMock).toHaveBeenCalledTimes(1);
+    expect(removeLabelsMock).toHaveBeenCalledWith(
+      expect.stringContaining('removeLabelsFromLabelable'),
+      {
+        labelableId: 'PR_node_id',
+        labelIds: ['label_a', 'label_b']
+      }
+    );
+    expect(addLabelsMock).not.toHaveBeenCalled();
+    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'external-label');
   });
 
   it('(with sync-labels: false) it only logs the excess labels', async () => {
@@ -408,7 +483,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
 
     expect(coreWarningMock).toHaveBeenCalledTimes(1);
     expect(coreWarningMock).toHaveBeenCalledWith(
@@ -437,12 +512,12 @@ describe('run', () => {
     });
 
     await run();
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 104,
-      labels: ['manually-added', 'touched-a-pdf-file']
+      labels: ['touched-a-pdf-file']
     });
     expect(setOutputSpy).toHaveBeenCalledWith(
       'new-labels',
@@ -477,14 +552,14 @@ describe('run', () => {
     });
 
     await run();
-    expect(setLabelsMock).toHaveBeenCalledTimes(2);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(2);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 104,
-      labels: ['manually-added', 'touched-a-pdf-file']
+      labels: ['touched-a-pdf-file']
     });
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 150,
@@ -515,7 +590,7 @@ describe('run', () => {
       "'abc' is not a valid pull request number"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: negative number) warns and makes no API call', async () => {
@@ -533,7 +608,7 @@ describe('run', () => {
       "'-1' is not a valid pull request number"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: zero) warns and makes no API call', async () => {
@@ -551,7 +626,7 @@ describe('run', () => {
       "'0' is not a valid pull request number"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: number with internal space) warns and makes no API call', async () => {
@@ -569,7 +644,7 @@ describe('run', () => {
       "'10 4' is not a valid pull request number"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: number with trailing non-numeric chars) warns and makes no API call', async () => {
@@ -587,7 +662,7 @@ describe('run', () => {
       "'104abc' is not a valid pull request number"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: valid number with surrounding whitespace) trims and processes correctly', async () => {
@@ -624,7 +699,7 @@ describe('run', () => {
       "'abc\\x0ddef' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: string with tab) sanitizes tab as \\x09 in warning', async () => {
@@ -642,7 +717,7 @@ describe('run', () => {
       "'abc\\x09def' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: string with ANSI escape sequence) sanitizes ESC byte as \\x1b in warning', async () => {
@@ -660,7 +735,7 @@ describe('run', () => {
       "'abc\\x1b[31mINJECTED\\x1b[0m' is not a valid pull request number (non-printable characters were escaped as \\xNN)"
     );
     expect(getPullMock).not.toHaveBeenCalled();
-    expect(setLabelsMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).not.toHaveBeenCalled();
   });
 
   it('(with pr-number: mix of valid and invalid) processes valid, skips invalid with warning', async () => {
@@ -682,8 +757,8 @@ describe('run', () => {
     expect(coreWarningMock).toHaveBeenCalledWith(
       "'abc' is not a valid pull request number"
     );
-    expect(setLabelsMock).toHaveBeenCalledTimes(1);
-    expect(setLabelsMock).toHaveBeenCalledWith({
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
       owner: 'monalisa',
       repo: 'helloworld',
       issue_number: 104,
@@ -697,7 +772,7 @@ describe('run', () => {
 
     await run();
 
-    expect(setLabelsMock).toHaveBeenCalledTimes(0);
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 
   describe('changed-files-labels-limit', () => {
@@ -715,8 +790,8 @@ describe('run', () => {
 
       await run();
 
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -740,7 +815,7 @@ describe('run', () => {
       await run();
 
       // No labels should be applied since changed-files labels exceed limit
-      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
     });
 
     it('still applies branch-based labels when changed-files limit is exceeded', async () => {
@@ -759,8 +834,8 @@ describe('run', () => {
       await run();
 
       // Only the branch-based label should be applied
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -784,8 +859,8 @@ describe('run', () => {
 
       await run();
 
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -811,12 +886,12 @@ describe('run', () => {
 
       // component-a and component-b are preexisting, so only 2 new labels (c, d) would be added
       // which equals the limit of 2, so labels should be applied
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
-        labels: ['component-a', 'component-b', 'component-c', 'component-d']
+        labels: ['component-c', 'component-d']
       });
     });
 
@@ -838,7 +913,7 @@ describe('run', () => {
 
       // component-a is preexisting, so 3 new labels (b, c, d) would be added
       // which exceeds the limit of 2, so no new changed-files labels are applied
-      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
     });
 
     it('applies labels when new count equals the limit', async () => {
@@ -855,8 +930,8 @@ describe('run', () => {
 
       await run();
 
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -876,8 +951,8 @@ describe('run', () => {
       await run();
 
       // With limit 0, only branch-based labels should be applied
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -902,8 +977,8 @@ describe('run', () => {
       // The mixed-label matches via branch rule but is still subject to limit
       // because it contains a changed-files rule in its definition.
       // Only pure-branch-label should be applied.
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -928,8 +1003,8 @@ describe('run', () => {
 
       await run();
 
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -956,7 +1031,7 @@ describe('run', () => {
       await run();
 
       // No labels should be applied since changed files exceed limit
-      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
     });
 
     it('applies labels when changed files count equals limit', async () => {
@@ -976,8 +1051,8 @@ describe('run', () => {
 
       await run();
 
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -1002,8 +1077,8 @@ describe('run', () => {
       await run();
 
       // Only the branch-based label should be applied
-      expect(setLabelsMock).toHaveBeenCalledTimes(1);
-      expect(setLabelsMock).toHaveBeenCalledWith({
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
         owner: 'monalisa',
         repo: 'helloworld',
         issue_number: 123,
@@ -1029,9 +1104,9 @@ describe('run', () => {
 
       await run();
 
-      // No setLabels call because labels should remain unchanged
+      // No mutation because labels should remain unchanged
       // (component-a is preserved, not removed by sync-labels)
-      expect(setLabelsMock).toHaveBeenCalledTimes(0);
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
     });
   });
 
