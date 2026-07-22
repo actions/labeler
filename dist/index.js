@@ -38008,14 +38008,46 @@ retry.VERSION = plugin_retry_dist_bundle_VERSION;
 
 ;// CONCATENATED MODULE: ./lib/api/add-labels.js
 
+const isServerError = (error) => typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    typeof error.status === 'number' &&
+    error.status >= 500 &&
+    error.status < 600;
 const addLabels = async (client, prNumber, labels) => {
-    await client.rest.issues.addLabels({
+    const request = {
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
-        issue_number: prNumber,
-        labels,
-        request: { retries: 0 }
-    });
+        issue_number: prNumber
+    };
+    try {
+        await client.rest.issues.addLabels({
+            ...request,
+            labels,
+            request: { retries: 0 }
+        });
+    }
+    catch (error) {
+        if (!isServerError(error)) {
+            throw error;
+        }
+        let currentLabels;
+        try {
+            currentLabels = await client.rest.issues.listLabelsOnIssue({
+                ...request,
+                per_page: 100,
+                request: { retries: 0 }
+            });
+        }
+        catch {
+            throw error;
+        }
+        const currentLabelNames = new Set(currentLabels.data.map(label => label.name.toLowerCase()));
+        if (labels.every(label => currentLabelNames.has(label.toLowerCase()))) {
+            return;
+        }
+        throw error;
+    }
 };
 
 ;// CONCATENATED MODULE: ./lib/api/get-changed-files.js
