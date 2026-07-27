@@ -38031,20 +38031,30 @@ const addLabels = async (client, prNumber, labels) => {
         if (!isServerError(error)) {
             throw error;
         }
-        let currentLabels;
+        const currentLabelNames = new Set();
+        let page = 1;
         try {
-            currentLabels = await client.rest.issues.listLabelsOnIssue({
-                ...request,
-                per_page: 100,
-                request: { retries: 0 }
-            });
+            while (true) {
+                const currentLabels = await client.rest.issues.listLabelsOnIssue({
+                    ...request,
+                    per_page: 100,
+                    page,
+                    request: { retries: 0 }
+                });
+                for (const label of currentLabels.data) {
+                    currentLabelNames.add(label.name.toLowerCase());
+                }
+                if (labels.every(label => currentLabelNames.has(label.toLowerCase()))) {
+                    return;
+                }
+                if (!currentLabels.headers.link?.match(/;\s*rel="next"/)) {
+                    break;
+                }
+                page++;
+            }
         }
         catch {
             throw error;
-        }
-        const currentLabelNames = new Set(currentLabels.data.map(label => label.name.toLowerCase()));
-        if (labels.every(label => currentLabelNames.has(label.toLowerCase()))) {
-            return;
         }
         throw error;
     }

@@ -46,7 +46,8 @@ describe('addLabels', () => {
     const serverError = Object.assign(new Error('Bad Gateway'), {status: 502});
     addLabelsMock.mockRejectedValue(serverError);
     listLabelsOnIssueMock.mockResolvedValue({
-      data: [{name: 'BUG'}, {name: 'documentation'}]
+      data: [{name: 'BUG'}, {name: 'documentation'}],
+      headers: {}
     });
 
     await expect(
@@ -57,6 +58,38 @@ describe('addLabels', () => {
       repo: 'helloworld',
       issue_number: 123,
       per_page: 100,
+      page: 1,
+      request: {retries: 0}
+    });
+  });
+
+  it('checks subsequent pages after a committed server error', async () => {
+    const {client, addLabelsMock, listLabelsOnIssueMock} = createClient();
+    const serverError = Object.assign(new Error('Bad Gateway'), {status: 502});
+    addLabelsMock.mockRejectedValue(serverError);
+    listLabelsOnIssueMock
+      .mockResolvedValueOnce({
+        data: Array.from({length: 100}, (_, index) => ({
+          name: `label-${index}`
+        })),
+        headers: {
+          link: '<https://api.github.com/issues/123/labels?page=2>; rel="next"'
+        }
+      })
+      .mockResolvedValueOnce({
+        data: [{name: 'documentation'}],
+        headers: {}
+      });
+
+    await expect(
+      addLabels(client, 123, ['label-0', 'documentation'])
+    ).resolves.toBeUndefined();
+    expect(listLabelsOnIssueMock).toHaveBeenNthCalledWith(2, {
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      per_page: 100,
+      page: 2,
       request: {retries: 0}
     });
   });
@@ -65,11 +98,15 @@ describe('addLabels', () => {
     const {client, addLabelsMock, listLabelsOnIssueMock} = createClient();
     const serverError = Object.assign(new Error('Bad Gateway'), {status: 502});
     addLabelsMock.mockRejectedValue(serverError);
-    listLabelsOnIssueMock.mockResolvedValue({data: [{name: 'bug'}]});
+    listLabelsOnIssueMock.mockResolvedValue({
+      data: [{name: 'bug'}],
+      headers: {}
+    });
 
     await expect(addLabels(client, 123, ['bug', 'documentation'])).rejects.toBe(
       serverError
     );
+    expect(listLabelsOnIssueMock).toHaveBeenCalledTimes(1);
   });
 
   it('does not verify non-server errors', async () => {

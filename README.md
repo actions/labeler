@@ -284,6 +284,14 @@ one batch, and configured labels that no longer match are removed in one batch.
 Other labels, including labels added by users or other automation, are not
 rewritten or removed.
 
+Removals and additions use separate API requests, so configured labels may be
+temporarily absent while a synchronization swaps stale labels for newly matching
+labels. Swaps can take longer than updates requiring only additions or removals
+because these requests run sequentially. At GitHub's 100-label limit, labels
+added concurrently between those requests can prevent all newly matching
+configured labels from being added; labeler does not remove unconfigured labels
+to make room.
+
 ##### Using `configuration-path` input together with the `@actions/checkout` action
 You might want to use action called [@actions/checkout](https://github.com/actions/checkout) to upload label configuration file onto the runner from the current or any other repositories. See usage example below:
 
