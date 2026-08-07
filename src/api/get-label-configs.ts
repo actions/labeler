@@ -22,10 +22,15 @@ export interface LabelConfigResult {
   labelConfigs: Map<string, MatchConfig[]>;
   changedFilesLimit?: number;
   maxFilesChanged?: number;
+  ignore?: string[];
 }
 
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
-const TOP_LEVEL_OPTIONS = ['changed-files-labels-limit', 'max-files-changed'];
+const TOP_LEVEL_OPTIONS = [
+  'changed-files-labels-limit',
+  'max-files-changed',
+  'ignore'
+];
 
 /**
  * Parses and validates a non-negative integer value from the configuration.
@@ -59,6 +64,19 @@ function parseNonNegativeInteger(value: unknown, optionName: string): number {
   throw new Error(
     `Invalid value for '${optionName}': expected a non-negative integer`
   );
+}
+
+/**
+ * Parses the top-level `ignore` option into a list of glob strings.
+ */
+function parseIgnorePatterns(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  if (!values.every(entry => typeof entry === 'string')) {
+    throw new Error(
+      `Invalid value for 'ignore': must be a glob string or a list of glob strings`
+    );
+  }
+  return values as string[];
 }
 
 export const getLabelConfigs = (
@@ -122,10 +140,17 @@ export function getLabelConfigResultFromObject(
     );
   }
 
+  let ignore: string[] | undefined;
+  const ignoreValue = configObject?.['ignore'];
+  if (ignoreValue !== undefined) {
+    ignore = parseIgnorePatterns(ignoreValue);
+  }
+
   return {
     labelConfigs: getLabelConfigMapFromObject(configObject),
     changedFilesLimit,
-    maxFilesChanged
+    maxFilesChanged,
+    ignore
   };
 }
 
