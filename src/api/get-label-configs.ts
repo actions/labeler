@@ -70,6 +70,18 @@ function parseNonNegativeInteger(value: unknown, optionName: string): number {
  * Parses the top-level `ignore` option into a list of glob strings.
  */
 function parseIgnorePatterns(value: unknown): string[] {
+  // If `ignore` is mistakenly used as a label name, its value will look like an
+  // array of rule objects (e.g. `- changed-files: ...`). Provide a clearer error.
+  if (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every(entry => entry !== null && typeof entry === 'object')
+  ) {
+    throw new Error(
+      `'ignore' is a reserved top-level option and cannot be used as a label name. Please rename it.`
+    );
+  }
+
   const values = Array.isArray(value) ? value : [value];
   if (!values.every(entry => typeof entry === 'string')) {
     throw new Error(
