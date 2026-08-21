@@ -254,6 +254,15 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('when the list of changed files is empty', () => {
+    const globPatterns = ['*.txt'];
+
+    it('returns false', () => {
+      const result = checkIfAnyGlobMatchesAllFiles([], globPatterns, false);
+      expect(result).toBe(false);
+    });
+  });
 });
 
 describe('checkIfAllGlobsMatchAllFiles', () => {
@@ -281,6 +290,15 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
         globPatterns,
         false
       );
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('when the list of changed files is empty', () => {
+    const globPatterns = ['**'];
+
+    it('returns false', () => {
+      const result = checkIfAllGlobsMatchAllFiles([], globPatterns, false);
       expect(result).toBe(false);
     });
   });

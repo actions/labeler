@@ -323,6 +323,11 @@ export function checkIfAnyGlobMatchesAllFiles(
   dot: boolean
 ): boolean {
   core.debug(`    checking "any-glob-to-all-files" config patterns`);
+  if (!changedFiles.length) {
+    core.debug(`    no files to check the patterns against`);
+    return false;
+  }
+
   const matchers = globs.map(g => new Minimatch(g, {dot}));
 
   for (const matcher of matchers) {
@@ -360,6 +365,11 @@ export function checkIfAllGlobsMatchAllFiles(
   dot: boolean
 ): boolean {
   core.debug(`    checking "all-globs-to-all-files" config patterns`);
+  if (!changedFiles.length) {
+    core.debug(`    no files to check the patterns against`);
+    return false;
+  }
+
   const matchers = globs.map(g => new Minimatch(g, {dot}));
 
   for (const changedFile of changedFiles) {

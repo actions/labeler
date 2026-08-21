@@ -44092,6 +44092,10 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
 }
 function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
     core_debug(`    checking "any-glob-to-all-files" config patterns`);
+    if (!changedFiles.length) {
+        core_debug(`    no files to check the patterns against`);
+        return false;
+    }
     const matchers = globs.map(g => new Minimatch(g, { dot }));
     for (const matcher of matchers) {
         const mismatchedFile = changedFiles.find(changedFile => {
@@ -44110,6 +44114,10 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
 }
 function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
     core_debug(`    checking "all-globs-to-all-files" config patterns`);
+    if (!changedFiles.length) {
+        core_debug(`    no files to check the patterns against`);
+        return false;
+    }
     const matchers = globs.map(g => new Minimatch(g, { dot }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
@@ -44238,6 +44246,13 @@ function parseNonNegativeInteger(value, optionName) {
  * Parses the top-level `ignore` option into a list of glob strings.
  */
 function parseIgnorePatterns(value) {
+    // If `ignore` is mistakenly used as a label name, its value will look like an
+    // array of rule objects (e.g. `- changed-files: ...`). Provide a clearer error.
+    if (Array.isArray(value) &&
+        value.length > 0 &&
+        value.every(entry => entry !== null && typeof entry === 'object')) {
+        throw new Error(`'ignore' is a reserved top-level option and cannot be used as a label name. Please rename it.`);
+    }
     const values = Array.isArray(value) ? value : [value];
     if (!values.every(entry => typeof entry === 'string')) {
         throw new Error(`Invalid value for 'ignore': must be a glob string or a list of glob strings`);
