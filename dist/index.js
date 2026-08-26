@@ -44179,6 +44179,42 @@ function matchBranchPattern(matcher, branchName) {
     return false;
 }
 
+;// CONCATENATED MODULE: ./lib/draft.js
+
+
+function toDraftMatchConfig(config) {
+    if (!Object.prototype.hasOwnProperty.call(config, 'draft')) {
+        return {};
+    }
+    if (typeof config.draft !== 'boolean') {
+        throw new Error(`The "draft" option must be a boolean (got ${JSON.stringify(config.draft)})`);
+    }
+    return { draft: config.draft };
+}
+function getDraft() {
+    const pullRequest = github_context.payload.pull_request;
+    if (!pullRequest || typeof pullRequest.draft !== 'boolean') {
+        return undefined;
+    }
+    return pullRequest.draft;
+}
+function checkDraft(expected, isDraft) {
+    const draftStatus = isDraft ?? getDraft();
+    if (draftStatus === undefined) {
+        core_debug(`   cannot fetch draft status from the pull request`);
+        return false;
+    }
+    core_debug(`   checking "draft" pattern against ${draftStatus}`);
+    const matched = draftStatus === expected;
+    if (matched) {
+        core_debug(`   "draft" pattern matched`);
+    }
+    else {
+        core_debug(`   "draft" pattern did not match`);
+    }
+    return matched;
+}
+
 ;// CONCATENATED MODULE: ./lib/api/get-label-configs.js
 
 
@@ -44186,7 +44222,13 @@ function matchBranchPattern(matcher, branchName) {
 
 
 
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+
+const ALLOWED_CONFIG_KEYS = [
+    'changed-files',
+    'head-branch',
+    'base-branch',
+    'draft'
+];
 const TOP_LEVEL_OPTIONS = ['changed-files-labels-limit', 'max-files-changed'];
 /**
  * Parses and validates a non-negative integer value from the configuration.
@@ -44304,9 +44346,11 @@ function getLabelConfigMapFromObject(configObject) {
 function toMatchConfig(config) {
     const changedFilesConfig = toChangedFilesMatchConfig(config);
     const branchConfig = toBranchMatchConfig(config);
+    const draftConfig = toDraftMatchConfig(config);
     return {
         ...changedFilesConfig,
-        ...branchConfig
+        ...branchConfig,
+        ...draftConfig
     };
 }
 /**
@@ -44410,6 +44454,7 @@ const getInputs = () => ({
 
 
 
+
 // GitHub Issues cannot have more than 100 labels
 const GITHUB_MAX_LABELS = 100;
 const run = () => labeler().catch(error => {
@@ -44445,7 +44490,7 @@ async function labeler() {
                 core_debug(`skipping ${label} (uses changed-files and max-files-changed exceeded)`);
                 continue;
             }
-            if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+            if (checkMatchConfigs(pullRequest.changedFiles, configs, dot, pullRequest.data.draft)) {
                 allLabels.add(label);
                 // Track if this label uses changed-files patterns
                 if (usesChangedFiles) {
@@ -44515,34 +44560,34 @@ async function labeler() {
         }
     }
 }
-function checkMatchConfigs(changedFiles, matchConfigs, dot) {
+function checkMatchConfigs(changedFiles, matchConfigs, dot, isDraft) {
     for (const config of matchConfigs) {
         core_debug(` checking config ${JSON.stringify(config)}`);
-        if (!checkMatch(changedFiles, config, dot)) {
+        if (!checkMatch(changedFiles, config, dot, isDraft)) {
             return false;
         }
     }
     return true;
 }
-function checkMatch(changedFiles, matchConfig, dot) {
+function checkMatch(changedFiles, matchConfig, dot, isDraft) {
     if (!Object.keys(matchConfig).length) {
         core_debug(`  no "any" or "all" patterns to check`);
         return false;
     }
     if (matchConfig.all) {
-        if (!checkAll(matchConfig.all, changedFiles, dot)) {
+        if (!checkAll(matchConfig.all, changedFiles, dot, isDraft)) {
             return false;
         }
     }
     if (matchConfig.any) {
-        if (!checkAny(matchConfig.any, changedFiles, dot)) {
+        if (!checkAny(matchConfig.any, changedFiles, dot, isDraft)) {
             return false;
         }
     }
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(matchConfigs, changedFiles, dot) {
+function checkAny(matchConfigs, changedFiles, dot, isDraft) {
     core_debug(`  checking "any" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -44568,12 +44613,18 @@ function checkAny(matchConfigs, changedFiles, dot) {
                 return true;
             }
         }
+        if (matchConfig.draft !== undefined) {
+            if (checkDraft(matchConfig.draft, isDraft)) {
+                core_debug(`  "any" patterns matched`);
+                return true;
+            }
+        }
     }
     core_debug(`  "any" patterns did not match any configs`);
     return false;
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(matchConfigs, changedFiles, dot) {
+function checkAll(matchConfigs, changedFiles, dot, isDraft) {
     core_debug(`  checking "all" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -44599,6 +44650,12 @@ function checkAll(matchConfigs, changedFiles, dot) {
         }
         if (matchConfig.headBranch) {
             if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+                core_debug(`  "all" patterns did not match`);
+                return false;
+            }
+        }
+        if (matchConfig.draft !== undefined) {
+            if (!checkDraft(matchConfig.draft, isDraft)) {
                 core_debug(`  "all" patterns did not match`);
                 return false;
             }

@@ -104,6 +104,18 @@ describe('getLabelConfigMapFromObject', () => {
     expect(result).toEqual(expected);
   });
 
+  it('parses draft match options', () => {
+    const draftYaml = loadYaml('__tests__/fixtures/draft.yml');
+    const result = getLabelConfigMapFromObject(draftYaml);
+    expect(result.get('draft-pr')).toEqual([{any: [{draft: true}]}]);
+    expect(result.get('ready-pr')).toEqual([{any: [{draft: false}]}]);
+    expect(result.get('docs-ready')).toEqual([
+      {
+        all: [{draft: false}, {changedFiles: [{anyGlobToAnyFile: ['docs/**']}]}]
+      }
+    ]);
+  });
+
   it('ignores top-level options like changed-files-labels-limit and max-files-changed', () => {
     const configWithLimit = {
       'changed-files-labels-limit': 5,
@@ -330,6 +342,18 @@ describe('toMatchConfig', () => {
       });
     });
   });
+
+  describe('when a draft option is present', () => {
+    it('sets draft in the matchConfig', () => {
+      const result = toMatchConfig({draft: true});
+      expect(result).toEqual({draft: true});
+    });
+
+    it('preserves draft false', () => {
+      const result = toMatchConfig({draft: false});
+      expect(result).toEqual({draft: false});
+    });
+  });
 });
 
 describe('checkMatchConfigs', () => {
@@ -403,6 +427,45 @@ describe('checkMatchConfigs', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('when a draft match config is provided', () => {
+    it('returns true when draft is true and the PR is a draft', () => {
+      const matchConfig: MatchConfig[] = [{any: [{draft: true}]}];
+      expect(checkMatchConfigs([], matchConfig, false, true)).toBe(true);
+    });
+
+    it('returns false when draft is true and the PR is not a draft', () => {
+      const matchConfig: MatchConfig[] = [{any: [{draft: true}]}];
+      expect(checkMatchConfigs([], matchConfig, false, false)).toBe(false);
+    });
+
+    it('returns true when draft is false and the PR is not a draft', () => {
+      const matchConfig: MatchConfig[] = [{any: [{draft: false}]}];
+      expect(checkMatchConfigs([], matchConfig, false, false)).toBe(true);
+    });
+
+    it('returns false when draft is false and the PR is a draft', () => {
+      const matchConfig: MatchConfig[] = [{any: [{draft: false}]}];
+      expect(checkMatchConfigs([], matchConfig, false, true)).toBe(false);
+    });
+
+    it('requires both draft and changed-files to match under all', () => {
+      const matchConfig: MatchConfig[] = [
+        {
+          all: [{draft: true}, {changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]
+        }
+      ];
+      expect(checkMatchConfigs(['foo.txt'], matchConfig, false, true)).toBe(
+        true
+      );
+      expect(checkMatchConfigs(['foo.txt'], matchConfig, false, false)).toBe(
+        false
+      );
+      expect(checkMatchConfigs(['foo.md'], matchConfig, false, true)).toBe(
+        false
+      );
+    });
+  });
 });
 
 describe('configUsesChangedFiles', () => {
@@ -425,6 +488,11 @@ describe('configUsesChangedFiles', () => {
       {any: [{headBranch: ['^test/']}]},
       {any: [{baseBranch: ['main']}]}
     ];
+    expect(configUsesChangedFiles(matchConfig)).toBe(false);
+  });
+
+  it('returns false when config only has a draft pattern', () => {
+    const matchConfig: MatchConfig[] = [{any: [{draft: true}]}];
     expect(configUsesChangedFiles(matchConfig)).toBe(false);
   });
 
