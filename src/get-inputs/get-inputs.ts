@@ -6,5 +6,6 @@ export const getInputs = () => ({
   configPath: core.getInput('configuration-path', {required: true}),
   syncLabels: core.getBooleanInput('sync-labels'),
   dot: core.getBooleanInput('dot'),
+  nocase: core.getBooleanInput('nocase'),
   prNumbers: getPrNumbers()
 });

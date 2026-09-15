@@ -274,8 +274,9 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
 | `repo-token`         | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret                                                                                               | `github.token`        |
 | `configuration-path` | The path to the label configuration file. If the file doesn't exist at the specified path on the runner, action will read from the source repository via the Github API. | `.github/labeler.yml` |
-| `sync-labels`        | Whether to remove configured labels when they no longer match. Labels not present in the labeler configuration are never removed.                                         | `false`               |
-| `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                                                                                                  | `true`               |
+| `sync-labels`        | Whether to remove configured labels when they no longer match. Labels not present in the labeler configuration are never removed.                                        | `false`               |
+| `dot`                | Whether or not to auto-include paths starting with dot (e.g. `.github`)                                                                                                  | `true`                |
+| `nocase`             | Whether or not to match `changed-files` glob patterns case-insensitively. Does not affect `head-branch`/`base-branch` patterns, which are regular expressions.           | `false`               |
 | `pr-number`          | The number(s) of pull request to update, rather than detecting from the workflow context                                                                                 | N/A                   |
 
 When `sync-labels` is enabled, labeler synchronizes only labels whose names are

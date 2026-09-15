@@ -99,6 +99,9 @@ class NotFound extends Error {
 const yamlFixtures = {
   'branches.yml': fs.readFileSync('__tests__/fixtures/branches.yml'),
   'only_pdfs.yml': fs.readFileSync('__tests__/fixtures/only_pdfs.yml'),
+  'camel_case_paths.yml': fs.readFileSync(
+    '__tests__/fixtures/camel_case_paths.yml'
+  ),
   'not_supported.yml': fs.readFileSync('__tests__/fixtures/not_supported.yml'),
   'any_and_all.yml': fs.readFileSync('__tests__/fixtures/any_and_all.yml'),
   'mixed_labels.yml': fs.readFileSync('__tests__/fixtures/mixed_labels.yml'),
@@ -119,6 +122,7 @@ const configureInput = (
     'configuration-path': string;
     'sync-labels': boolean;
     dot: boolean;
+    nocase: boolean;
     'pr-number': string[];
   }>
 ) => {
@@ -226,6 +230,48 @@ describe('run', () => {
     ]);
     expect(getPullMock).toHaveBeenCalledTimes(1);
     expect(setLabelsMock).not.toHaveBeenCalled();
+  });
+
+  it('(with nocase: false) does not add labels to PRs whose changed files differ only in case', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('camel_case_paths.yml');
+    mockGitHubResponseChangedFiles('src/MyComponent/Button.tsx');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', '');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', '');
+  });
+
+  it('(with nocase: true) adds labels to PRs whose changed files differ only in case', async () => {
+    configureInput({nocase: true});
+    usingLabelerConfigYaml('camel_case_paths.yml');
+    mockGitHubResponseChangedFiles('src/MyComponent/Button.tsx');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['touched-my-component']
+    });
+    expect(setOutputSpy).toHaveBeenCalledWith(
+      'new-labels',
+      'touched-my-component'
+    );
   });
 
   it('(with dot: false) does not add labels to PRs that do not match our glob patterns', async () => {

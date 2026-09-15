@@ -18,6 +18,10 @@ inputs:
     description: 'Whether or not to auto-include paths starting with dot (e.g. `.github`)'
     default: true
     required: false
+  nocase:
+    description: 'Whether or not to match `changed-files` glob patterns case-insensitively'
+    default: false
+    required: false
   pr-number:
     description: 'The pull request number(s)'
     required: false
