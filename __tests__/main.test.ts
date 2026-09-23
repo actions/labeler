@@ -110,7 +110,8 @@ const yamlFixtures = {
   'max_files_5.yml': fs.readFileSync('__tests__/fixtures/max_files_5.yml'),
   'max_files_with_branch.yml': fs.readFileSync(
     '__tests__/fixtures/max_files_with_branch.yml'
-  )
+  ),
+  'draft.yml': fs.readFileSync('__tests__/fixtures/draft.yml')
 };
 
 const configureInput = (
@@ -341,6 +342,71 @@ describe('run', () => {
 
     expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'array-branch');
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'array-branch');
+  });
+
+  it('adds a label when the pull request is a draft', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('draft.yml');
+    mockGitHubResponseChangedFiles('foo.txt');
+    getPullMock.mockResolvedValue(<any>{
+      data: {draft: true, labels: []}
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['draft-pr']
+    });
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'draft-pr');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'draft-pr');
+  });
+
+  it('adds a label when the pull request is not a draft', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('draft.yml');
+    mockGitHubResponseChangedFiles('foo.txt');
+    getPullMock.mockResolvedValue(<any>{
+      data: {draft: false, labels: []}
+    });
+
+    await run();
+
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['ready-pr']
+    });
+    expect(setOutputSpy).toHaveBeenCalledWith('new-labels', 'ready-pr');
+    expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'ready-pr');
+  });
+
+  it('removes a draft label with sync-labels when the pull request is ready', async () => {
+    configureInput({'sync-labels': true});
+    usingLabelerConfigYaml('draft.yml');
+    mockGitHubResponseChangedFiles('foo.txt');
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        draft: false,
+        node_id: 'PR_node_id',
+        labels: [{name: 'draft-pr', node_id: 'label_node_id'}]
+      }
+    });
+
+    await run();
+
+    expect(removeLabelsMock).toHaveBeenCalled();
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['ready-pr']
+    });
   });
 
   it('adds a label when matching any and all patterns are provided', async () => {
