@@ -1,0 +1,3 @@
+touched-my-component:
+  - changed-files:
+      - any-glob-to-any-file: ['src/mycomponent/**']
