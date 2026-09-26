@@ -108,11 +108,13 @@ describe('getLabelConfigMapFromObject', () => {
     const configWithLimit = {
       'changed-files-labels-limit': 5,
       'max-files-changed': 100,
+      ignore: ['**/*.lock'],
       label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
     };
     const result = getLabelConfigMapFromObject(configWithLimit);
     expect(result.has('changed-files-labels-limit')).toBe(false);
     expect(result.has('max-files-changed')).toBe(false);
+    expect(result.has('ignore')).toBe(false);
     expect(result.has('label1')).toBe(true);
   });
 });
@@ -301,6 +303,53 @@ describe('getLabelConfigResultFromObject', () => {
       /reserved top-level option and cannot be used as a label name/
     );
   });
+
+  it('extracts ignore as a list of glob strings', () => {
+    const config = {
+      ignore: ['**/*.lock', '**/gradle.lockfile'],
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.ignore).toEqual(['**/*.lock', '**/gradle.lockfile']);
+    expect(result.labelConfigs.has('label1')).toBe(true);
+  });
+
+  it('accepts a single ignore glob as a string', () => {
+    const config = {
+      ignore: '**/*.lock',
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.ignore).toEqual(['**/*.lock']);
+  });
+
+  it('returns undefined ignore when not set', () => {
+    const config = {
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    const result = getLabelConfigResultFromObject(config);
+    expect(result.ignore).toBeUndefined();
+  });
+
+  it('throws error when ignore is not a string or list of strings', () => {
+    const config = {
+      ignore: [42],
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /Invalid value for 'ignore'/
+    );
+  });
+
+  it('throws reserved-name error when ignore is used as a label name', () => {
+    const config = {
+      ignore: [{'any-glob-to-any-file': ['*.txt']}],
+      label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
+    };
+    expect(() => getLabelConfigResultFromObject(config)).toThrow(
+      /'ignore' is a reserved top-level option/
+    );
+  });
 });
 
 describe('toMatchConfig', () => {
@@ -379,6 +428,26 @@ describe('checkMatchConfigs', () => {
       const result = checkMatchConfigs(changedFiles, matchConfig, true);
 
       expect(result).toBeTruthy();
+    });
+  });
+
+  describe('when every changed file was filtered out by `ignore`', () => {
+    const changedFiles: string[] = [];
+
+    it('returns false for an `any-glob-to-all-files` pattern', () => {
+      const matchConfig: MatchConfig[] = [
+        {any: [{changedFiles: [{anyGlobToAllFiles: ['**']}]}]}
+      ];
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for an `all-globs-to-all-files` pattern', () => {
+      const matchConfig: MatchConfig[] = [
+        {any: [{changedFiles: [{allGlobsToAllFiles: ['**']}]}]}
+      ];
+      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      expect(result).toBe(false);
     });
   });
 

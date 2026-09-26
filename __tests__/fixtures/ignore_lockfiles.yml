@@ -1,0 +1,13 @@
+# Ignore lock files everywhere so they never trigger component labels
+ignore:
+  - '**/*.lock'
+  - '**/gradle.lockfile'
+
+# Labels based on changed files
+component-a:
+  - changed-files:
+      - any-glob-to-any-file: ['components/a/**']
+
+component-b:
+  - changed-files:
+      - any-glob-to-any-file: ['components/b/**']

@@ -43962,6 +43962,26 @@ async function changedFiles_getChangedFiles(client, prNumber) {
     }
     return changedFiles;
 }
+/**
+ * Removes any changed files that match one of the top-level `ignore` globs.
+ * Ignored files are dropped before any label rule is evaluated, so they can
+ * never, on their own, cause a label to be applied.
+ */
+function filterIgnoredFiles(changedFiles, ignoreGlobs, dot) {
+    if (!ignoreGlobs.length) {
+        return changedFiles;
+    }
+    core_debug(`filtering out changed files matching "ignore" patterns`);
+    const matchers = ignoreGlobs.map(g => new Minimatch(g, { dot }));
+    return changedFiles.filter(changedFile => {
+        const ignoredBy = matchers.find(matcher => matcher.match(changedFile));
+        if (ignoredBy) {
+            core_debug(`  ignoring "${changedFile}" (matched "${printPattern(ignoredBy)}")`);
+            return false;
+        }
+        return true;
+    });
+}
 function toChangedFilesMatchConfig(config) {
     if (!config['changed-files'] || !config['changed-files'].length) {
         return {};
@@ -44089,6 +44109,10 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
 }
 function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
     core_debug(`    checking "any-glob-to-all-files" config patterns`);
+    if (!changedFiles.length) {
+        core_debug(`    no files to check the patterns against`);
+        return false;
+    }
     const matchers = globs.map(g => new Minimatch(g, { dot }));
     for (const matcher of matchers) {
         const mismatchedFile = changedFiles.find(changedFile => {
@@ -44107,6 +44131,10 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
 }
 function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
     core_debug(`    checking "all-globs-to-all-files" config patterns`);
+    if (!changedFiles.length) {
+        core_debug(`    no files to check the patterns against`);
+        return false;
+    }
     const matchers = globs.map(g => new Minimatch(g, { dot }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
@@ -44204,7 +44232,11 @@ function matchBranchPattern(matcher, branchName) {
 
 
 const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
-const TOP_LEVEL_OPTIONS = ['changed-files-labels-limit', 'max-files-changed'];
+const TOP_LEVEL_OPTIONS = [
+    'changed-files-labels-limit',
+    'max-files-changed',
+    'ignore'
+];
 /**
  * Parses and validates a non-negative integer value from the configuration.
  */
@@ -44226,6 +44258,23 @@ function parseNonNegativeInteger(value, optionName) {
         throw new Error(`'${optionName}' is a reserved top-level option and cannot be used as a label name. Please rename it.`);
     }
     throw new Error(`Invalid value for '${optionName}': expected a non-negative integer`);
+}
+/**
+ * Parses the top-level `ignore` option into a list of glob strings.
+ */
+function parseIgnorePatterns(value) {
+    // If `ignore` is mistakenly used as a label name, its value will look like an
+    // array of rule objects (e.g. `- changed-files: ...`). Provide a clearer error.
+    if (Array.isArray(value) &&
+        value.length > 0 &&
+        value.every(entry => entry !== null && typeof entry === 'object')) {
+        throw new Error(`'ignore' is a reserved top-level option and cannot be used as a label name. Please rename it.`);
+    }
+    const values = Array.isArray(value) ? value : [value];
+    if (!values.every(entry => typeof entry === 'string')) {
+        throw new Error(`Invalid value for 'ignore': must be a glob string or a list of glob strings`);
+    }
+    return values;
 }
 const getLabelConfigs = (client, configurationPath) => Promise.resolve()
     .then(() => {
@@ -44262,10 +44311,16 @@ function getLabelConfigResultFromObject(configObject) {
     if (maxFilesValue !== undefined) {
         maxFilesChanged = parseNonNegativeInteger(maxFilesValue, 'max-files-changed');
     }
+    let ignore;
+    const ignoreValue = configObject?.['ignore'];
+    if (ignoreValue !== undefined) {
+        ignore = parseIgnorePatterns(ignoreValue);
+    }
     return {
         labelConfigs: getLabelConfigMapFromObject(configObject),
         changedFilesLimit,
-        maxFilesChanged
+        maxFilesChanged,
+        ignore
     };
 }
 function getLabelConfigMapFromObject(configObject) {
@@ -44442,12 +44497,18 @@ async function labeler() {
     const client = getOctokit(token, {}, retry);
     const pullRequests = getPullRequests(client, prNumbers);
     for await (const pullRequest of pullRequests) {
-        const { labelConfigs, changedFilesLimit, maxFilesChanged } = await getLabelConfigs(client, configPath);
+        const { labelConfigs, changedFilesLimit, maxFilesChanged, ignore } = await getLabelConfigs(client, configPath);
+        // Drop any changed files matching the top-level `ignore` globs before doing
+        // anything else, so ignored files (e.g. lock files) never influence labeling.
+        const changedFiles = filterIgnoredFiles(pullRequest.changedFiles, ignore ?? [], dot);
+        if (ignore?.length) {
+            info(`Ignoring ${pullRequest.changedFiles.length - changedFiles.length} of ` +
+                `${pullRequest.changedFiles.length} changed file(s) matching "ignore" patterns`);
+        }
         // Check if total changed files exceeds the max-files-changed threshold
-        const skipChangedFilesLabeling = maxFilesChanged !== undefined &&
-            pullRequest.changedFiles.length > maxFilesChanged;
+        const skipChangedFilesLabeling = maxFilesChanged !== undefined && changedFiles.length > maxFilesChanged;
         if (skipChangedFilesLabeling) {
-            info(`Total changed files (${pullRequest.changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`);
+            info(`Total changed files (${changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`);
         }
         const preexistingLabels = pullRequest.data.labels.map(l => l.name);
         const allLabels = new Set(preexistingLabels);
@@ -44462,7 +44523,7 @@ async function labeler() {
                 core_debug(`skipping ${label} (uses changed-files and max-files-changed exceeded)`);
                 continue;
             }
-            if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+            if (checkMatchConfigs(changedFiles, configs, dot)) {
                 allLabels.add(label);
                 // Track if this label uses changed-files patterns
                 if (usesChangedFiles) {

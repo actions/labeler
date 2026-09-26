@@ -10,7 +10,11 @@ import {
   configUsesChangedFiles
 } from './api/get-label-configs.js';
 
-import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles.js';
+import {
+  checkAllChangedFiles,
+  checkAnyChangedFiles,
+  filterIgnoredFiles
+} from './changedFiles.js';
 
 import {checkAnyBranch, checkAllBranch} from './branch.js';
 
@@ -38,17 +42,31 @@ export async function labeler() {
   const pullRequests = api.getPullRequests(client, prNumbers);
 
   for await (const pullRequest of pullRequests) {
-    const {labelConfigs, changedFilesLimit, maxFilesChanged} =
+    const {labelConfigs, changedFilesLimit, maxFilesChanged, ignore} =
       await api.getLabelConfigs(client, configPath);
+
+    // Drop any changed files matching the top-level `ignore` globs before doing
+    // anything else, so ignored files (e.g. lock files) never influence labeling.
+    const changedFiles = filterIgnoredFiles(
+      pullRequest.changedFiles,
+      ignore ?? [],
+      dot
+    );
+
+    if (ignore?.length) {
+      core.info(
+        `Ignoring ${pullRequest.changedFiles.length - changedFiles.length} of ` +
+          `${pullRequest.changedFiles.length} changed file(s) matching "ignore" patterns`
+      );
+    }
 
     // Check if total changed files exceeds the max-files-changed threshold
     const skipChangedFilesLabeling =
-      maxFilesChanged !== undefined &&
-      pullRequest.changedFiles.length > maxFilesChanged;
+      maxFilesChanged !== undefined && changedFiles.length > maxFilesChanged;
 
     if (skipChangedFilesLabeling) {
       core.info(
-        `Total changed files (${pullRequest.changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`
+        `Total changed files (${changedFiles.length}) exceeds max-files-changed (${maxFilesChanged}), skipping file-based labeling`
       );
     }
 
@@ -71,7 +89,7 @@ export async function labeler() {
         continue;
       }
 
-      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+      if (checkMatchConfigs(changedFiles, configs, dot)) {
         allLabels.add(label);
         // Track if this label uses changed-files patterns
         if (usesChangedFiles) {

@@ -165,6 +165,7 @@ The labeler configuration file (`.github/labeler.yml`) supports the following to
 |------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `changed-files-labels-limit` | Maximum number of new labels to apply based on changed files (must be a non-negative integer). If exceeded, no changed-files labels are applied for that run. |
 | `max-files-changed`          | Maximum number of total changed files (must be a non-negative integer). If exceeded, all file-based labeling is skipped.                                      |
+| `ignore`                     | A glob string, or list of glob strings, matching files that are removed from the changed-files set before any rule is evaluated, so they never trigger a label. |
 
 ##### Limiting changed-files labels
 
@@ -245,6 +246,37 @@ backend:
 # Branch-based labels are NOT affected
 release:
   - base-branch: 'main'
+```
+
+##### Ignoring files globally
+
+Some files should never influence labeling no matter which directory they live in — generated lock files are the classic example. A dependency bump can rewrite many lock files (`gradle.lockfile`, `package-lock.json`, `poetry.lock`, ...) scattered across per-component directories without touching any real source, which would otherwise label every one of those components. Set `ignore` in your `.github/labeler.yml` to a glob (or list of globs); matching files are dropped from the changed-files set before any rule runs.
+
+**Important behaviors:**
+
+- Ignored files are removed **globally**, before any label rule is evaluated. They cannot cause a label to be added on their own.
+- If a label already matches via a **non-ignored** file, it is unaffected — only the ignored files are removed, not the whole PR.
+- When `sync-labels` is enabled, a label whose only supporting files were ignored is treated as no-longer-matching and is removed.
+- `ignore` uses the same glob engine as the rules, so `dot` and negation (`!`) patterns behave the same way.
+- Because ignored files never reach any rule, a label intended to match those files (e.g. a `dependencies` label matching lock files) will not be applied — don't ignore files you still want to label on.
+
+##### Example
+
+```yml
+# .github/labeler.yml
+
+# Lock files should never, on their own, label a component
+ignore:
+  - '**/*.lock'
+  - '**/gradle.lockfile'
+
+component-a:
+  - changed-files:
+    - any-glob-to-any-file: 'components/a/**'
+
+component-b:
+  - changed-files:
+    - any-glob-to-any-file: 'components/b/**'
 ```
 
 ### Create Workflow

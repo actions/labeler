@@ -22,6 +22,7 @@ const {
   checkAllChangedFiles,
   checkAnyChangedFiles,
   toChangedFilesMatchConfig,
+  filterIgnoredFiles,
   checkIfAnyGlobMatchesAnyFile,
   checkIfAllGlobsMatchAnyFile,
   checkIfAnyGlobMatchesAllFiles,
@@ -253,6 +254,15 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('when the list of changed files is empty', () => {
+    const globPatterns = ['*.txt'];
+
+    it('returns false', () => {
+      const result = checkIfAnyGlobMatchesAllFiles([], globPatterns, false);
+      expect(result).toBe(false);
+    });
+  });
 });
 
 describe('checkIfAllGlobsMatchAllFiles', () => {
@@ -282,5 +292,45 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
       );
       expect(result).toBe(false);
     });
+  });
+
+  describe('when the list of changed files is empty', () => {
+    const globPatterns = ['**'];
+
+    it('returns false', () => {
+      const result = checkIfAllGlobsMatchAllFiles([], globPatterns, false);
+      expect(result).toBe(false);
+    });
+  });
+});
+
+describe('filterIgnoredFiles', () => {
+  const changedFiles = [
+    'components/a/src/index.ts',
+    'components/a/gradle.lockfile',
+    'components/b/pnpm.lock',
+    'README.md'
+  ];
+
+  it('returns the files unchanged when no ignore globs are given', () => {
+    expect(filterIgnoredFiles(changedFiles, [], false)).toEqual(changedFiles);
+  });
+
+  it('drops files matching an ignore glob', () => {
+    const result = filterIgnoredFiles(
+      changedFiles,
+      ['**/*.lock', '**/gradle.lockfile'],
+      false
+    );
+    expect(result).toEqual(['components/a/src/index.ts', 'README.md']);
+  });
+
+  it('can drop every file, returning an empty list', () => {
+    const result = filterIgnoredFiles(
+      ['a/gradle.lockfile', 'b/gradle.lockfile'],
+      ['**/gradle.lockfile'],
+      false
+    );
+    expect(result).toEqual([]);
   });
 });
