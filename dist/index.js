@@ -38187,7 +38187,31 @@ const addLabels = async (client, prNumber, labels) => {
 ;// CONCATENATED MODULE: ./lib/api/get-changed-files.js
 
 
-const getChangedFiles = async (client, prNumber) => {
+const COMPARE_API_FILE_LIMIT = 300;
+const getChangedFiles = async (client, prNumber, baseRef, headSha) => {
+    if (baseRef && headSha) {
+        core_debug(`using compare API for pr #${prNumber}: ${baseRef}...${headSha}`);
+        const response = await client.rest.repos.compareCommitsWithBasehead({
+            owner: github_context.repo.owner,
+            repo: github_context.repo.repo,
+            basehead: `${baseRef}...${headSha}`
+        });
+        const compareFiles = (response.data.files ?? []).map(f => f.filename);
+        if (compareFiles.length >= COMPARE_API_FILE_LIMIT) {
+            info(`compare API returned ${compareFiles.length} files (at or above ${COMPARE_API_FILE_LIMIT} limit), ` +
+                `falling back to pulls.listFiles for pr #${prNumber}`);
+            return getChangedFilesFromListFiles(client, prNumber);
+        }
+        core_debug('found changed files (compare):');
+        for (const file of compareFiles) {
+            core_debug('  ' + file);
+        }
+        return compareFiles;
+    }
+    return getChangedFilesFromListFiles(client, prNumber);
+};
+const getChangedFilesFromListFiles = async (client, prNumber) => {
+    core_debug(`using pulls.listFiles for pr #${prNumber}`);
     const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
@@ -38223,7 +38247,7 @@ async function* getPullRequests(client, prNumbers) {
             continue;
         }
         core_debug(`fetching changed files for pr #${prNumber}`);
-        const changedFiles = await getChangedFiles(client, prNumber);
+        const changedFiles = await getChangedFiles(client, prNumber, prData.base?.ref, prData.head?.sha);
         if (!changedFiles.length) {
             warning(`Pull request #${prNumber} has no changed files, skipping`);
             continue;
