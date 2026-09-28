@@ -393,6 +393,9 @@ However, when the action runs on a pull request from a forked repository, GitHub
 
 There exists a potentially dangerous misuse of the `pull_request_target` workflow trigger that may lead to malicious PR authors (i.e. attackers) being able to obtain repository write permissions or stealing repository secrets. Hence, it is advisable that `pull_request_target` should only be used in workflows that are carefully designed to avoid executing untrusted code and to also ensure that workflows using `pull_request_target` limit access to sensitive resources. Refer to the [GitHub token permissions documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for more details about access levels and event contexts.
 
+> [!IMPORTANT]
+> Starting **November 2, 2026**, GitHub blocks `pull_request_target` by default on public repositories that have no Actions policy allowing it. Workflows using this trigger will stop running unless a repository administrator enables it under **Settings → Actions → Policies**. See [the notes below](#default-block-of-pull_request_target-november-2026) and [GitHub's changelog](https://github.blog/changelog/2026-09-17-workflow-execution-protections-in-github-actions-generally-available/) for details.
+
 ### Example Workflow Permissions
 
 To ensure the action works correctly, include the following permissions in your workflow file:
@@ -429,6 +432,12 @@ on:
 ```
 
 Once you confirm that the updated configuration files function as intended, you can then revert to using the `pull_request_target` event before merging the pull request. Following this step ensures that your workflow is robust and free from disruptions.
+
+### Default block of `pull_request_target` (November 2026)
+
+Starting **November 2, 2026**, GitHub [blocks the `pull_request_target` trigger by default](https://github.blog/changelog/2026-09-17-workflow-execution-protections-in-github-actions-generally-available/) on public repositories. Workflows that use `pull_request_target` — including the labeler configuration shown [above](#create-workflow) — will not run unless a repository administrator explicitly allows the trigger under **Settings → Actions → Policies** (see [GitHub's docs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/actions-policies/workflow-execution-protections)).
+
+The run is blocked before the job starts, so nothing fails inside the labeler itself and no error appears in the Actions tab. Maintainers may only notice when new pull requests stop receiving labels.
 
 ## Contributions
 
