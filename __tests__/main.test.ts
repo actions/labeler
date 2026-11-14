@@ -23,6 +23,7 @@ const addLabelsRequestMock = jest.fn<any>(options => {
 const removeLabelsMock = jest.fn<any>();
 const setLabelsMock = jest.fn<any>();
 const reposMock = jest.fn<any>();
+const compareCommitsWithBaseheadMock = jest.fn<any>();
 const paginateMock = jest.fn<any>();
 const getPullMock = jest.fn<any>().mockResolvedValue({data: {labels: []}});
 const listFilesMergeMock = jest.fn<any>().mockReturnValue({});
@@ -67,7 +68,10 @@ jest.unstable_mockModule('@actions/github', () => ({
         addLabels: addLabelsRequestMock,
         setLabels: setLabelsMock
       },
-      repos: {getContent: reposMock},
+      repos: {
+        getContent: reposMock,
+        compareCommitsWithBasehead: compareCommitsWithBaseheadMock
+      },
       pulls: {
         get: getPullMock,
         listFiles: {endpoint: {merge: listFilesMergeMock}}
@@ -1164,6 +1168,96 @@ describe('run', () => {
       expect(coreSetFailedMock).toHaveBeenCalledWith(error.message);
     }
   );
+  it('uses compare API when PR data includes base ref and head sha', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {ref: 'main'},
+        head: {sha: 'abc123'}
+      }
+    });
+
+    compareCommitsWithBaseheadMock.mockResolvedValue({
+      data: {
+        files: [{filename: 'foo.pdf'}]
+      }
+    });
+
+    await run();
+
+    expect(compareCommitsWithBaseheadMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      basehead: 'main...abc123'
+    });
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['touched-a-pdf-file']
+    });
+  });
+
+  it('falls back to listFiles when compare API returns 300+ files', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('only_pdfs.yml');
+
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: [],
+        base: {ref: 'main'},
+        head: {sha: 'abc123'}
+      }
+    });
+
+    const manyFiles = Array.from({length: 300}, (_, i) => ({
+      filename: `file${i}.ts`
+    }));
+    compareCommitsWithBaseheadMock.mockResolvedValue({
+      data: {files: manyFiles}
+    });
+
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    await run();
+
+    expect(compareCommitsWithBaseheadMock).toHaveBeenCalled();
+    expect(paginateMock).toHaveBeenCalled();
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['touched-a-pdf-file']
+    });
+  });
+
+  it('falls back to listFiles when PR data lacks base ref', async () => {
+    configureInput({});
+    usingLabelerConfigYaml('only_pdfs.yml');
+    mockGitHubResponseChangedFiles('foo.pdf');
+
+    getPullMock.mockResolvedValue(<any>{
+      data: {
+        labels: []
+      }
+    });
+
+    await run();
+
+    expect(compareCommitsWithBaseheadMock).not.toHaveBeenCalled();
+    expect(addLabelsMock).toHaveBeenCalledTimes(1);
+    expect(addLabelsMock).toHaveBeenCalledWith({
+      owner: 'monalisa',
+      repo: 'helloworld',
+      issue_number: 123,
+      labels: ['touched-a-pdf-file']
+    });
+  });
 });
 
 function usingLabelerConfigYaml(fixtureName: keyof typeof yamlFixtures): void {
