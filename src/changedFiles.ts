@@ -44,6 +44,35 @@ export async function getChangedFiles(
   return changedFiles;
 }
 
+/**
+ * Removes any changed files that match one of the top-level `ignore` globs.
+ * Ignored files are dropped before any label rule is evaluated, so they can
+ * never, on their own, cause a label to be applied.
+ */
+export function filterIgnoredFiles(
+  changedFiles: string[],
+  ignoreGlobs: string[],
+  dot: boolean
+): string[] {
+  if (!ignoreGlobs.length) {
+    return changedFiles;
+  }
+
+  core.debug(`filtering out changed files matching "ignore" patterns`);
+  const matchers = ignoreGlobs.map(g => new Minimatch(g, {dot}));
+
+  return changedFiles.filter(changedFile => {
+    const ignoredBy = matchers.find(matcher => matcher.match(changedFile));
+    if (ignoredBy) {
+      core.debug(
+        `  ignoring "${changedFile}" (matched "${printPattern(ignoredBy)}")`
+      );
+      return false;
+    }
+    return true;
+  });
+}
+
 export function toChangedFilesMatchConfig(
   config: any
 ): ChangedFilesMatchConfig {
@@ -294,6 +323,11 @@ export function checkIfAnyGlobMatchesAllFiles(
   dot: boolean
 ): boolean {
   core.debug(`    checking "any-glob-to-all-files" config patterns`);
+  if (!changedFiles.length) {
+    core.debug(`    no files to check the patterns against`);
+    return false;
+  }
+
   const matchers = globs.map(g => new Minimatch(g, {dot}));
 
   for (const matcher of matchers) {
@@ -331,6 +365,11 @@ export function checkIfAllGlobsMatchAllFiles(
   dot: boolean
 ): boolean {
   core.debug(`    checking "all-globs-to-all-files" config patterns`);
+  if (!changedFiles.length) {
+    core.debug(`    no files to check the patterns against`);
+    return false;
+  }
+
   const matchers = globs.map(g => new Minimatch(g, {dot}));
 
   for (const changedFile of changedFiles) {

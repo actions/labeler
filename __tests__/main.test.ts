@@ -110,6 +110,9 @@ const yamlFixtures = {
   'max_files_5.yml': fs.readFileSync('__tests__/fixtures/max_files_5.yml'),
   'max_files_with_branch.yml': fs.readFileSync(
     '__tests__/fixtures/max_files_with_branch.yml'
+  ),
+  'ignore_lockfiles.yml': fs.readFileSync(
+    '__tests__/fixtures/ignore_lockfiles.yml'
   )
 };
 
@@ -1107,6 +1110,69 @@ describe('run', () => {
       // No mutation because labels should remain unchanged
       // (component-a is preserved, not removed by sync-labels)
       expect(addLabelsMock).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('ignore', () => {
+    it('does not label a component when only its lock file changed', async () => {
+      configureInput({});
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
+      usingLabelerConfigYaml('ignore_lockfiles.yml');
+      mockGitHubResponseChangedFiles('components/a/gradle.lockfile');
+      getPullMock.mockResolvedValue(<any>{data: {labels: []}});
+
+      await run();
+
+      // The only changed file is ignored, so no component label is applied
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
+      expect(setOutputSpy).toHaveBeenCalledWith('all-labels', '');
+    });
+
+    it('still labels a component when a real file changed alongside a lock file', async () => {
+      configureInput({});
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
+      usingLabelerConfigYaml('ignore_lockfiles.yml');
+      mockGitHubResponseChangedFiles(
+        'components/a/src/index.ts',
+        'components/a/gradle.lockfile',
+        'components/b/pnpm.lock'
+      );
+      getPullMock.mockResolvedValue(<any>{data: {labels: []}});
+
+      await run();
+
+      // component-a matches its real source file; component-b only had an
+      // ignored lock file so it is not labeled
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['component-a']
+      });
+    });
+
+    it('removes a stale label with sync-labels when only a lock file changed', async () => {
+      configureInput({'sync-labels': true});
+      mockGithubContext.payload.pull_request.head = {ref: 'main'};
+      usingLabelerConfigYaml('ignore_lockfiles.yml');
+      mockGitHubResponseChangedFiles('components/a/gradle.lockfile');
+      getPullMock.mockResolvedValue(<any>{
+        data: {
+          node_id: 'PR_node_id',
+          labels: [{name: 'component-a', node_id: 'stale_label_node_id'}]
+        }
+      });
+
+      await run();
+
+      // component-a no longer matches (its only change is ignored) so it is removed
+      expect(addLabelsMock).toHaveBeenCalledTimes(0);
+      expect(removeLabelsMock).toHaveBeenCalledTimes(1);
+      expect(removeLabelsMock).toHaveBeenCalledWith(
+        expect.stringContaining('removeLabelsFromLabelable'),
+        {labelableId: 'PR_node_id', labelIds: ['stale_label_node_id']}
+      );
     });
   });
 
