@@ -26,7 +26,7 @@ export const run = () =>
   });
 
 export async function labeler() {
-  const {token, configPath, syncLabels, dot, prNumbers} = getInputs();
+  const {token, configPath, syncLabels, dot, nocase, prNumbers} = getInputs();
 
   if (!prNumbers.length) {
     core.warning('Could not get pull request number(s), exiting');
@@ -71,7 +71,7 @@ export async function labeler() {
         continue;
       }
 
-      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot, nocase)) {
         allLabels.add(label);
         // Track if this label uses changed-files patterns
         if (usesChangedFiles) {
@@ -187,11 +187,12 @@ export async function labeler() {
 export function checkMatchConfigs(
   changedFiles: string[],
   matchConfigs: MatchConfig[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   for (const config of matchConfigs) {
     core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config, dot)) {
+    if (!checkMatch(changedFiles, config, dot, nocase)) {
       return false;
     }
   }
@@ -202,7 +203,8 @@ export function checkMatchConfigs(
 function checkMatch(
   changedFiles: string[],
   matchConfig: MatchConfig,
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
@@ -210,13 +212,13 @@ function checkMatch(
   }
 
   if (matchConfig.all) {
-    if (!checkAll(matchConfig.all, changedFiles, dot)) {
+    if (!checkAll(matchConfig.all, changedFiles, dot, nocase)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    if (!checkAny(matchConfig.any, changedFiles, dot)) {
+    if (!checkAny(matchConfig.any, changedFiles, dot, nocase)) {
       return false;
     }
   }
@@ -228,7 +230,8 @@ function checkMatch(
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -248,7 +251,14 @@ export function checkAny(
     }
 
     if (matchConfig.changedFiles) {
-      if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+      if (
+        checkAnyChangedFiles(
+          changedFiles,
+          matchConfig.changedFiles,
+          dot,
+          nocase
+        )
+      ) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -270,7 +280,8 @@ export function checkAny(
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (
@@ -295,7 +306,14 @@ export function checkAll(
         return false;
       }
 
-      if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+      if (
+        !checkAllChangedFiles(
+          changedFiles,
+          matchConfig.changedFiles,
+          dot,
+          nocase
+        )
+      ) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }

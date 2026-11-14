@@ -42,6 +42,7 @@ describe('checkAllChangedFiles', () => {
       const result = checkAllChangedFiles(
         changedFiles,
         globPatternsConfigs,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -59,6 +60,7 @@ describe('checkAllChangedFiles', () => {
       const result = checkAllChangedFiles(
         changedFiles,
         globPatternsConfigs,
+        false,
         false
       );
       expect(result).toBe(false);
@@ -79,6 +81,7 @@ describe('checkAnyChangedFiles', () => {
       const result = checkAnyChangedFiles(
         changedFiles,
         globPatternsConfigs,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -95,6 +98,7 @@ describe('checkAnyChangedFiles', () => {
       const result = checkAnyChangedFiles(
         changedFiles,
         globPatternsConfigs,
+        false,
         false
       );
       expect(result).toBe(false);
@@ -175,6 +179,7 @@ describe('checkIfAnyGlobMatchesAnyFile', () => {
       const result = checkIfAnyGlobMatchesAnyFile(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -188,6 +193,7 @@ describe('checkIfAnyGlobMatchesAnyFile', () => {
       const result = checkIfAnyGlobMatchesAnyFile(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(false);
@@ -205,6 +211,7 @@ describe('checkIfAllGlobsMatchAnyFile', () => {
       const result = checkIfAllGlobsMatchAnyFile(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -218,6 +225,7 @@ describe('checkIfAllGlobsMatchAnyFile', () => {
       const result = checkIfAllGlobsMatchAnyFile(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(false);
@@ -235,6 +243,7 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
       const result = checkIfAnyGlobMatchesAllFiles(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -248,6 +257,7 @@ describe('checkIfAnyGlobMatchesAllFiles', () => {
       const result = checkIfAnyGlobMatchesAllFiles(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(false);
@@ -265,6 +275,7 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
       const result = checkIfAllGlobsMatchAllFiles(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(true);
@@ -278,9 +289,203 @@ describe('checkIfAllGlobsMatchAllFiles', () => {
       const result = checkIfAllGlobsMatchAllFiles(
         changedFiles,
         globPatterns,
+        false,
         false
       );
       expect(result).toBe(false);
+    });
+  });
+});
+
+// Each scenario's glob patterns differ from its changed files by letter case
+// only, so every pattern matches every file when `nocase` is true and none of
+// them match when it is false.
+const NOCASE_SCENARIOS = [
+  {
+    description: 'a CamelCase directory name',
+    changedFiles: ['src/MyComponent/Button.tsx', 'src/MyComponent/Icon.tsx'],
+    globPatterns: ['src/mycomponent/**', 'SRC/mycomponent/*.tsx']
+  },
+  {
+    description: 'a CamelCase file name',
+    changedFiles: ['src/MyComponent.tsx', 'src/MyHelper.tsx'],
+    globPatterns: ['src/my*.tsx', 'src/MY*.TSX']
+  },
+  {
+    description: 'an uppercased file extension',
+    changedFiles: ['src/foo.md', 'src/bar.md'],
+    globPatterns: ['**/*.MD', 'SRC/*.md']
+  },
+  {
+    description: 'lowercased files and CamelCase patterns',
+    changedFiles: ['docs/readme.md', 'docs/contributing.md'],
+    globPatterns: ['Docs/*.md', 'docs/*.Md']
+  }
+];
+
+describe('`nocase` option', () => {
+  describe.each(NOCASE_SCENARIOS)(
+    'with $description',
+    ({changedFiles, globPatterns}) => {
+      describe('checkIfAnyGlobMatchesAnyFile', () => {
+        it('returns false when `nocase` is false', () => {
+          const result = checkIfAnyGlobMatchesAnyFile(
+            changedFiles,
+            globPatterns,
+            false,
+            false
+          );
+          expect(result).toBe(false);
+        });
+
+        it('returns true when `nocase` is true', () => {
+          const result = checkIfAnyGlobMatchesAnyFile(
+            changedFiles,
+            globPatterns,
+            false,
+            true
+          );
+          expect(result).toBe(true);
+        });
+      });
+
+      describe('checkIfAllGlobsMatchAnyFile', () => {
+        it('returns false when `nocase` is false', () => {
+          const result = checkIfAllGlobsMatchAnyFile(
+            changedFiles,
+            globPatterns,
+            false,
+            false
+          );
+          expect(result).toBe(false);
+        });
+
+        it('returns true when `nocase` is true', () => {
+          const result = checkIfAllGlobsMatchAnyFile(
+            changedFiles,
+            globPatterns,
+            false,
+            true
+          );
+          expect(result).toBe(true);
+        });
+      });
+
+      describe('checkIfAnyGlobMatchesAllFiles', () => {
+        it('returns false when `nocase` is false', () => {
+          const result = checkIfAnyGlobMatchesAllFiles(
+            changedFiles,
+            globPatterns,
+            false,
+            false
+          );
+          expect(result).toBe(false);
+        });
+
+        it('returns true when `nocase` is true', () => {
+          const result = checkIfAnyGlobMatchesAllFiles(
+            changedFiles,
+            globPatterns,
+            false,
+            true
+          );
+          expect(result).toBe(true);
+        });
+      });
+
+      describe('checkIfAllGlobsMatchAllFiles', () => {
+        it('returns false when `nocase` is false', () => {
+          const result = checkIfAllGlobsMatchAllFiles(
+            changedFiles,
+            globPatterns,
+            false,
+            false
+          );
+          expect(result).toBe(false);
+        });
+
+        it('returns true when `nocase` is true', () => {
+          const result = checkIfAllGlobsMatchAllFiles(
+            changedFiles,
+            globPatterns,
+            false,
+            true
+          );
+          expect(result).toBe(true);
+        });
+      });
+    }
+  );
+
+  describe('when passed through the "changed-files" config keys', () => {
+    const changedFiles = [
+      'src/MyComponent/Button.tsx',
+      'src/MyComponent/Icon.tsx'
+    ];
+    const globPatterns = ['src/mycomponent/**'];
+
+    // `checkAnyChangedFiles` short-circuits on the first matching key, so each
+    // key gets its own config to cover every glob pattern branch.
+    describe.each([
+      'anyGlobToAnyFile',
+      'anyGlobToAllFiles',
+      'allGlobsToAnyFile',
+      'allGlobsToAllFiles'
+    ])('checkAnyChangedFiles with a "%s" config', key => {
+      const globPatternsConfigs = [{[key]: globPatterns}];
+
+      it('returns false when `nocase` is false', () => {
+        const result = checkAnyChangedFiles(
+          changedFiles,
+          globPatternsConfigs,
+          false,
+          false
+        );
+        expect(result).toBe(false);
+      });
+
+      it('returns true when `nocase` is true', () => {
+        const result = checkAnyChangedFiles(
+          changedFiles,
+          globPatternsConfigs,
+          false,
+          true
+        );
+        expect(result).toBe(true);
+      });
+    });
+
+    // `checkAllChangedFiles` requires every key to match, so one config covering
+    // all of them fails if any single branch ignores `nocase`.
+    describe('checkAllChangedFiles', () => {
+      const globPatternsConfigs = [
+        {
+          anyGlobToAnyFile: globPatterns,
+          anyGlobToAllFiles: globPatterns,
+          allGlobsToAnyFile: globPatterns,
+          allGlobsToAllFiles: globPatterns
+        }
+      ];
+
+      it('returns false when `nocase` is false', () => {
+        const result = checkAllChangedFiles(
+          changedFiles,
+          globPatternsConfigs,
+          false,
+          false
+        );
+        expect(result).toBe(false);
+      });
+
+      it('returns true when `nocase` is true', () => {
+        const result = checkAllChangedFiles(
+          changedFiles,
+          globPatternsConfigs,
+          false,
+          true
+        );
+        expect(result).toBe(true);
+      });
     });
   });
 });

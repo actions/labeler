@@ -340,14 +340,14 @@ describe('checkMatchConfigs', () => {
 
     it('returns true when our pattern does match changed files', () => {
       const changedFiles = ['foo.txt', 'bar.txt'];
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
 
       expect(result).toBeTruthy();
     });
 
     it('returns false when our pattern does not match changed files', () => {
       const changedFiles = ['foo.docx'];
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
 
       expect(result).toBeFalsy();
     });
@@ -363,20 +363,20 @@ describe('checkMatchConfigs', () => {
       ];
       const changedFiles = ['foo.txt', 'bar.txt'];
 
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
       expect(result).toBe(true);
     });
 
     it('returns false for a file starting with dot if `dot` option is false', () => {
       const changedFiles = ['.foo.txt'];
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
 
       expect(result).toBeFalsy();
     });
 
     it('returns true for a file starting with dot if `dot` option is true', () => {
       const changedFiles = ['.foo.txt'];
-      const result = checkMatchConfigs(changedFiles, matchConfig, true);
+      const result = checkMatchConfigs(changedFiles, matchConfig, true, false);
 
       expect(result).toBeTruthy();
     });
@@ -390,7 +390,7 @@ describe('checkMatchConfigs', () => {
     const changedFiles = ['foo.txt', 'bar.md'];
 
     it('returns false when only one config matches', () => {
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
       expect(result).toBe(false);
     });
 
@@ -399,7 +399,7 @@ describe('checkMatchConfigs', () => {
         {any: [{changedFiles: [{anyGlobToAnyFile: ['*.txt']}]}]},
         {any: [{headBranch: ['head-branch']}]}
       ];
-      const result = checkMatchConfigs(changedFiles, matchConfig, false);
+      const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
       expect(result).toBe(true);
     });
   });
@@ -548,5 +548,24 @@ describe('labeler error handling', () => {
       "Failed to remove configured labels 'stale-label' from PR #123"
     );
     expect(addLabelsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkMatchConfigs with the `nocase` option', () => {
+  const matchConfig: MatchConfig[] = [
+    {any: [{changedFiles: [{anyGlobToAnyFile: ['src/mycomponent/**']}]}]}
+  ];
+  const changedFiles = ['src/MyComponent/Button.tsx'];
+
+  it('returns false for a CamelCase path if `nocase` option is false', () => {
+    const result = checkMatchConfigs(changedFiles, matchConfig, false, false);
+
+    expect(result).toBeFalsy();
+  });
+
+  it('returns true for a CamelCase path if `nocase` option is true', () => {
+    const result = checkMatchConfigs(changedFiles, matchConfig, false, true);
+
+    expect(result).toBeTruthy();
   });
 });

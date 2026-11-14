@@ -93,7 +93,8 @@ export function toChangedFilesMatchConfig(
 export function checkAnyChangedFiles(
   changedFiles: string[],
   globPatternsConfigs: ChangedFilesGlobPatternsConfig[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`   checking "changed-files" patterns`);
 
@@ -103,7 +104,8 @@ export function checkAnyChangedFiles(
         checkIfAnyGlobMatchesAnyFile(
           changedFiles,
           globPatternsConfig.anyGlobToAnyFile,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" matched`);
@@ -116,7 +118,8 @@ export function checkAnyChangedFiles(
         checkIfAnyGlobMatchesAllFiles(
           changedFiles,
           globPatternsConfig.anyGlobToAllFiles,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" matched`);
@@ -129,7 +132,8 @@ export function checkAnyChangedFiles(
         checkIfAllGlobsMatchAnyFile(
           changedFiles,
           globPatternsConfig.allGlobsToAnyFile,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" matched`);
@@ -142,7 +146,8 @@ export function checkAnyChangedFiles(
         checkIfAllGlobsMatchAllFiles(
           changedFiles,
           globPatternsConfig.allGlobsToAllFiles,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" matched`);
@@ -158,7 +163,8 @@ export function checkAnyChangedFiles(
 export function checkAllChangedFiles(
   changedFiles: string[],
   globPatternsConfigs: ChangedFilesGlobPatternsConfig[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`   checking "changed-files" patterns`);
 
@@ -168,7 +174,8 @@ export function checkAllChangedFiles(
         !checkIfAnyGlobMatchesAnyFile(
           changedFiles,
           globPatternsConfig.anyGlobToAnyFile,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" did not match`);
@@ -181,7 +188,8 @@ export function checkAllChangedFiles(
         !checkIfAnyGlobMatchesAllFiles(
           changedFiles,
           globPatternsConfig.anyGlobToAllFiles,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" did not match`);
@@ -194,7 +202,8 @@ export function checkAllChangedFiles(
         !checkIfAllGlobsMatchAnyFile(
           changedFiles,
           globPatternsConfig.allGlobsToAnyFile,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" did not match`);
@@ -207,7 +216,8 @@ export function checkAllChangedFiles(
         !checkIfAllGlobsMatchAllFiles(
           changedFiles,
           globPatternsConfig.allGlobsToAllFiles,
-          dot
+          dot,
+          nocase
         )
       ) {
         core.debug(`   "changed-files" did not match`);
@@ -223,10 +233,11 @@ export function checkAllChangedFiles(
 export function checkIfAnyGlobMatchesAnyFile(
   changedFiles: string[],
   globs: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`    checking "any-glob-to-any-file" config patterns`);
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
+  const matchers = globs.map(g => new Minimatch(g, {dot, nocase}));
 
   for (const matcher of matchers) {
     const matchedFile = changedFiles.find(changedFile => {
@@ -254,10 +265,11 @@ export function checkIfAnyGlobMatchesAnyFile(
 export function checkIfAllGlobsMatchAnyFile(
   changedFiles: string[],
   globs: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`    checking "all-globs-to-any-file" config patterns`);
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
+  const matchers = globs.map(g => new Minimatch(g, {dot, nocase}));
 
   for (const changedFile of changedFiles) {
     const mismatchedGlob = matchers.find(matcher => {
@@ -291,10 +303,11 @@ export function checkIfAllGlobsMatchAnyFile(
 export function checkIfAnyGlobMatchesAllFiles(
   changedFiles: string[],
   globs: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`    checking "any-glob-to-all-files" config patterns`);
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
+  const matchers = globs.map(g => new Minimatch(g, {dot, nocase}));
 
   for (const matcher of matchers) {
     const mismatchedFile = changedFiles.find(changedFile => {
@@ -328,10 +341,11 @@ export function checkIfAnyGlobMatchesAllFiles(
 export function checkIfAllGlobsMatchAllFiles(
   changedFiles: string[],
   globs: string[],
-  dot: boolean
+  dot: boolean,
+  nocase: boolean
 ): boolean {
   core.debug(`    checking "all-globs-to-all-files" config patterns`);
-  const matchers = globs.map(g => new Minimatch(g, {dot}));
+  const matchers = globs.map(g => new Minimatch(g, {dot, nocase}));
 
   for (const changedFile of changedFiles) {
     const mismatchedGlob = matchers.find(matcher => {

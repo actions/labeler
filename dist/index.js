@@ -43991,29 +43991,29 @@ function toChangedFilesMatchConfig(config) {
         changedFiles: validChangedFilesConfigs
     };
 }
-function checkAnyChangedFiles(changedFiles, globPatternsConfigs, dot) {
+function checkAnyChangedFiles(changedFiles, globPatternsConfigs, dot, nocase) {
     core_debug(`   checking "changed-files" patterns`);
     for (const globPatternsConfig of globPatternsConfigs) {
         if (globPatternsConfig.anyGlobToAnyFile) {
-            if (checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.anyGlobToAnyFile, dot)) {
+            if (checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.anyGlobToAnyFile, dot, nocase)) {
                 core_debug(`   "changed-files" matched`);
                 return true;
             }
         }
         if (globPatternsConfig.anyGlobToAllFiles) {
-            if (checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.anyGlobToAllFiles, dot)) {
+            if (checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.anyGlobToAllFiles, dot, nocase)) {
                 core_debug(`   "changed-files" matched`);
                 return true;
             }
         }
         if (globPatternsConfig.allGlobsToAnyFile) {
-            if (checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.allGlobsToAnyFile, dot)) {
+            if (checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.allGlobsToAnyFile, dot, nocase)) {
                 core_debug(`   "changed-files" matched`);
                 return true;
             }
         }
         if (globPatternsConfig.allGlobsToAllFiles) {
-            if (checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.allGlobsToAllFiles, dot)) {
+            if (checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.allGlobsToAllFiles, dot, nocase)) {
                 core_debug(`   "changed-files" matched`);
                 return true;
             }
@@ -44022,29 +44022,29 @@ function checkAnyChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core_debug(`   "changed-files" did not match`);
     return false;
 }
-function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot) {
+function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot, nocase) {
     core_debug(`   checking "changed-files" patterns`);
     for (const globPatternsConfig of globPatternsConfigs) {
         if (globPatternsConfig.anyGlobToAnyFile) {
-            if (!checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.anyGlobToAnyFile, dot)) {
+            if (!checkIfAnyGlobMatchesAnyFile(changedFiles, globPatternsConfig.anyGlobToAnyFile, dot, nocase)) {
                 core_debug(`   "changed-files" did not match`);
                 return false;
             }
         }
         if (globPatternsConfig.anyGlobToAllFiles) {
-            if (!checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.anyGlobToAllFiles, dot)) {
+            if (!checkIfAnyGlobMatchesAllFiles(changedFiles, globPatternsConfig.anyGlobToAllFiles, dot, nocase)) {
                 core_debug(`   "changed-files" did not match`);
                 return false;
             }
         }
         if (globPatternsConfig.allGlobsToAnyFile) {
-            if (!checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.allGlobsToAnyFile, dot)) {
+            if (!checkIfAllGlobsMatchAnyFile(changedFiles, globPatternsConfig.allGlobsToAnyFile, dot, nocase)) {
                 core_debug(`   "changed-files" did not match`);
                 return false;
             }
         }
         if (globPatternsConfig.allGlobsToAllFiles) {
-            if (!checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.allGlobsToAllFiles, dot)) {
+            if (!checkIfAllGlobsMatchAllFiles(changedFiles, globPatternsConfig.allGlobsToAllFiles, dot, nocase)) {
                 core_debug(`   "changed-files" did not match`);
                 return false;
             }
@@ -44053,9 +44053,9 @@ function checkAllChangedFiles(changedFiles, globPatternsConfigs, dot) {
     core_debug(`   "changed-files" patterns matched`);
     return true;
 }
-function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
+function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot, nocase) {
     core_debug(`    checking "any-glob-to-any-file" config patterns`);
-    const matchers = globs.map(g => new Minimatch(g, { dot }));
+    const matchers = globs.map(g => new Minimatch(g, { dot, nocase }));
     for (const matcher of matchers) {
         const matchedFile = changedFiles.find(changedFile => {
             core_debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
@@ -44069,9 +44069,9 @@ function checkIfAnyGlobMatchesAnyFile(changedFiles, globs, dot) {
     core_debug(`    none of the patterns matched any of the files`);
     return false;
 }
-function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
+function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot, nocase) {
     core_debug(`    checking "all-globs-to-any-file" config patterns`);
-    const matchers = globs.map(g => new Minimatch(g, { dot }));
+    const matchers = globs.map(g => new Minimatch(g, { dot, nocase }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
             core_debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
@@ -44087,9 +44087,9 @@ function checkIfAllGlobsMatchAnyFile(changedFiles, globs, dot) {
     core_debug(`    none of the files matched all patterns`);
     return false;
 }
-function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
+function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot, nocase) {
     core_debug(`    checking "any-glob-to-all-files" config patterns`);
-    const matchers = globs.map(g => new Minimatch(g, { dot }));
+    const matchers = globs.map(g => new Minimatch(g, { dot, nocase }));
     for (const matcher of matchers) {
         const mismatchedFile = changedFiles.find(changedFile => {
             core_debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
@@ -44105,9 +44105,9 @@ function checkIfAnyGlobMatchesAllFiles(changedFiles, globs, dot) {
     core_debug(`    none of the patterns matched all files`);
     return false;
 }
-function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot) {
+function checkIfAllGlobsMatchAllFiles(changedFiles, globs, dot, nocase) {
     core_debug(`    checking "all-globs-to-all-files" config patterns`);
-    const matchers = globs.map(g => new Minimatch(g, { dot }));
+    const matchers = globs.map(g => new Minimatch(g, { dot, nocase }));
     for (const changedFile of changedFiles) {
         const mismatchedGlob = matchers.find(matcher => {
             core_debug(`     checking "${printPattern(matcher)}" pattern against ${changedFile}`);
@@ -44412,6 +44412,7 @@ const getInputs = () => ({
     configPath: getInput('configuration-path', { required: true }),
     syncLabels: getBooleanInput('sync-labels'),
     dot: getBooleanInput('dot'),
+    nocase: getBooleanInput('nocase'),
     prNumbers: getPrNumbers()
 });
 
@@ -44434,7 +44435,7 @@ const run = () => labeler().catch(error => {
     setFailed(error.message);
 });
 async function labeler() {
-    const { token, configPath, syncLabels, dot, prNumbers } = getInputs();
+    const { token, configPath, syncLabels, dot, nocase, prNumbers } = getInputs();
     if (!prNumbers.length) {
         warning('Could not get pull request number(s), exiting');
         return;
@@ -44462,7 +44463,7 @@ async function labeler() {
                 core_debug(`skipping ${label} (uses changed-files and max-files-changed exceeded)`);
                 continue;
             }
-            if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+            if (checkMatchConfigs(pullRequest.changedFiles, configs, dot, nocase)) {
                 allLabels.add(label);
                 // Track if this label uses changed-files patterns
                 if (usesChangedFiles) {
@@ -44532,34 +44533,34 @@ async function labeler() {
         }
     }
 }
-function checkMatchConfigs(changedFiles, matchConfigs, dot) {
+function checkMatchConfigs(changedFiles, matchConfigs, dot, nocase) {
     for (const config of matchConfigs) {
         core_debug(` checking config ${JSON.stringify(config)}`);
-        if (!checkMatch(changedFiles, config, dot)) {
+        if (!checkMatch(changedFiles, config, dot, nocase)) {
             return false;
         }
     }
     return true;
 }
-function checkMatch(changedFiles, matchConfig, dot) {
+function checkMatch(changedFiles, matchConfig, dot, nocase) {
     if (!Object.keys(matchConfig).length) {
         core_debug(`  no "any" or "all" patterns to check`);
         return false;
     }
     if (matchConfig.all) {
-        if (!checkAll(matchConfig.all, changedFiles, dot)) {
+        if (!checkAll(matchConfig.all, changedFiles, dot, nocase)) {
             return false;
         }
     }
     if (matchConfig.any) {
-        if (!checkAny(matchConfig.any, changedFiles, dot)) {
+        if (!checkAny(matchConfig.any, changedFiles, dot, nocase)) {
             return false;
         }
     }
     return true;
 }
 // equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(matchConfigs, changedFiles, dot) {
+function checkAny(matchConfigs, changedFiles, dot, nocase) {
     core_debug(`  checking "any" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -44574,7 +44575,7 @@ function checkAny(matchConfigs, changedFiles, dot) {
             }
         }
         if (matchConfig.changedFiles) {
-            if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+            if (checkAnyChangedFiles(changedFiles, matchConfig.changedFiles, dot, nocase)) {
                 core_debug(`  "any" patterns matched`);
                 return true;
             }
@@ -44590,7 +44591,7 @@ function checkAny(matchConfigs, changedFiles, dot) {
     return false;
 }
 // equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(matchConfigs, changedFiles, dot) {
+function checkAll(matchConfigs, changedFiles, dot, nocase) {
     core_debug(`  checking "all" patterns`);
     if (!matchConfigs.length ||
         !matchConfigs.some(configOption => Object.keys(configOption).length)) {
@@ -44609,7 +44610,7 @@ function checkAll(matchConfigs, changedFiles, dot) {
                 core_debug(`  no files to check "changed-files" patterns against`);
                 return false;
             }
-            if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles, dot)) {
+            if (!checkAllChangedFiles(changedFiles, matchConfig.changedFiles, dot, nocase)) {
                 core_debug(`  "all" patterns did not match`);
                 return false;
             }
