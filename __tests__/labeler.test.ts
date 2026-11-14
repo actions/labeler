@@ -77,25 +77,25 @@ describe('getLabelConfigMapFromObject', () => {
     expected.set('label1', [
       {
         any: [
-          { changedFiles: [{ anyGlobToAnyFile: ['glob'] }] },
-          { baseBranch: undefined, headBranch: ['regexp'] },
-          { baseBranch: ['regexp'], headBranch: undefined }
+          {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
         ]
       },
       {
         all: [
-          { changedFiles: [{ allGlobsToAllFiles: ['glob'] }] },
-          { baseBranch: undefined, headBranch: ['regexp'] },
-          { baseBranch: ['regexp'], headBranch: undefined }
+          {changedFiles: [{allGlobsToAllFiles: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
         ]
       }
     ]);
     expected.set('label2', [
       {
         any: [
-          { changedFiles: [{ anyGlobToAnyFile: ['glob'] }] },
-          { baseBranch: undefined, headBranch: ['regexp'] },
-          { baseBranch: ['regexp'], headBranch: undefined }
+          {changedFiles: [{anyGlobToAnyFile: ['glob']}]},
+          {baseBranch: undefined, headBranch: ['regexp']},
+          {baseBranch: ['regexp'], headBranch: undefined}
         ]
       }
     ]);
@@ -109,14 +109,14 @@ describe('getLabelConfigMapFromObject', () => {
       const configWithLimit = {
         'changed-files-labels-limit': 5,
         'max-files-changed': 100,
-        label1: [{ 'changed-files': [{ 'any-glob-to-any-file': ['*.txt'] }] }]
+        label1: [{'changed-files': [{'any-glob-to-any-file': ['*.txt']}]}]
       };
       const result = getLabelConfigMapFromObject(configWithLimit);
       expect(result.has('changed-files-labels-limit')).toBe(false);
       expect(result.has('max-files-changed')).toBe(false);
       expect(result.has('label1')).toBe(true);
     });
-  })
+  });
 
   describe('when no any or all key are present', () => {
     const yamlObject = loadYaml('__tests__/fixtures/default_any_and_all.yml');
