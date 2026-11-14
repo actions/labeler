@@ -1,0 +1,11 @@
+draft-pr:
+  - draft: true
+
+ready-pr:
+  - draft: false
+
+docs-ready:
+  - all:
+      - draft: false
+      - changed-files:
+          - any-glob-to-any-file: docs/**

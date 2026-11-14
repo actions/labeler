@@ -2,7 +2,7 @@
 
 [![Basic validation](https://github.com/actions/labeler/actions/workflows/basic-validation.yml/badge.svg?branch=main)](https://github.com/actions/labeler/actions/workflows/basic-validation.yml)
 
-Automatically label new pull requests based on the paths of files being changed or the branch name.
+Automatically label new pull requests based on the paths of files being changed, the branch name, or whether the pull request is a draft.
 
 ## What's changed in V7
 
@@ -37,7 +37,7 @@ The key is the name of the label in your repository that you want to add (eg: "m
 
 #### Match Object
 
-The match object allows control over the matching options. You can specify the label to be applied based on the files that have changed or the name of either the base branch or the head branch. For the changed files options you provide a [path glob](https://github.com/isaacs/minimatch#minimatch), and for the branches you provide a regexp to match against the branch name.
+The match object allows control over the matching options. You can specify the label to be applied based on the files that have changed, the name of either the base branch or the head branch, or whether the pull request is a draft. For the changed files options you provide a [path glob](https://github.com/isaacs/minimatch#minimatch), for the branches you provide a regexp to match against the branch name, and for draft status you provide a boolean.
 
 The base match object is defined as:
 ```yml
@@ -48,6 +48,7 @@ The base match object is defined as:
   - all-globs-to-all-files: ['list', 'of', 'globs']
 - base-branch: ['list', 'of', 'regexps']
 - head-branch: ['list', 'of', 'regexps']
+- draft: true # or false
 ```
 
 There are two top-level keys, `any` and `all`, which both accept the same configuration options:
@@ -60,6 +61,7 @@ There are two top-level keys, `any` and `all`, which both accept the same config
     - all-globs-to-all-files: ['list', 'of', 'globs']
   - base-branch: ['list', 'of', 'regexps']
   - head-branch: ['list', 'of', 'regexps']
+  - draft: true # or false
 - all:
   - changed-files:
     - any-glob-to-any-file: ['list', 'of', 'globs']
@@ -68,6 +70,7 @@ There are two top-level keys, `any` and `all`, which both accept the same config
     - all-globs-to-all-files: ['list', 'of', 'globs']
   - base-branch: ['list', 'of', 'regexps']
   - head-branch: ['list', 'of', 'regexps']
+  - draft: true # or false
 ```
 
 From a boolean logic perspective, top-level match objects, and options within `all` are `AND`-ed together and individual match rules within the `any` object are `OR`-ed.
@@ -78,6 +81,7 @@ The fields are defined as follows:
 - `any`: if ANY of the provided options match then the label will be applied
   - `base-branch`: match regexps against the base branch name
   - `head-branch`: match regexps against the head branch name
+  - `draft`: match against whether the pull request is a draft (`true`) or ready for review (`false`)
   - `changed-files`: match glob patterns against the changed paths
     - `any-glob-to-any-file`: ANY glob must match against ANY changed file
     - `any-glob-to-all-files`: ANY glob must match against ALL changed files
@@ -155,6 +159,14 @@ feature:
 # Add 'release' label to any PR that is opened against the `main` branch
 release:
  - base-branch: 'main'
+
+# Add 'WIP' label to draft pull requests
+WIP:
+ - draft: true
+
+# Add 'ready-for-review' label to pull requests that are not drafts
+ready-for-review:
+ - draft: false
 ```
 
 #### Configuration Options
@@ -175,7 +187,7 @@ When working with large PRs (e.g., tree-wide refactors) that touch many componen
 - The limit counts only **new** labels that would be added by changed-files rules. Labels already present on the PR are not counted toward the limit.
 - If the number of new changed-files labels **exceeds** the limit, **all** new changed-files labels are skipped for that run.
 - If the number of new changed-files labels **equals** the limit, labels are still applied normally.
-- Labels based on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- Labels based on branch conditions (`head-branch`, `base-branch`) or draft status (`draft`) are **not affected** by the limit.
 - **Any label definition that includes a `changed-files` rule is considered a changed-files label** and is subject to the limit, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be subject to the limit even if it matches via the branch rule.
 - If both `max-files-changed` and `changed-files-labels-limit` are configured at the same time, `max-files-changed` is evaluated first, and if it triggers, `changed-files-labels-limit` is not evaluated.
 
@@ -221,7 +233,7 @@ When a PR modifies a very large number of files (e.g., tree-wide refactors, auto
 
 - If the total number of changed files **exceeds** the limit, all file-based labeling is skipped entirely.
 - If the total number of changed files **equals** the limit, labels are still applied normally.
-- Labels based **only** on branch conditions (`head-branch`, `base-branch`) are **not affected** by the limit.
+- Labels based **only** on branch conditions (`head-branch`, `base-branch`) or draft status (`draft`) are **not affected** by the limit.
 - **Any label definition that includes a `changed-files` rule is considered a file-based label** and will be skipped, regardless of which condition caused the label to match. For example, a label with both `head-branch` and `changed-files` rules will be skipped even if it would match via the branch rule.
 - Pre-existing labels on the PR are **preserved** — changed-files configs are not evaluated at all, so `sync-labels` will not remove them.
 
@@ -254,7 +266,8 @@ Create a workflow (e.g. `.github/workflows/labeler.yml` see [Creating a Workflow
 ```yml
 name: "Pull Request Labeler"
 on:
-- pull_request_target
+  pull_request_target:
+    types: [opened, synchronize, reopened, converted_to_draft, ready_for_review]
 
 jobs:
   labeler:
@@ -265,6 +278,10 @@ jobs:
     steps:
     - uses: actions/labeler@v6
 ```
+
+The `converted_to_draft` and `ready_for_review` activity types are required if you want labels to update when a pull request is marked as a draft or marked ready for review. Without them, GitHub only runs the workflow for `opened`, `synchronize`, and `reopened`.
+
+If you use `sync-labels: true`, a label matched with `draft: true` is removed when the pull request is no longer a draft, and a label matched with `draft: false` is removed when the pull request becomes a draft.
 
 #### Inputs
 

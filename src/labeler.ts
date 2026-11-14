@@ -13,6 +13,7 @@ import {
 import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles.js';
 
 import {checkAnyBranch, checkAllBranch} from './branch.js';
+import {checkDraft} from './draft.js';
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
@@ -71,7 +72,14 @@ export async function labeler() {
         continue;
       }
 
-      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+      if (
+        checkMatchConfigs(
+          pullRequest.changedFiles,
+          configs,
+          dot,
+          pullRequest.data.draft
+        )
+      ) {
         allLabels.add(label);
         // Track if this label uses changed-files patterns
         if (usesChangedFiles) {
@@ -187,11 +195,12 @@ export async function labeler() {
 export function checkMatchConfigs(
   changedFiles: string[],
   matchConfigs: MatchConfig[],
-  dot: boolean
+  dot: boolean,
+  isDraft?: boolean
 ): boolean {
   for (const config of matchConfigs) {
     core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config, dot)) {
+    if (!checkMatch(changedFiles, config, dot, isDraft)) {
       return false;
     }
   }
@@ -202,7 +211,8 @@ export function checkMatchConfigs(
 function checkMatch(
   changedFiles: string[],
   matchConfig: MatchConfig,
-  dot: boolean
+  dot: boolean,
+  isDraft?: boolean
 ): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
@@ -210,13 +220,13 @@ function checkMatch(
   }
 
   if (matchConfig.all) {
-    if (!checkAll(matchConfig.all, changedFiles, dot)) {
+    if (!checkAll(matchConfig.all, changedFiles, dot, isDraft)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    if (!checkAny(matchConfig.any, changedFiles, dot)) {
+    if (!checkAny(matchConfig.any, changedFiles, dot, isDraft)) {
       return false;
     }
   }
@@ -228,7 +238,8 @@ function checkMatch(
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  isDraft?: boolean
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -260,6 +271,13 @@ export function checkAny(
         return true;
       }
     }
+
+    if (matchConfig.draft !== undefined) {
+      if (checkDraft(matchConfig.draft, isDraft)) {
+        core.debug(`  "any" patterns matched`);
+        return true;
+      }
+    }
   }
 
   core.debug(`  "any" patterns did not match any configs`);
@@ -270,7 +288,8 @@ export function checkAny(
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  isDraft?: boolean
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (
@@ -303,6 +322,13 @@ export function checkAll(
 
     if (matchConfig.headBranch) {
       if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+        core.debug(`  "all" patterns did not match`);
+        return false;
+      }
+    }
+
+    if (matchConfig.draft !== undefined) {
+      if (!checkDraft(matchConfig.draft, isDraft)) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }

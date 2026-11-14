@@ -10,13 +10,16 @@ import {
 } from '../changedFiles.js';
 
 import {toBranchMatchConfig, BranchMatchConfig} from '../branch.js';
+import {toDraftMatchConfig, DraftMatchConfig} from '../draft.js';
 
 export interface MatchConfig {
   all?: BaseMatchConfig[];
   any?: BaseMatchConfig[];
 }
 
-export type BaseMatchConfig = BranchMatchConfig & ChangedFilesMatchConfig;
+export type BaseMatchConfig = BranchMatchConfig &
+  ChangedFilesMatchConfig &
+  DraftMatchConfig;
 
 export interface LabelConfigResult {
   labelConfigs: Map<string, MatchConfig[]>;
@@ -24,7 +27,12 @@ export interface LabelConfigResult {
   maxFilesChanged?: number;
 }
 
-const ALLOWED_CONFIG_KEYS = ['changed-files', 'head-branch', 'base-branch'];
+const ALLOWED_CONFIG_KEYS = [
+  'changed-files',
+  'head-branch',
+  'base-branch',
+  'draft'
+];
 const TOP_LEVEL_OPTIONS = ['changed-files-labels-limit', 'max-files-changed'];
 
 /**
@@ -193,10 +201,12 @@ export function getLabelConfigMapFromObject(
 export function toMatchConfig(config: any): BaseMatchConfig {
   const changedFilesConfig = toChangedFilesMatchConfig(config);
   const branchConfig = toBranchMatchConfig(config);
+  const draftConfig = toDraftMatchConfig(config);
 
   return {
     ...changedFilesConfig,
-    ...branchConfig
+    ...branchConfig,
+    ...draftConfig
   };
 }
 
