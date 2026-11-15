@@ -281,6 +281,33 @@ describe('run', () => {
     expect(setOutputSpy).toHaveBeenCalledWith('all-labels', 'test-branch');
   });
 
+  it('adds branch-based labels when triggered without pull_request payload (e.g. workflow_dispatch)', async () => {
+    const savedPr = mockGithubContext.payload.pull_request;
+    mockGithubContext.payload.pull_request = undefined;
+    try {
+      configureInput({'pr-number': ['123']});
+      getPullMock.mockResolvedValue({
+        data: {
+          labels: [],
+          base: {ref: 'main'},
+          head: {ref: 'test/testing-time'}
+        }
+      });
+      usingLabelerConfigYaml('branches.yml');
+      await run();
+
+      expect(addLabelsMock).toHaveBeenCalledTimes(1);
+      expect(addLabelsMock).toHaveBeenCalledWith({
+        owner: 'monalisa',
+        repo: 'helloworld',
+        issue_number: 123,
+        labels: ['test-branch']
+      });
+    } finally {
+      mockGithubContext.payload.pull_request = savedPr;
+    }
+  });
+
   it('adds multiple labels based on branch names that match different regexp patterns', async () => {
     configureInput({});
     mockGithubContext.payload.pull_request.head = {
