@@ -41,6 +41,23 @@ describe('getBranchName', () => {
       expect(result).toEqual('head-branch-name');
     });
   });
+
+  describe('when pull_request payload is absent (e.g. workflow_dispatch)', () => {
+    it('returns head and base branch names from pullRequestData', () => {
+      const savedPr = mockGithubContext.payload.pull_request;
+      mockGithubContext.payload.pull_request = undefined;
+      try {
+        const apiPr = {
+          base: {ref: 'api-base-branch'},
+          head: {ref: 'api-head-branch'}
+        };
+        expect(getBranchName('base', apiPr)).toEqual('api-base-branch');
+        expect(getBranchName('head', apiPr)).toEqual('api-head-branch');
+      } finally {
+        mockGithubContext.payload.pull_request = savedPr;
+      }
+    });
+  });
 });
 
 describe('checkAllBranch', () => {

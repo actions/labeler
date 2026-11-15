@@ -12,7 +12,11 @@ import {
 
 import {checkAllChangedFiles, checkAnyChangedFiles} from './changedFiles.js';
 
-import {checkAnyBranch, checkAllBranch} from './branch.js';
+import {
+  checkAnyBranch,
+  checkAllBranch,
+  PullRequestBranchData
+} from './branch.js';
 
 type ClientType = ReturnType<typeof github.getOctokit>;
 
@@ -71,7 +75,14 @@ export async function labeler() {
         continue;
       }
 
-      if (checkMatchConfigs(pullRequest.changedFiles, configs, dot)) {
+      if (
+        checkMatchConfigs(
+          pullRequest.changedFiles,
+          configs,
+          dot,
+          pullRequest.data
+        )
+      ) {
         allLabels.add(label);
         // Track if this label uses changed-files patterns
         if (usesChangedFiles) {
@@ -187,11 +198,12 @@ export async function labeler() {
 export function checkMatchConfigs(
   changedFiles: string[],
   matchConfigs: MatchConfig[],
-  dot: boolean
+  dot: boolean,
+  pullRequestData?: PullRequestBranchData
 ): boolean {
   for (const config of matchConfigs) {
     core.debug(` checking config ${JSON.stringify(config)}`);
-    if (!checkMatch(changedFiles, config, dot)) {
+    if (!checkMatch(changedFiles, config, dot, pullRequestData)) {
       return false;
     }
   }
@@ -202,7 +214,8 @@ export function checkMatchConfigs(
 function checkMatch(
   changedFiles: string[],
   matchConfig: MatchConfig,
-  dot: boolean
+  dot: boolean,
+  pullRequestData?: PullRequestBranchData
 ): boolean {
   if (!Object.keys(matchConfig).length) {
     core.debug(`  no "any" or "all" patterns to check`);
@@ -210,13 +223,13 @@ function checkMatch(
   }
 
   if (matchConfig.all) {
-    if (!checkAll(matchConfig.all, changedFiles, dot)) {
+    if (!checkAll(matchConfig.all, changedFiles, dot, pullRequestData)) {
       return false;
     }
   }
 
   if (matchConfig.any) {
-    if (!checkAny(matchConfig.any, changedFiles, dot)) {
+    if (!checkAny(matchConfig.any, changedFiles, dot, pullRequestData)) {
       return false;
     }
   }
@@ -228,7 +241,8 @@ function checkMatch(
 export function checkAny(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  pullRequestData?: PullRequestBranchData
 ): boolean {
   core.debug(`  checking "any" patterns`);
   if (
@@ -241,7 +255,7 @@ export function checkAny(
 
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (checkAnyBranch(matchConfig.baseBranch, 'base')) {
+      if (checkAnyBranch(matchConfig.baseBranch, 'base', pullRequestData)) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -255,7 +269,7 @@ export function checkAny(
     }
 
     if (matchConfig.headBranch) {
-      if (checkAnyBranch(matchConfig.headBranch, 'head')) {
+      if (checkAnyBranch(matchConfig.headBranch, 'head', pullRequestData)) {
         core.debug(`  "any" patterns matched`);
         return true;
       }
@@ -270,7 +284,8 @@ export function checkAny(
 export function checkAll(
   matchConfigs: BaseMatchConfig[],
   changedFiles: string[],
-  dot: boolean
+  dot: boolean,
+  pullRequestData?: PullRequestBranchData
 ): boolean {
   core.debug(`  checking "all" patterns`);
   if (
@@ -283,7 +298,7 @@ export function checkAll(
 
   for (const matchConfig of matchConfigs) {
     if (matchConfig.baseBranch) {
-      if (!checkAllBranch(matchConfig.baseBranch, 'base')) {
+      if (!checkAllBranch(matchConfig.baseBranch, 'base', pullRequestData)) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
@@ -302,7 +317,7 @@ export function checkAll(
     }
 
     if (matchConfig.headBranch) {
-      if (!checkAllBranch(matchConfig.headBranch, 'head')) {
+      if (!checkAllBranch(matchConfig.headBranch, 'head', pullRequestData)) {
         core.debug(`  "all" patterns did not match`);
         return false;
       }
