@@ -158,7 +158,9 @@ export function getLabelConfigMapFromObject(
           // our config objects.
           if (key === 'any' || key === 'all') {
             if (Array.isArray(value)) {
-              const newConfigs = value.map(toMatchConfig);
+              const newConfigs = value.map(config =>
+                toMatchConfig(config, key === 'all')
+              );
               updatedConfig.push({[key]: newConfigs});
             }
           } else if (ALLOWED_CONFIG_KEYS.includes(key)) {
@@ -190,8 +192,11 @@ export function getLabelConfigMapFromObject(
   return labelMap;
 }
 
-export function toMatchConfig(config: any): BaseMatchConfig {
-  const changedFilesConfig = toChangedFilesMatchConfig(config);
+export function toMatchConfig(
+  config: any,
+  defaultToAll = false
+): BaseMatchConfig {
+  const changedFilesConfig = toChangedFilesMatchConfig(config, defaultToAll);
   const branchConfig = toBranchMatchConfig(config);
 
   return {

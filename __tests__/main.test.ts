@@ -110,6 +110,9 @@ const yamlFixtures = {
   'max_files_5.yml': fs.readFileSync('__tests__/fixtures/max_files_5.yml'),
   'max_files_with_branch.yml': fs.readFileSync(
     '__tests__/fixtures/max_files_with_branch.yml'
+  ),
+  'default_any_and_all.yml': fs.readFileSync(
+    '__tests__/fixtures/default_any_and_all.yml'
   )
 };
 

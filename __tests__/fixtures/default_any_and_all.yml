@@ -1,0 +1,6 @@
+default_any:
+  - changed-files: ['glob']
+
+default_all:
+  - all:
+      - changed-files: ['glob']
